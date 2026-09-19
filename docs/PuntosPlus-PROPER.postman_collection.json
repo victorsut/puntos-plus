@@ -629,6 +629,32 @@
             "description": "Enviar DESPUÉS de la primera compra exitosa con la misma `Idempotency-Key`: devuelve `200` con la respuesta original + `\"replayed\": true`, SIN acreditar dos veces. Es el comportamiento esperado ante reintentos por corte de red."
           },
           "response": []
+        },
+        {
+          "name": "POST /purchases — rechazo: factura ya acreditada (invoice_already_credited)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"card_code\": \"{{card_code}}\",\n  \"fuel_amount\": 250.00,\n  \"gallons\": 8.06,\n  \"fuel_type\": \"super\",\n  \"nit\": \"CF\",\n  \"invoice_no\": \"FAC-2026-000123\",\n  \"operator\": {\n    \"external_id\": \"{{operator_external_id}}\",\n    \"name\": \"{{operator_name}}\", \"dpi\": \"{{operator_dpi}}\",\n    \"station\": \"{{operator_station}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/purchases",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "purchases"
+              ]
+            },
+            "description": "v1.4 — Candado de factura única. Enviar un invoice_no que YA acreditó (por ejemplo, repetir el de la solicitud anterior) SIN header Idempotency-Key → 409 invoice_already_credited. same_card=true si fue a esta misma tarjeta (trae purchase_id y points_earned); false si fue a otra. Regla del programa: los puntos se asignan solo al momento de la factura; no hay acumulación posterior."
+          }
         }
       ]
     },

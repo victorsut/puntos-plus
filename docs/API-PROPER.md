@@ -281,7 +281,7 @@ curl -X POST "https://puntosplus.vercel.app/api/v1/purchases" \
 | `gallons` | number | Sí | Galones reales despachados |
 | `fuel_type` | string | Sí | `super` \| `regular` \| `diesel` |
 | `nit` | string | Sí | NIT de la factura emitida, o `CF` |
-| `invoice_no` | string | Recomendado | Número de factura, para conciliación |
+| `invoice_no` | string | **Sí** (v1.4) | Número de factura (serie-número). Cada factura acredita **una sola vez** |
 | `total_amount` | number | Opcional | Total de la factura (con tienda). Solo se guarda para conciliar: **no** afecta los puntos |
 | `operator.external_id` | string | Sí | Identificador del colaborador en PROPER |
 | `operator.name` | string | Recomendado | Nombre **real del colaborador** (es el que ve el cliente en su notificación: "Atendido por Juan") |
@@ -373,6 +373,38 @@ del premio en pantalla como cortesía.
 
 Recuerden la regla de impresión (§1): **acumular puntos no genera ningún
 impreso**.
+
+#### Momento de la acumulación y factura única (v1.4)
+
+**Los puntos se asignan en el mismo momento de la factura.** El flujo previsto
+es que, al emitir la factura, el POS muestre **en ese instante** el botón para
+escanear el QR y acumular. Si el colaborador no lo hace y emite otra factura,
+los puntos de la factura anterior **quedan sin asignar**: no existe acumulación
+posterior ni un endpoint para "recuperar" facturas ya cerradas.
+
+Para respaldar esa regla, cada factura acredita **una sola vez**:
+
+- `invoice_no` es **obligatorio**. Sin él respondemos `422 missing_invoice_no`.
+- Si ese número de factura ya acreditó puntos respondemos
+  `409 invoice_already_credited` y **no** se acredita de nuevo — aunque llegue
+  con otra tarjeta, otra estación u otra `Idempotency-Key`. La comparación
+  ignora mayúsculas/minúsculas y espacios al inicio y al final.
+
+```json
+{
+  "error": "invoice_already_credited",
+  "message": "Esta factura ya acreditó puntos a esta tarjeta",
+  "invoice_no": "FC351-22",
+  "same_card": true,
+  "credited_at": "2026-09-18T19:18:06.510Z",
+  "purchase_id": "9c1e...",
+  "points_earned": 2
+}
+```
+
+`same_card` indica si la acreditación original fue a **esta misma tarjeta**
+(en ese caso incluimos `purchase_id` y `points_earned`, útil si el POS
+reintentó sin `Idempotency-Key`) o a **otra** (`false`: no revelamos a quién).
 
 #### Idempotencia (importante)
 
@@ -552,6 +584,8 @@ mostrar al colaborador.
 | 422 | `invalid_fuel_type` | Distinto de `super`, `regular`, `diesel` |
 | 422 | `unknown_station` | No se pudo resolver la estación del colaborador (§3.4) |
 | 422 | `missing_operator` | Falta el identificador del colaborador |
+| 422 | `missing_invoice_no` | Falta el número de factura (obligatorio desde v1.4) |
+| 409 | `invoice_already_credited` | Esa factura ya acreditó puntos — una factura acredita una sola vez (§5.3) |
 | 400 | `invalid_action` | `action` distinto de `request`, `cancel`, `deliver` |
 | 409 | `already_delivered` | El premio ya fue entregado — no se entrega dos veces |
 | 422 | `not_confirmed` | El cliente aún no confirmó la entrega en su app (§5.4) |
@@ -578,6 +612,9 @@ misma `Idempotency-Key`.
 5a. Acumuló  → el POS muestra: "+25 pts · Saldo: 365"
 5b. No acumuló → el POS muestra el motivo, dirigido al cliente
     ("agregá tu NIT en la app" / "pedí la factura con CF")
+
+IMPORTANTE: el paso 2 ocurre EN ESE INSTANTE. Si se emite otra factura sin
+haber acumulado, los puntos de la anterior quedan sin asignar (§5.3).
 ```
 
 Del lado del cliente todo sigue igual: **recibe una notificación** en su
@@ -653,6 +690,9 @@ Sugerimos validar estos casos:
 - [ ] **(v1.4)** Estación enviada con su código de PROPER (`17261015-1`…) → acredita en la correcta
 - [ ] **(v1.4)** Mismo `operator.dpi` con dos `external_id` distintos → ambas compras quedan en el mismo colaborador
 - [ ] **(v1.4)** Consulta de canje → trae `reward_value` (número o `null`) y `expires_at`
+- [ ] **(v1.4)** Misma factura enviada dos veces **sin** `Idempotency-Key` → `409 invoice_already_credited` con `same_card: true`
+- [ ] **(v1.4)** Misma factura con **otra tarjeta** → `409 invoice_already_credited` con `same_card: false`
+- [ ] **(v1.4)** Compra sin `invoice_no` → `422 missing_invoice_no`
 
 ---
 
@@ -700,9 +740,9 @@ Sugerimos validar estos casos:
   primer `fuel_type` de la lista (§5.3).
 - **Facturas a crédito o con varias formas de pago:** para nosotros es
   indistinto — acreditamos sobre el consumo de combustible facturado.
-- **Cliente sin tarjeta escaneada (acumular después):** **en definición** de
-  nuestro lado. Hasta que les enviemos la regla, la acumulación se hace
-  únicamente al momento de la factura.
+- **Cliente sin tarjeta escaneada (acumular después) — cerrado.** No habrá
+  acumulación posterior: los puntos se asignan siempre en el mismo momento de
+  la factura (§5.3). No necesitan parametrizar nada.
 - **Nombre del colaborador:** en las pruebas recibimos `operator.name =
   "PROPER"`. En producción necesitamos el nombre real, porque es el que ve el
   cliente al calificar la atención.
@@ -722,7 +762,7 @@ versión 1 de la API.
 
 | Versión | Fecha | Cambios |
 |---|---|---|
-| 1.4 | 19-sep-2026 | `operator.dpi`; `reward_value` y `expires_at` en canjes; error `expired` documentado; códigos de estación configurados; criterio de varios combustibles; §10/§11 con los acuerdos. Detalle en `API-PROPER-CAMBIOS-v1.4.md` |
+| 1.4 | 19-sep-2026 | Acumulación solo al momento de la factura + candado de factura única (`invoice_no` obligatorio, `invoice_already_credited`); `operator.dpi`; `reward_value` y `expires_at` en canjes; error `expired` documentado; códigos de estación configurados; criterio de varios combustibles; §10/§11 con los acuerdos. Detalle en `API-PROPER-CAMBIOS-v1.4.md` |
 | 1.3 | 31-jul-2026 | Ambiente de pruebas con datos reales; canje completo desde el POS |
 | 1.2 | 29-jul-2026 | Facturas anuladas no revierten puntos |
 | 1.1 | 29-jul-2026 | Factura primero; facturas mixtas; estación por colaborador |

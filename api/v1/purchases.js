@@ -8,6 +8,10 @@
 // Body: { card_code, fuel_amount, gallons, fuel_type, nit, invoice_no,
 //         total_amount?, operator: { external_id, name, station, dpi? } }
 // Header recomendado: Idempotency-Key (nº de factura)
+//
+// REGLA (dueño, 19-sep): NO hay acumulación tardía — los puntos se
+// asignan en el mismo momento de la factura. invoice_no es obligatorio
+// y cada factura acredita UNA vez (409 invoice_already_credited).
 import { authenticate, logRequest, replay, json, cors, statusFor, messageFor, sbAdmin } from '../_lib/apiAuth.js';
 import { pushToMembers } from '../_lib/push.js';
 
@@ -80,6 +84,14 @@ export default async function handler(req, res) {
       ...(data.member_name ? { member_name: data.member_name } : {}),
       ...(data.invoice_nit ? { invoice_nit: data.invoice_nit } : {}),
       ...(data.registered_nit_masked ? { registered_nit_masked: data.registered_nit_masked } : {}),
+      // Candado de factura única (v1.4): si fue a ESTA tarjeta viajan los
+      // datos de la acreditación original; si fue a otra, nunca a quién.
+      ...(data.error === 'invoice_already_credited' ? {
+        invoice_no: data.invoice_no,
+        ...(data.same_card != null ? { same_card: data.same_card } : {}),
+        ...(data.credited_at ? { credited_at: data.credited_at } : {}),
+        ...(data.purchase_id ? { purchase_id: data.purchase_id, points_earned: data.points_earned } : {}),
+      } : {}),
     };
     // Los rechazos NO consumen la idempotency-key.
     await logRequest({ clientId: auth.clientId, endpoint: 'POST /v1/purchases',

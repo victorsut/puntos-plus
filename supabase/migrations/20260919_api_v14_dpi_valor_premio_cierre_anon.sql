@@ -27,6 +27,15 @@
 --   7. `expires_at` expuesto en las consultas de canje (el error
 --      'expired' de D22 existía sin forma de anticiparlo).
 --
+-- ACUMULACIÓN TARDÍA — decisión del dueño (19-sep): NO existe. Los
+-- puntos se asignan SIEMPRE en el mismo momento de la factura (el POS
+-- muestra el botón de escanear al cerrar la factura; si se emite otra
+-- factura, la anterior quedó sin asignar). Lo que SÍ se agrega:
+--   8. CANDADO DE FACTURA ÚNICA: invoice_no pasa a ser obligatorio en
+--      la API y una factura solo acredita UNA vez (índice único +
+--      error 'invoice_already_credited'). Hasta hoy la única barrera
+--      era el header Idempotency-Key, que controla PROPER.
+--
 -- LECCIÓN SEC.C.6: agregar un parámetro crea una SOBRECARGA — acá se
 -- hace DROP de cada firma vieja antes de crear la nueva, y cada
 -- función nueva lleva su REVOKE explícito (DROP+CREATE resetea ACLs).
@@ -227,7 +236,16 @@ colaborador con el operador que ya tenga ese DPI — propio o espejo —
 fusionando el espejo previo si hacía falta. El nombre solo rellena el
 placeholder; la estación se refresca con cada factura.';
 
--- ── 5. api_register_purchase: + p_operator_dpi, solo tarjetas activas ──
+-- ── 4b. Candado de factura única ─────────────────────────────
+-- Global (no por estación): mandar la misma factura con otra estación
+-- no debe saltarse el candado. Verificado el 19-sep: 0 duplicados en
+-- las compras existentes y la app propia nunca envía invoice_no.
+CREATE UNIQUE INDEX IF NOT EXISTS purchases_invoice_no_uniq
+  ON public.purchases (upper(btrim(invoice_no)))
+  WHERE invoice_no IS NOT NULL AND btrim(invoice_no) <> '';
+
+-- ── 5. api_register_purchase: + p_operator_dpi, solo tarjetas activas,
+--      factura obligatoria y única ──
 DROP FUNCTION IF EXISTS public.api_register_purchase(uuid, text, numeric, numeric, text, text, text, text, text, text, numeric);
 
 CREATE OR REPLACE FUNCTION public.api_register_purchase(
@@ -251,10 +269,17 @@ DECLARE
   v_station_id  uuid;
   v_fuel        text := lower(COALESCE(p_fuel_type, 'regular'));
   v_core        jsonb;
+  v_invoice     text := NULLIF(btrim(COALESCE(p_invoice_no, '')), '');
+  v_prev        RECORD;
 BEGIN
   -- ── Validaciones de entrada ──
   IF v_code !~ '^CT[OPB]D-[0-9]+$' THEN
     RETURN jsonb_build_object('error', 'invalid_card_code');
+  END IF;
+  -- Candado de factura única: sin número de factura no hay candado.
+  IF v_invoice IS NULL THEN
+    RETURN jsonb_build_object('error', 'missing_invoice_no',
+      'detail', 'Falta el número de factura (invoice_no): es obligatorio para acumular');
   END IF;
   IF p_fuel_amount IS NULL OR p_fuel_amount <= 0 THEN
     RETURN jsonb_build_object('error', 'no_fuel_in_invoice',
@@ -284,6 +309,28 @@ BEGIN
     AND pc.status = 'active';
   IF NOT FOUND THEN
     RETURN jsonb_build_object('error', 'member_not_found');
+  END IF;
+
+  -- ── FACTURA ÚNICA: una factura acredita una sola vez ──
+  -- same_card dice si fue a ESTA tarjeta (reintento del POS sin
+  -- Idempotency-Key → se devuelven los datos de la acreditación
+  -- original) o a otra (nunca se revela a quién).
+  SELECT pu.id, pu.member_id, pu.points_earned, pu.created_at INTO v_prev
+  FROM purchases pu
+  WHERE pu.invoice_no IS NOT NULL AND upper(btrim(pu.invoice_no)) = upper(v_invoice)
+  LIMIT 1;
+  IF FOUND THEN
+    RETURN jsonb_build_object(
+      'error', 'invoice_already_credited',
+      'detail', CASE WHEN v_prev.member_id = v_member.id
+                  THEN 'Esta factura ya acreditó puntos a esta tarjeta'
+                  ELSE 'Esta factura ya acreditó puntos a otra tarjeta' END,
+      'invoice_no', v_invoice,
+      'same_card', v_prev.member_id = v_member.id,
+      'credited_at', v_prev.created_at)
+      || CASE WHEN v_prev.member_id = v_member.id
+           THEN jsonb_build_object('purchase_id', v_prev.id, 'points_earned', v_prev.points_earned)
+           ELSE '{}'::jsonb END;
   END IF;
 
   -- ── REGLA DE NIT ──
@@ -325,10 +372,18 @@ BEGIN
   END IF;
 
   -- ── Núcleo compartido: puntos por tier + promos + persistencia ──
-  v_core := public.register_purchase_core(
-    v_member.id, v_operator_id, v_station_id,
-    p_fuel_amount, p_total_amount, p_gallons, v_fuel, p_invoice_no
-  );
+  -- El índice único cubre la carrera de dos envíos simultáneos de la
+  -- misma factura: el segundo cae acá y no acredita.
+  BEGIN
+    v_core := public.register_purchase_core(
+      v_member.id, v_operator_id, v_station_id,
+      p_fuel_amount, p_total_amount, p_gallons, v_fuel, v_invoice
+    );
+  EXCEPTION WHEN unique_violation THEN
+    RETURN jsonb_build_object('error', 'invoice_already_credited',
+      'detail', 'Esta factura ya acreditó puntos',
+      'invoice_no', v_invoice);
+  END;
   IF v_core ? 'error' THEN
     RETURN jsonb_build_object('error', 'member_not_found');
   END IF;
@@ -999,6 +1054,10 @@ GRANT EXECUTE ON FUNCTION public.api_redemption_confirm(uuid, text, text, text, 
 --      → 401/403 "permission denied for function" (antes: JSON de negocio).
 --   4. GET /api/v1/redemptions?card_code=CTOD-95176 con la llave de API
 --      → cada pendiente trae reward_value y expires_at.
---   5. POST /api/v1/purchases sigue acreditando (la API no cambió de
---      contrato: los campos nuevos son opcionales).
+--   5. POST /api/v1/purchases sigue acreditando (los campos nuevos son
+--      opcionales; invoice_no pasa a obligatorio — PROPER ya lo envía
+--      en el 100 % de sus llamadas).
+--   6. Repetir el MISMO invoice_no sin Idempotency-Key → 409
+--      invoice_already_credited (same_card true + purchase_id si es la
+--      misma tarjeta); con otra tarjeta → 409 same_card false.
 -- ============================================================

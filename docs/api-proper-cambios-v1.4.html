@@ -449,8 +449,8 @@
     <h1>Novedades de la versión 1.4</h1>
     <p class="standfirst">
       Solo lo que cambió en la API de integración: integraciones nuevas,
-      modificaciones y correcciones. Todo es aditivo — lo que ya tienen
-      integrado sigue funcionando sin tocarlo.
+      modificaciones y correcciones. Compatible con lo que ya tienen
+      integrado: sigue funcionando sin tocarlo.
     </p>
     <div class="meta-row">
       <span><b>Fecha</b> 19 de septiembre de 2026</span>
@@ -471,7 +471,7 @@
 
   <main>
       <p>Este documento contiene <strong>únicamente lo que cambió</strong> respecto a la v1.3, a partir de sus respuestas a los apartados 10 y 11. El documento completo (v1.4) sigue siendo la referencia general; acá está solo lo nuevo.</p>
-      <div class="callout c-ok"><p style="margin:0;"><strong>Todo es aditivo.</strong> Ningún campo existente cambió de nombre, tipo ni significado, y ningún campo nuevo es obligatorio. Lo que ya tienen integrado <strong>sigue funcionando sin tocarlo</strong>; los cambios se adoptan cuando les resulte conveniente.</p></div>
+      <div class="callout c-ok"><p style="margin:0;"><strong>Compatible con lo que ya integraron.</strong> Ningún campo existente cambió de nombre, tipo ni significado, y los campos nuevos son opcionales. El único requisito nuevo es que <code>invoice_no</code> pasa a ser obligatorio (3.1) — y ya lo envían en todas sus llamadas, así que <strong>no tienen que cambiar nada para seguir funcionando</strong>.</p></div>
 
     <section id="c1">
       <h2><span class="n">01</span>Resumen</h2>
@@ -481,10 +481,11 @@
           <tr><td>2.1</td><td><code>operator.dpi</code> — DPI del colaborador</td><td>Integración nueva</td><td>Enviar el DPI en <code>operator</code> (recomendado)</td></tr>
           <tr><td>2.2</td><td><code>reward_value</code> — valor monetario del premio</td><td>Integración nueva (solicitada por PROPER)</td><td>Leer el campo; tolerar <code>null</code></td></tr>
           <tr><td>2.3</td><td><code>expires_at</code> — vencimiento del premio</td><td>Integración nueva</td><td>Opcional: mostrarlo; tolerar <code>null</code></td></tr>
-          <tr><td>3.1</td><td>Códigos de estación configurados</td><td>Modificación</td><td>Enviar su código en <code>operator.station</code></td></tr>
-          <tr><td>3.2</td><td>Varios combustibles en una factura</td><td>Criterio confirmado</td><td>Nada — se mantiene lo que ya hacen</td></tr>
-          <tr><td>3.3</td><td>Nombre real del colaborador</td><td>Modificación</td><td>Enviar el nombre real en <code>operator.name</code></td></tr>
-          <tr><td>3.4</td><td><code>total_amount</code> = total de la factura</td><td>Aclaración</td><td>Enviar el total con tienda cuando aplique</td></tr>
+          <tr><td>3.1</td><td><strong>Acumulación solo al momento de la factura</strong> + factura única</td><td>Regla de negocio</td><td>Mostrar el botón al emitir la factura; manejar <code>409 invoice_already_credited</code></td></tr>
+          <tr><td>3.2</td><td>Códigos de estación configurados</td><td>Modificación</td><td>Enviar su código en <code>operator.station</code></td></tr>
+          <tr><td>3.3</td><td>Varios combustibles en una factura</td><td>Criterio confirmado</td><td>Nada — se mantiene lo que ya hacen</td></tr>
+          <tr><td>3.4</td><td>Nombre real del colaborador</td><td>Modificación</td><td>Enviar el nombre real en <code>operator.name</code></td></tr>
+          <tr><td>3.5</td><td><code>total_amount</code> = total de la factura</td><td>Aclaración</td><td>Enviar el total con tienda cuando aplique</td></tr>
           <tr><td>4.1</td><td>Error <code>expired</code></td><td>Corrección</td><td>Manejar <code>422 expired</code> en canjes</td></tr>
           <tr><td>4.2</td><td>Tarjetas no activas</td><td>Corrección</td><td>Nada — mismo error <code>member_not_found</code></td></tr>
           <tr><td>4.3</td><td>Códigos de ejemplo vs. códigos de prueba</td><td>Aclaración</td><td>Usar los códigos del apartado 8</td></tr>
@@ -566,7 +567,36 @@
 
     <section id="c3">
       <h2><span class="n">03</span>Modificaciones y criterios confirmados</h2>
-      <h3>3.1 Códigos de estación — ya configurados</h3>
+      <h3>3.1 Acumulación solo al momento de la factura — y factura única</h3>
+      <p><strong>Respuesta a su pregunta sobre el cliente sin tarjeta escaneada:</strong> no necesitan parametrizar nada, porque <strong>no habrá acumulación posterior</strong>. La regla del programa es:</p>
+      <ul>
+        <li>Al emitir la factura, el POS muestra <strong>en ese instante</strong> el botón para escanear el QR del cliente y asignar los puntos.</li>
+        <li>Si el colaborador no lo hace y <strong>emite otra factura</strong>, los puntos de la factura anterior <strong>quedan sin asignar</strong>. No hay forma de acumular una factura ya cerrada.</li>
+      </ul>
+      <p>Del lado de la API respaldamos la regla con un <strong>candado de factura única</strong>:</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Situación</th><th>Respuesta</th></tr></thead>
+        <tbody>
+          <tr><td>Compra sin <code>invoice_no</code></td><td><code>422 missing_invoice_no</code> — el número de factura pasa a ser <strong>obligatorio</strong></td></tr>
+          <tr><td><code>invoice_no</code> que ya acreditó puntos</td><td><code>409 invoice_already_credited</code> — no se acredita de nuevo, aunque llegue con otra tarjeta, otra estación u otra <code>Idempotency-Key</code></td></tr>
+        </tbody>
+      </table></div>
+      <pre><code>{
+  <span class="tok-key">"error"</span>: <span class="tok-str">"invoice_already_credited"</span>,
+  <span class="tok-key">"message"</span>: <span class="tok-str">"Esta factura ya acreditó puntos a esta tarjeta"</span>,
+  <span class="tok-key">"invoice_no"</span>: <span class="tok-str">"FC351-22"</span>,
+  <span class="tok-key">"same_card"</span>: true,
+  <span class="tok-key">"credited_at"</span>: <span class="tok-str">"2026-09-18T19:<span class="tok-num">18</span>:<span class="tok-num">06.510</span>Z"</span>,
+  <span class="tok-key">"purchase_id"</span>: <span class="tok-str">"9c1e..."</span>,
+  <span class="tok-key">"points_earned"</span>: <span class="tok-num">2</span>
+}</code></pre>
+      <ul>
+        <li><code>same_card: true</code> → la acreditación original fue a <strong>esa misma tarjeta</strong>; incluimos <code>purchase_id</code> y <code>points_earned</code> para que el POS pueda mostrarlos (caso típico: un reintento sin <code>Idempotency-Key</code>). Pueden tratarlo como "ya acumulada".</li>
+        <li><code>same_card: false</code> → la factura ya se acreditó a <strong>otra</strong> tarjeta; no revelamos a quién.</li>
+        <li>La comparación del número ignora mayúsculas/minúsculas y espacios al inicio y al final. El número debe ser único por factura (serie-número).</li>
+        <li><strong>La idempotencia no cambia:</strong> un reintento con la <strong>misma</strong> <code>Idempotency-Key</code> sigue devolviendo la respuesta original con <code>"replayed": true</code>. El candado actúa cuando la llave es distinta o no viene.</li>
+      </ul>
+      <h3>3.2 Códigos de estación — ya configurados</h3>
       <p>Cargamos de nuestro lado los códigos que nos entregaron:</p>
       <div class="table-wrap"><table>
         <thead><tr><th><code>operator.station</code></th><th>Estación en Puntos Plus</th></tr></thead>
@@ -577,19 +607,19 @@
         </tbody>
       </table></div>
       <p>En sus pruebas vimos que resolvieron la estación enviando nuestro identificador interno (<code>03643c23-…</code>). <strong>Eso sigue funcionando</strong>, pero ya pueden enviar directamente su propio código, que es lo previsto en el contrato. Un código que no esté en esta tabla responde <code>422 unknown_station</code>; si abren una sucursal nueva, avísennos para agregarla.</p>
-      <h3>3.2 Varios combustibles en una misma factura — se mantiene su criterio</h3>
+      <h3>3.3 Varios combustibles en una misma factura — se mantiene su criterio</h3>
       <p>Confirmado tal como lo tienen: <code>fuel_amount</code>, <code>gallons</code> y <code>total_amount</code> van <strong>sumados</strong>, y en <code>fuel_type</code> el <strong>primer combustible de la lista</strong> (los productos que no son combustible quedan fuera de <code>fuel_amount</code>). No necesitamos un arreglo de líneas. Los puntos se calculan sobre <code>fuel_amount</code>, así que no se ven afectados.</p>
       <p>De nuestro lado, la instrucción a los colaboradores será emitir <strong>una factura por producto</strong>, por lo que este caso debería ser excepcional.</p>
-      <h3>3.3 Nombre real del colaborador</h3>
+      <h3>3.4 Nombre real del colaborador</h3>
       <p>En las pruebas recibimos <code>operator.name = "PROPER"</code> para todas las compras. En producción necesitamos el <strong>nombre real</strong> de quien atendió: es el que ve el cliente en su notificación ("Atendido por Juan") y al calificar la atención. Solo lo tomamos la primera vez que aparece el colaborador; después respetamos el nombre que tengamos registrado.</p>
-      <h3>3.4 <code>total_amount</code> es el total de la factura</h3>
+      <h3>3.5 <code>total_amount</code> es el total de la factura</h3>
       <p>En las pruebas <code>total_amount</code> llegó siempre igual a <code>fuel_amount</code>. El criterio es:</p>
       <ul>
         <li><code>fuel_amount</code> → suma de <strong>combustibles</strong> (base de los puntos). ✔ Ya lo envían así.</li>
         <li><code>total_amount</code> → <strong>total facturado</strong>, incluyendo tienda, lubricantes, etc.</li>
       </ul>
       <p>No afecta los puntos; solo lo guardamos para conciliar. Si la factura es solo de combustible, ambos valores coinciden y está bien.</p>
-      <h3>3.5 Combustible por bomba — cerrado</h3>
+      <h3>3.6 Combustible por bomba — cerrado</h3>
       <p>Entendido: el producto es general y el número de bomba es un parámetro aparte. No lo necesitamos; <code>fuel_type</code> sigue siendo <code>super</code>, <code>regular</code> o <code>diesel</code>.</p>
     </section>
 
@@ -625,7 +655,7 @@
         <thead><tr><th>Tema</th><th>Quién</th><th>Estado</th></tr></thead>
         <tbody>
           <tr><td><strong>Volumen estimado</strong> (transacciones por día y por estación)</td><td>PROPER</td><td>Pendiente — lo necesitamos para dimensionar límites de uso</td></tr>
-          <tr><td><strong>Acumulación posterior</strong> (cliente sin tarjeta escaneada al facturar)</td><td>Puntos Plus</td><td>En definición. Hasta que les enviemos la regla, la acumulación se hace <strong>únicamente al momento de la factura</strong></td></tr>
+          <tr><td>Acumulación posterior (cliente sin tarjeta escaneada al facturar)</td><td>—</td><td><strong>Cerrado:</strong> no habrá. Los puntos se asignan siempre al momento de la factura (3.1)</td></tr>
           <tr><td>Modelo de llamada servidor ⇄ API</td><td>—</td><td>Confirmado: la llave vive solo en el servidor de PROPER</td></tr>
         </tbody>
       </table></div>
@@ -642,6 +672,10 @@
         <li><code>GET /v1/redemptions?card_code=…</code> → cada pendiente trae <code>reward_value</code> y <code>expires_at</code></li>
         <li>Premio sin valor definido → <code>reward_value: null</code> sin romper el POS</li>
         <li><code>deliver</code> → el comprobante incluye <code>reward_value</code></li>
+        <li>Misma factura enviada dos veces <strong>sin</strong> <code>Idempotency-Key</code> → <code>409 invoice_already_credited</code>, <code>same_card: true</code></li>
+        <li>Misma factura con <strong>otra tarjeta</strong> → <code>409 invoice_already_credited</code>, <code>same_card: false</code></li>
+        <li>Misma factura con la <strong>misma</strong> <code>Idempotency-Key</code> → respuesta original con <code>replayed: true</code> (sin cambios)</li>
+        <li>Compra sin <code>invoice_no</code> → <code>422 missing_invoice_no</code></li>
       </ul>
       <p>La colección de Postman actualizada (<code>PuntosPlus-PROPER.postman_collection.json</code>, v1.4) ya incluye <code>operator.dpi</code> y el código de estación en sus variables.</p>
     </section>

@@ -131,8 +131,8 @@ ${style}
     <h1>Novedades de la versión ${ver}</h1>
     <p class="standfirst">
       Solo lo que cambió en la API de integración: integraciones nuevas,
-      modificaciones y correcciones. Todo es aditivo — lo que ya tienen
-      integrado sigue funcionando sin tocarlo.
+      modificaciones y correcciones. Compatible con lo que ya tienen
+      integrado: sigue funcionando sin tocarlo.
     </p>
     <div class="meta-row">
       ${meta.join('\n      ')}

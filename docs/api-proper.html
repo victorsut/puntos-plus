@@ -780,7 +780,7 @@
             <tr><td><code>gallons</code></td><td>number</td><td>Sí</td><td>Galones reales despachados</td></tr>
             <tr><td><code>fuel_type</code></td><td>string</td><td>Sí</td><td><code>super</code> · <code>regular</code> · <code>diesel</code></td></tr>
             <tr><td><code>nit</code></td><td>string</td><td>Sí</td><td>NIT de la factura emitida, o <code>CF</code></td></tr>
-            <tr><td><code>invoice_no</code></td><td>string</td><td>Recom.</td><td>Número de factura, para conciliación</td></tr>
+            <tr><td><code>invoice_no</code></td><td>string</td><td><strong>Sí</strong> <span style="color:var(--brand);font-weight:600;">v1.4</span></td><td>Número de factura (serie-número). Cada factura acredita <strong>una sola vez</strong></td></tr>
             <tr><td><code>total_amount</code></td><td>number</td><td>No</td><td>Total facturado. Solo se guarda para conciliar: <strong>no</strong> afecta los puntos</td></tr>
             <tr><td><code>operator.external_id</code></td><td>string</td><td>Sí</td><td>Identificador del colaborador en PROPER</td></tr>
             <tr><td><code>operator.name</code></td><td>string</td><td>Recom.</td><td>Nombre <strong>real del colaborador</strong> — es el que ve el cliente en su notificación ("Atendido por Juan")</td></tr>
@@ -803,6 +803,22 @@
         <p>Ejemplo: factura de Q312.50 = Q250 de súper + Q62.50 de tienda → el cliente
         acumula por los Q250. Si la factura <strong>no tiene combustible</strong>,
         devolvemos <code>422 no_fuel_in_invoice</code>.</p>
+      </div>
+
+      <div class="callout c-key">
+        <div class="callout-label">Nuevo en v1.4 · momento de la acumulación y factura única</div>
+        <p><strong>Los puntos se asignan en el mismo momento de la factura.</strong> Al
+        emitirla, el POS muestra <strong>en ese instante</strong> el botón para escanear
+        el QR y acumular. Si el colaborador no lo hace y emite otra factura, los puntos de
+        la anterior <strong>quedan sin asignar</strong>: no existe acumulación posterior.</p>
+        <p>Para respaldarlo, cada factura acredita <strong>una sola vez</strong>:
+        <code>invoice_no</code> es obligatorio (<code>422 missing_invoice_no</code>) y, si
+        ese número ya acreditó, respondemos <code>409 invoice_already_credited</code> —
+        aunque llegue con otra tarjeta, otra estación u otra <code>Idempotency-Key</code>.</p>
+        <p style="margin:0;">La respuesta trae <code>same_card</code>: <code>true</code> si la
+        acreditación original fue a esa misma tarjeta (incluye <code>purchase_id</code> y
+        <code>points_earned</code>, útil si el POS reintentó sin
+        <code>Idempotency-Key</code>), <code>false</code> si fue a otra (no revelamos a quién).</p>
       </div>
 
       <div class="callout">
@@ -1009,6 +1025,8 @@
             <tr><td>422</td><td><code>invalid_fuel_type</code></td><td>Distinto de super, regular, diesel</td></tr>
             <tr><td>422</td><td><code>unknown_station</code></td><td>No se pudo resolver la estación del colaborador</td></tr>
             <tr><td>422</td><td><code>missing_operator</code></td><td>Falta el identificador del colaborador</td></tr>
+            <tr><td>422</td><td><code>missing_invoice_no</code></td><td>Falta el número de factura (obligatorio desde v1.4)</td></tr>
+            <tr><td>409</td><td><code>invoice_already_credited</code></td><td>Esa factura ya acreditó puntos — una factura acredita una sola vez</td></tr>
             <tr><td>400</td><td><code>invalid_action</code></td><td><code>action</code> distinto de request, cancel, deliver</td></tr>
             <tr><td>409</td><td><code>already_delivered</code></td><td>El premio ya fue entregado — no se entrega dos veces</td></tr>
             <tr><td>422</td><td><code>not_confirmed</code></td><td>El cliente aún no confirmó la entrega en su app</td></tr>
@@ -1131,6 +1149,9 @@
         <li><strong>v1.4</strong> · Estación enviada con su código de PROPER (<code>17261015-1</code>…) → acredita en la correcta</li>
         <li><strong>v1.4</strong> · Mismo <code>operator.dpi</code> con dos <code>external_id</code> distintos → ambas compras quedan en el mismo colaborador</li>
         <li><strong>v1.4</strong> · Consulta de canje → trae <code>reward_value</code> (número o <code>null</code>) y <code>expires_at</code></li>
+        <li><strong>v1.4</strong> · Misma factura dos veces sin <code>Idempotency-Key</code> → <code>409 invoice_already_credited</code>, <code>same_card: true</code></li>
+        <li><strong>v1.4</strong> · Misma factura con otra tarjeta → <code>409 invoice_already_credited</code>, <code>same_card: false</code></li>
+        <li><strong>v1.4</strong> · Compra sin <code>invoice_no</code> → <code>422 missing_invoice_no</code></li>
       </ul>
     </section>
 
@@ -1187,9 +1208,9 @@
           sumados con el primer <code>fuel_type</code> de la lista (§5.3).</li>
         <li><strong>Facturas a crédito o con varias formas de pago:</strong> para nosotros
           es indistinto — acreditamos sobre el consumo de combustible facturado.</li>
-        <li><strong>Cliente sin tarjeta escaneada (acumular después):</strong> en
-          definición de nuestro lado. Hasta que les enviemos la regla, la acumulación se
-          hace únicamente al momento de la factura.</li>
+        <li><strong>Cliente sin tarjeta escaneada (acumular después) — cerrado.</strong>
+          No habrá acumulación posterior: los puntos se asignan siempre en el mismo
+          momento de la factura (§5.3). No necesitan parametrizar nada.</li>
         <li><strong>Nombre del colaborador:</strong> en las pruebas recibimos
           <code>operator.name = "PROPER"</code>. En producción necesitamos el nombre real,
           porque es el que ve el cliente al calificar la atención.</li>
@@ -1200,8 +1221,9 @@
 
   <footer class="foot">
     <p>
-      <strong>Versión 1.4.</strong> Todos los cambios de esta versión son
-      <strong>aditivos</strong>: lo que ya integraron sigue funcionando sin tocarlo.
+      <strong>Versión 1.4.</strong> Los cambios de esta versión son
+      <strong>compatibles</strong> con lo que ya integraron: sigue funcionando sin tocarlo
+      (el único requisito nuevo, <code>invoice_no</code> obligatorio, ya lo cumplen).
       Cualquier duda sobre los ejemplos o el ambiente de pruebas, la resolvemos por el
       canal que les resulte más cómodo.
     </p>

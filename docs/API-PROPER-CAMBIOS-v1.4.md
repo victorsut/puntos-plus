@@ -8,10 +8,11 @@ Este documento contiene **únicamente lo que cambió** respecto a la v1.3, a
 partir de sus respuestas a los apartados 10 y 11. El documento completo
 (v1.4) sigue siendo la referencia general; acá está solo lo nuevo.
 
-> **Todo es aditivo.** Ningún campo existente cambió de nombre, tipo ni
-> significado, y ningún campo nuevo es obligatorio. Lo que ya tienen
-> integrado **sigue funcionando sin tocarlo**; los cambios se adoptan cuando
-> les resulte conveniente.
+> **Compatible con lo que ya integraron.** Ningún campo existente cambió de
+> nombre, tipo ni significado, y los campos nuevos son opcionales. El único
+> requisito nuevo es que `invoice_no` pasa a ser obligatorio (3.1) — y ya lo
+> envían en todas sus llamadas, así que **no tienen que cambiar nada para
+> seguir funcionando**.
 
 ---
 
@@ -22,10 +23,11 @@ partir de sus respuestas a los apartados 10 y 11. El documento completo
 | 2.1 | `operator.dpi` — DPI del colaborador | Integración nueva | Enviar el DPI en `operator` (recomendado) |
 | 2.2 | `reward_value` — valor monetario del premio | Integración nueva (solicitada por PROPER) | Leer el campo; tolerar `null` |
 | 2.3 | `expires_at` — vencimiento del premio | Integración nueva | Opcional: mostrarlo; tolerar `null` |
-| 3.1 | Códigos de estación configurados | Modificación | Enviar su código en `operator.station` |
-| 3.2 | Varios combustibles en una factura | Criterio confirmado | Nada — se mantiene lo que ya hacen |
-| 3.3 | Nombre real del colaborador | Modificación | Enviar el nombre real en `operator.name` |
-| 3.4 | `total_amount` = total de la factura | Aclaración | Enviar el total con tienda cuando aplique |
+| 3.1 | **Acumulación solo al momento de la factura** + factura única | Regla de negocio | Mostrar el botón al emitir la factura; manejar `409 invoice_already_credited` |
+| 3.2 | Códigos de estación configurados | Modificación | Enviar su código en `operator.station` |
+| 3.3 | Varios combustibles en una factura | Criterio confirmado | Nada — se mantiene lo que ya hacen |
+| 3.4 | Nombre real del colaborador | Modificación | Enviar el nombre real en `operator.name` |
+| 3.5 | `total_amount` = total de la factura | Aclaración | Enviar el total con tienda cuando aplique |
 | 4.1 | Error `expired` | Corrección | Manejar `422 expired` en canjes |
 | 4.2 | Tarjetas no activas | Corrección | Nada — mismo error `member_not_found` |
 | 4.3 | Códigos de ejemplo vs. códigos de prueba | Aclaración | Usar los códigos del apartado 8 |
@@ -139,7 +141,50 @@ de descubrirlo con el error.
 
 ## 3. Modificaciones y criterios confirmados
 
-### 3.1 Códigos de estación — ya configurados
+### 3.1 Acumulación solo al momento de la factura — y factura única
+
+**Respuesta a su pregunta sobre el cliente sin tarjeta escaneada:** no
+necesitan parametrizar nada, porque **no habrá acumulación posterior**. La
+regla del programa es:
+
+- Al emitir la factura, el POS muestra **en ese instante** el botón para
+  escanear el QR del cliente y asignar los puntos.
+- Si el colaborador no lo hace y **emite otra factura**, los puntos de la
+  factura anterior **quedan sin asignar**. No hay forma de acumular una
+  factura ya cerrada.
+
+Del lado de la API respaldamos la regla con un **candado de factura única**:
+
+| Situación | Respuesta |
+|---|---|
+| Compra sin `invoice_no` | `422 missing_invoice_no` — el número de factura pasa a ser **obligatorio** |
+| `invoice_no` que ya acreditó puntos | `409 invoice_already_credited` — no se acredita de nuevo, aunque llegue con otra tarjeta, otra estación u otra `Idempotency-Key` |
+
+```json
+{
+  "error": "invoice_already_credited",
+  "message": "Esta factura ya acreditó puntos a esta tarjeta",
+  "invoice_no": "FC351-22",
+  "same_card": true,
+  "credited_at": "2026-09-18T19:18:06.510Z",
+  "purchase_id": "9c1e...",
+  "points_earned": 2
+}
+```
+
+- `same_card: true` → la acreditación original fue a **esa misma tarjeta**;
+  incluimos `purchase_id` y `points_earned` para que el POS pueda mostrarlos
+  (caso típico: un reintento sin `Idempotency-Key`). Pueden tratarlo como
+  "ya acumulada".
+- `same_card: false` → la factura ya se acreditó a **otra** tarjeta; no
+  revelamos a quién.
+- La comparación del número ignora mayúsculas/minúsculas y espacios al
+  inicio y al final. El número debe ser único por factura (serie-número).
+- **La idempotencia no cambia:** un reintento con la **misma**
+  `Idempotency-Key` sigue devolviendo la respuesta original con
+  `"replayed": true`. El candado actúa cuando la llave es distinta o no viene.
+
+### 3.2 Códigos de estación — ya configurados
 
 Cargamos de nuestro lado los códigos que nos entregaron:
 
@@ -155,7 +200,7 @@ pueden enviar directamente su propio código, que es lo previsto en el
 contrato. Un código que no esté en esta tabla responde `422
 unknown_station`; si abren una sucursal nueva, avísennos para agregarla.
 
-### 3.2 Varios combustibles en una misma factura — se mantiene su criterio
+### 3.3 Varios combustibles en una misma factura — se mantiene su criterio
 
 Confirmado tal como lo tienen: `fuel_amount`, `gallons` y `total_amount` van
 **sumados**, y en `fuel_type` el **primer combustible de la lista** (los
@@ -166,7 +211,7 @@ así que no se ven afectados.
 De nuestro lado, la instrucción a los colaboradores será emitir **una
 factura por producto**, por lo que este caso debería ser excepcional.
 
-### 3.3 Nombre real del colaborador
+### 3.4 Nombre real del colaborador
 
 En las pruebas recibimos `operator.name = "PROPER"` para todas las compras.
 En producción necesitamos el **nombre real** de quien atendió: es el que ve
@@ -174,7 +219,7 @@ el cliente en su notificación ("Atendido por Juan") y al calificar la
 atención. Solo lo tomamos la primera vez que aparece el colaborador; después
 respetamos el nombre que tengamos registrado.
 
-### 3.4 `total_amount` es el total de la factura
+### 3.5 `total_amount` es el total de la factura
 
 En las pruebas `total_amount` llegó siempre igual a `fuel_amount`. El criterio
 es:
@@ -185,7 +230,7 @@ es:
 No afecta los puntos; solo lo guardamos para conciliar. Si la factura es
 solo de combustible, ambos valores coinciden y está bien.
 
-### 3.5 Combustible por bomba — cerrado
+### 3.6 Combustible por bomba — cerrado
 
 Entendido: el producto es general y el número de bomba es un parámetro
 aparte. No lo necesitamos; `fuel_type` sigue siendo `super`, `regular` o
@@ -241,7 +286,7 @@ Dos observaciones de la bitácora de sus pruebas, por si ayudan:
 | Tema | Quién | Estado |
 |---|---|---|
 | **Volumen estimado** (transacciones por día y por estación) | PROPER | Pendiente — lo necesitamos para dimensionar límites de uso |
-| **Acumulación posterior** (cliente sin tarjeta escaneada al facturar) | Puntos Plus | En definición. Hasta que les enviemos la regla, la acumulación se hace **únicamente al momento de la factura** |
+| Acumulación posterior (cliente sin tarjeta escaneada al facturar) | — | **Cerrado:** no habrá. Los puntos se asignan siempre al momento de la factura (3.1) |
 | Modelo de llamada servidor ⇄ API | — | Confirmado: la llave vive solo en el servidor de PROPER |
 
 ---
@@ -256,6 +301,10 @@ Dos observaciones de la bitácora de sus pruebas, por si ayudan:
 - [ ] `GET /v1/redemptions?card_code=…` → cada pendiente trae `reward_value` y `expires_at`
 - [ ] Premio sin valor definido → `reward_value: null` sin romper el POS
 - [ ] `deliver` → el comprobante incluye `reward_value`
+- [ ] Misma factura enviada dos veces **sin** `Idempotency-Key` → `409 invoice_already_credited`, `same_card: true`
+- [ ] Misma factura con **otra tarjeta** → `409 invoice_already_credited`, `same_card: false`
+- [ ] Misma factura con la **misma** `Idempotency-Key` → respuesta original con `replayed: true` (sin cambios)
+- [ ] Compra sin `invoice_no` → `422 missing_invoice_no`
 
 La colección de Postman actualizada (`PuntosPlus-PROPER.postman_collection.json`,
 v1.4) ya incluye `operator.dpi` y el código de estación en sus variables.
