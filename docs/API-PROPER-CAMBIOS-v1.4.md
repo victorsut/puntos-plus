@@ -102,7 +102,7 @@ monetario al que equivale el premio.
   "reward_value": 10.00,
   "points_spent": 80,
   "member_name": "Cliente Prueba 1",
-  "card_code": "CTOD-95176",
+  "card_code": "CTPD-95176",
   "created_at": "2026-07-31T19:03:04.640Z",
   "expires_at": null,
   "delivered": false,
@@ -273,8 +273,8 @@ Dos observaciones de la bitácora de sus pruebas, por si ayudan:
 
 - `TK-3F9A2C` y `CTOD-00042` son **ejemplos ilustrativos** del documento y no
   existen (responden 404). Los códigos reales de prueba son los del
-  apartado 8: tarjetas `CTOD-95176` y `CTOD-93935`, y la lista viva de
-  canjes se obtiene con `GET /v1/redemptions?card_code=CTOD-95176`.
+  apartado 8: tarjetas `CTPD-95176` (antes `CTOD-95176`: Cliente Prueba 1 subió a PLATINO durante sus pruebas, y con el nivel cambia la letra de la tarjeta) y `CTOD-93935`, y la lista viva de
+  canjes se obtiene con `GET /v1/redemptions?card_code=CTPD-95176`.
 - `GET /v1/members` y `GET /v1/redemptions` leen sus parámetros de la **query
   string** (`?card_code=…` o `?code=…`). Sin parámetro responden `400
   invalid_card_code` / `404 redemption_not_found`.

@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "b7f4e2a1-puntos-plus-proper-v1",
     "name": "Puntos Plus ⇄ PROPER API v1.4",
-    "description": "API de integración del programa de lealtad **Puntos Plus** (Gasolineras Turkaj I, II y III — Chichicastenango) para el POS de **PROPER**.\n\n**Documento de referencia:** `docs/API-PROPER.md` (v1.3, 31-jul-2026)\n\n---\n\n## Datos básicos\n\n| | |\n|---|---|\n| URL base | `https://puntosplus.vercel.app/api/v1` |\n| Formato | JSON (UTF-8) |\n| Autenticación | `Authorization: Bearer <API_KEY>` (configurada a nivel de colección con la variable `api_key`) |\n| Zona horaria | Fechas en ISO 8601 UTC; lógica de negocio en América/Guatemala |\n| Moneda | Quetzales (GTQ) |\n\n## Antes de empezar\n\n1. En **Variables** de esta colección, pegá tu API key (`pp_live_...` o la de pruebas) en `api_key`.\n2. Las variables `card_code` y `redemption_code` vienen precargadas con las **cuentas ficticias del ambiente de pruebas** (§8 del documento):\n   - `CTOD-95176` — sin NIT (solo acumula con CF). Canjes de prueba: `TK-54C5E8`, `TK-95A8B3`, `TK-5C06D7`, `TK-991C1C`…\n   - `CTOD-93935` — NIT ficticio `12345678` (acumula con CF o ese NIT). Canjes: `TK-68E982`, `TK-9BA228`, `TK-C707BE`, `TK-BDAED6`…\n\n## Reglas clave\n\n- **Regla de NIT:** cliente con NIT registrado → acumula con `CF` o su NIT; sin NIT → solo `CF`. Rechazos: `422 nit_mismatch` / `422 nit_not_registered`.\n- **Idempotencia:** enviar header `Idempotency-Key` (el nº de factura sirve) en `POST /purchases`. Un reintento devuelve la respuesta original con `replayed: true`. Los rechazos NO consumen la llave.\n- **Regla de impresión:** el comprobante se imprime SOLO al entregar un canje (`action: deliver`). Acumular puntos no imprime nada.\n- **Facturas anuladas:** no hay reverso — los puntos ya acreditados quedan firmes; no llamar a la API.\n- **Criterio de reintentos:** los `4xx` son definitivos; ante `500` o timeout, reintentar hasta 2 veces con la misma `Idempotency-Key`.\n\n---\n\n*Colección verificada punta a punta contra producción el 17-ago-2026 con la API key de pruebas: los 4 endpoints activos, camino feliz de acumulación (con replay idempotente) y ciclo de canje request/poll/cancel ejecutados con éxito, salvaguarda de deliver comprobada (422 sin confirmación del cliente), rechazos de NIT verificados y bitácora de llamadas registrando cada solicitud. Los ejemplos marcados como *respuesta real verificada* son respuestas literales de producción.*",
+    "description": "API de integración del programa de lealtad **Puntos Plus** (Gasolineras Turkaj I, II y III — Chichicastenango) para el POS de **PROPER**.\n\n**Documento de referencia:** `docs/API-PROPER.md` (v1.3, 31-jul-2026)\n\n---\n\n## Datos básicos\n\n| | |\n|---|---|\n| URL base | `https://puntosplus.vercel.app/api/v1` |\n| Formato | JSON (UTF-8) |\n| Autenticación | `Authorization: Bearer <API_KEY>` (configurada a nivel de colección con la variable `api_key`) |\n| Zona horaria | Fechas en ISO 8601 UTC; lógica de negocio en América/Guatemala |\n| Moneda | Quetzales (GTQ) |\n\n## Antes de empezar\n\n1. En **Variables** de esta colección, pegá tu API key (`pp_live_...` o la de pruebas) en `api_key`.\n2. Las variables `card_code` y `redemption_code` vienen precargadas con las **cuentas ficticias del ambiente de pruebas** (§8 del documento):\n   - `CTPD-95176` — sin NIT (solo acumula con CF). Canjes de prueba: `TK-54C5E8`, `TK-95A8B3`, `TK-5C06D7`, `TK-991C1C`…\n   - `CTOD-93935` — NIT ficticio `12345678` (acumula con CF o ese NIT). Canjes: `TK-68E982`, `TK-9BA228`, `TK-C707BE`, `TK-BDAED6`…\n\n## Reglas clave\n\n- **Regla de NIT:** cliente con NIT registrado → acumula con `CF` o su NIT; sin NIT → solo `CF`. Rechazos: `422 nit_mismatch` / `422 nit_not_registered`.\n- **Idempotencia:** enviar header `Idempotency-Key` (el nº de factura sirve) en `POST /purchases`. Un reintento devuelve la respuesta original con `replayed: true`. Los rechazos NO consumen la llave.\n- **Regla de impresión:** el comprobante se imprime SOLO al entregar un canje (`action: deliver`). Acumular puntos no imprime nada.\n- **Facturas anuladas:** no hay reverso — los puntos ya acreditados quedan firmes; no llamar a la API.\n- **Criterio de reintentos:** los `4xx` son definitivos; ante `500` o timeout, reintentar hasta 2 veces con la misma `Idempotency-Key`.\n\n---\n\n*Colección verificada punta a punta contra producción el 17-ago-2026 con la API key de pruebas: los 4 endpoints activos, camino feliz de acumulación (con replay idempotente) y ciclo de canje request/poll/cancel ejecutados con éxito, salvaguarda de deliver comprobada (422 sin confirmación del cliente), rechazos de NIT verificados y bitácora de llamadas registrando cada solicitud. Los ejemplos marcados como *respuesta real verificada* son respuestas literales de producción.*",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -28,7 +28,7 @@
     },
     {
       "key": "card_code",
-      "value": "CTOD-95176",
+      "value": "CTPD-95176",
       "type": "string",
       "description": "Cliente Prueba 1 — sin NIT (solo CF)"
     },
@@ -154,7 +154,7 @@
                 "method": "GET",
                 "header": [],
                 "url": {
-                  "raw": "{{base_url}}/members?card_code=CTOD-95176",
+                  "raw": "{{base_url}}/members?card_code=CTPD-95176",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -164,7 +164,7 @@
                   "query": [
                     {
                       "key": "card_code",
-                      "value": "CTOD-95176"
+                      "value": "CTPD-95176"
                     }
                   ]
                 }
@@ -299,7 +299,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"card_code\": \"CTOD-95176\",\n  \"fuel_amount\": 25.00,\n  \"gallons\": 0.8,\n  \"fuel_type\": \"super\",\n  \"nit\": \"CF\",\n  \"invoice_no\": \"FAC-2026-000123\",\n  \"operator\": { \"external_id\": \"EMP-017\", \"name\": \"Juan Pérez\", \"station\": \"Turkaj I\" }\n}"
+                  "raw": "{\n  \"card_code\": \"CTPD-95176\",\n  \"fuel_amount\": 25.00,\n  \"gallons\": 0.8,\n  \"fuel_type\": \"super\",\n  \"nit\": \"CF\",\n  \"invoice_no\": \"FAC-2026-000123\",\n  \"operator\": { \"external_id\": \"EMP-017\", \"name\": \"Juan Pérez\", \"station\": \"Turkaj I\" }\n}"
                 },
                 "url": {
                   "raw": "{{base_url}}/purchases",
@@ -338,7 +338,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"card_code\": \"CTOD-95176\",\n  \"fuel_amount\": 25.00,\n  \"gallons\": 0.8,\n  \"fuel_type\": \"super\",\n  \"nit\": \"CF\",\n  \"invoice_no\": \"FAC-2026-000123\",\n  \"operator\": { \"external_id\": \"EMP-017\", \"name\": \"Juan Pérez\", \"station\": \"Turkaj I\" }\n}"
+                  "raw": "{\n  \"card_code\": \"CTPD-95176\",\n  \"fuel_amount\": 25.00,\n  \"gallons\": 0.8,\n  \"fuel_type\": \"super\",\n  \"nit\": \"CF\",\n  \"invoice_no\": \"FAC-2026-000123\",\n  \"operator\": { \"external_id\": \"EMP-017\", \"name\": \"Juan Pérez\", \"station\": \"Turkaj I\" }\n}"
                 },
                 "url": {
                   "raw": "{{base_url}}/purchases",
@@ -558,7 +558,7 @@
                 "purchases"
               ]
             },
-            "description": "Cliente Prueba 1 (`CTOD-95176`) NO tiene NIT registrado → una factura con NIT devuelve `422 nit_not_registered`. El cliente puede agregar su NIT desde la app (Menú → Mi Cuenta) o pedir la factura con CF."
+            "description": "Cliente Prueba 1 (`CTPD-95176`) NO tiene NIT registrado → una factura con NIT devuelve `422 nit_not_registered`. El cliente puede agregar su NIT desde la app (Menú → Mi Cuenta) o pedir la factura con CF."
           },
           "response": [
             {
@@ -573,7 +573,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{ \"card_code\": \"CTOD-95176\", \"nit\": \"12345678\", \"...\": \"...\" }"
+                  "raw": "{ \"card_code\": \"CTPD-95176\", \"nit\": \"12345678\", \"...\": \"...\" }"
                 },
                 "url": {
                   "raw": "{{base_url}}/purchases",
@@ -716,7 +716,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"ok\": true,\n  \"redemption_id\": \"da35f02a-030c-4f62-b80b-02097df055dc\",\n  \"code\": \"TK-54C5E8\",\n  \"reward_name\": \"Vale Q10 Combustible\",\n  \"category\": \"combustible\",\n  \"points_spent\": 80,\n  \"member_name\": \"Cliente Prueba 1\",\n  \"card_code\": \"CTOD-95176\",\n  \"created_at\": \"2026-07-31T19:03:04.640719+00:00\",\n  \"delivered\": false,\n  \"delivered_at\": null,\n  \"confirm_status\": \"none\"\n}"
+              "body": "{\n  \"ok\": true,\n  \"redemption_id\": \"da35f02a-030c-4f62-b80b-02097df055dc\",\n  \"code\": \"TK-54C5E8\",\n  \"reward_name\": \"Vale Q10 Combustible\",\n  \"category\": \"combustible\",\n  \"points_spent\": 80,\n  \"member_name\": \"Cliente Prueba 1\",\n  \"card_code\": \"CTPD-95176\",\n  \"created_at\": \"2026-07-31T19:03:04.640719+00:00\",\n  \"delivered\": false,\n  \"delivered_at\": null,\n  \"confirm_status\": \"none\"\n}"
             }
           ]
         },
@@ -750,7 +750,7 @@
                 "method": "GET",
                 "header": [],
                 "url": {
-                  "raw": "{{base_url}}/redemptions?card_code=CTOD-95176",
+                  "raw": "{{base_url}}/redemptions?card_code=CTPD-95176",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -760,7 +760,7 @@
                   "query": [
                     {
                       "key": "card_code",
-                      "value": "CTOD-95176"
+                      "value": "CTPD-95176"
                     }
                   ]
                 }
@@ -774,7 +774,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"ok\": true,\n  \"member_name\": \"Cliente Prueba 1\",\n  \"card_code\": \"CTOD-95176\",\n  \"pending\": [\n    { \"code\": \"TK-54C5E8\", \"reward_name\": \"Vale Q10 Combustible\",\n      \"category\": \"combustible\", \"points_spent\": 80,\n      \"created_at\": \"2026-07-31T19:03:04.640719+00:00\", \"confirm_status\": \"none\" },\n    { \"code\": \"TK-95A8B3\", \"reward_name\": \"Vale Q10 Combustible\",\n      \"category\": \"combustible\", \"points_spent\": 80,\n      \"created_at\": \"2026-07-31T18:51:23.380075+00:00\", \"confirm_status\": \"none\" }\n  ]\n}"
+              "body": "{\n  \"ok\": true,\n  \"member_name\": \"Cliente Prueba 1\",\n  \"card_code\": \"CTPD-95176\",\n  \"pending\": [\n    { \"code\": \"TK-54C5E8\", \"reward_name\": \"Vale Q10 Combustible\",\n      \"category\": \"combustible\", \"points_spent\": 80,\n      \"created_at\": \"2026-07-31T19:03:04.640719+00:00\", \"confirm_status\": \"none\" },\n    { \"code\": \"TK-95A8B3\", \"reward_name\": \"Vale Q10 Combustible\",\n      \"category\": \"combustible\", \"points_spent\": 80,\n      \"created_at\": \"2026-07-31T18:51:23.380075+00:00\", \"confirm_status\": \"none\" }\n  ]\n}"
             }
           ]
         },

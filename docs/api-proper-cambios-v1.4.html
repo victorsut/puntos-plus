@@ -542,7 +542,7 @@
   <span class="tok-key">"reward_value"</span>: <span class="tok-num">10.00</span>,
   <span class="tok-key">"points_spent"</span>: <span class="tok-num">80</span>,
   <span class="tok-key">"member_name"</span>: <span class="tok-str">"Cliente Prueba 1"</span>,
-  <span class="tok-key">"card_code"</span>: <span class="tok-str">"CTOD-95176"</span>,
+  <span class="tok-key">"card_code"</span>: <span class="tok-str">"CTPD-95176"</span>,
   <span class="tok-key">"created_at"</span>: <span class="tok-str">"2026-07-31T19:<span class="tok-num">03</span>:<span class="tok-num">04.640</span>Z"</span>,
   <span class="tok-key">"expires_at"</span>: null,
   <span class="tok-key">"delivered"</span>: false,
@@ -644,7 +644,7 @@
       <h3>4.3 Códigos de ejemplo y parámetros de consulta</h3>
       <p>Dos observaciones de la bitácora de sus pruebas, por si ayudan:</p>
       <ul>
-        <li><code>TK-3F9A2C</code> y <code>CTOD-00042</code> son <strong>ejemplos ilustrativos</strong> del documento y no existen (responden 404). Los códigos reales de prueba son los del apartado 8: tarjetas <code>CTOD-95176</code> y <code>CTOD-93935</code>, y la lista viva de canjes se obtiene con <code>GET /v1/redemptions?card_code=CTOD-95176</code>.</li>
+        <li><code>TK-3F9A2C</code> y <code>CTOD-00042</code> son <strong>ejemplos ilustrativos</strong> del documento y no existen (responden 404). Los códigos reales de prueba son los del apartado 8: tarjetas <code>CTPD-95176</code> (antes <code>CTOD-95176</code>: Cliente Prueba 1 subió a PLATINO durante sus pruebas, y con el nivel cambia la letra de la tarjeta) y <code>CTOD-93935</code>, y la lista viva de canjes se obtiene con <code>GET /v1/redemptions?card_code=CTPD-95176</code>.</li>
         <li><code>GET /v1/members</code> y <code>GET /v1/redemptions</code> leen sus parámetros de la <strong>query string</strong> (<code>?card_code=…</code> o <code>?code=…</code>). Sin parámetro responden <code>400 invalid_card_code</code> / <code>404 redemption_not_found</code>.</li>
       </ul>
     </section>

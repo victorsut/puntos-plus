@@ -649,14 +649,19 @@ creadas, con las que validamos nosotros mismos todos los casos del plan:
 
 | | Cliente Prueba 1 | Cliente Prueba 2 |
 |---|---|---|
-| **Tarjeta (QR)** | `CTOD-95176` | `CTOD-93935` |
+| **Tarjeta (QR)** | `CTPD-95176` | `CTOD-93935` |
 | **NIT registrado** | No tiene — solo acumula con `CF` | `12345678` (ficticio) — acumula con `CF` o ese NIT |
 | **Uso sugerido** | Camino `nit_not_registered` | Caminos `nit_mismatch` / NIT propio |
+
+> **Nota (v1.4):** Cliente Prueba 1 subió a nivel PLATINO durante las pruebas de
+> integración, por eso su tarjeta pasó de `CTOD-95176` a `CTPD-95176` (el
+> correlativo no cambia; la letra del nivel sí — §3.1). Es el mismo caso que verán
+> en producción con `tier_changed: true` y `new_card_code`.
 
 Ambas cuentas tienen **canjes pendientes de entrega** para probar el flujo
 de premios (consulta, request/cancel/deliver e impresión del comprobante):
 
-- `CTOD-95176`: `TK-54C5E8`, `TK-95A8B3`, `TK-5C06D7`, `TK-991C1C` (y más)
+- `CTPD-95176`: `TK-54C5E8`, `TK-95A8B3`, `TK-5C06D7`, `TK-991C1C` (y más)
 - `CTOD-93935`: `TK-68E982`, `TK-9BA228`, `TK-C707BE`, `TK-BDAED6` (y más)
 
 La lista viva siempre puede consultarse con
