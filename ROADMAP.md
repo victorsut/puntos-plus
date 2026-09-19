@@ -1939,6 +1939,32 @@ Cambios mayores van en commits separados con mensaje `docs: actualizar ROADMAP �
 
 ## Changelog
 
+### Versión 4.4 — 19 de septiembre de 2026
+
+**API PROPER v1.4** (PROPER integra contra producción desde el 16-sep): DPI
+del colaborador con fusión hacia el operador propio (`operator_external_ids`),
+`reward_value`/`expires_at` en canjes (`rewards.cash_value`), códigos de
+estación de PROPER, candado de factura única (`invoice_no` obligatorio,
+`invoice_already_credited`) y regla "los puntos se asignan SOLO al momento de
+la factura" (no hay acumulación tardía). Cierre de seguridad: las funciones
+`api_*` estaban ejecutables por `anon`. Documentos de novedades por versión en
+`docs/NOVEDADES/`. Migración `20260919_api_v14…`.
+
+**RECALIBRACIÓN DE PUNTOS PLUS** (documento v1.1 del 7-sep, aprobado el
+19-sep, ANTES del GO-LIVE; migración `20260919b_recalibracion…`):
+
+- **C3/C4/C6 · Puntos por GALÓN:** ORO 3.5 · PLATINO 4.0 · BLACK 4.5 pts/gal
+  (opción A), `round(galones × tasa)`. El costo del programa deja de depender
+  del precio del combustible (de ~13.5 % a ~9.2 % del margen bruto estimado).
+- **C2 · Punto a Q0.10** subiendo el catálogo (vales = valor × 10; resto
+  × 1.25). Los saldos de los socios NO se ajustaron.
+- **C1/C5 · Sin descuento de canje** por nivel; lo reemplazan los premios con
+  nivel mínimo (`rewards.min_tier`), que el socio ve bloqueados al final del
+  catálogo.
+- **C7** `tiers.<nivel>.ptsPerGalFuel` previsto, no construido. **C8** términos
+  actualizados (MenuTerms + `program_config.terms_*`).
+- Sin cambios en la API de PROPER, eventos especiales ni motor de promociones.
+
 ### Versión 4.3 — 5 de septiembre de 2026
 
 **F8 Puntos Plus Business — diseño v0.3** (solo documentación; nada

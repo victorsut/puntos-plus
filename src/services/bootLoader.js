@@ -47,6 +47,9 @@ export async function loadFromSupabase({
         points_cost: r.points_cost, category: r.category, tier_exclusive: r.tier_exclusive,
         description: r.description, active: r.active !== false,
         cash_value: r.cash_value ?? null,   // API v1.4: valor en Q (lo edita el admin)
+        // Recalibración C5: nivel MÍNIMO para canjear (null = todos). Antes
+        // de la migración 20260919b cae al viejo tier_exclusive.
+        minTier: r.min_tier ?? r.tier_exclusive ?? null,
         // D17: localizaciones de canje (null = todas las estaciones)
         stationIds: r.station_ids || null, storeIds: r.store_ids || null,
         station_ids: r.station_ids || null, store_ids: r.store_ids || null,
@@ -127,7 +130,8 @@ export async function loadFromSupabase({
           fp = { super: 0, regular: 0, diesel: 0 };
         }
         setCfg({
-          qPerPt: gen.qPerPt || 10, ticketPts: gen.ticketPts || 5,
+          qPerPt: gen.qPerPt || 10, pointValue: +gen.pointValue || (gen.qPerPt ? 0.125 : 0.10),
+          ticketPts: gen.ticketPts || 5,
           regBase: gen.regBase || 15, regOptional: gen.regOptional || 2,
           referralPts: gen.referralPts || 25, surveyPts: gen.surveyPts || 3,
           surveyDaily: gen.surveyDaily || 5, tiers: trs, degrad: deg,

@@ -94,8 +94,11 @@ export default function AdminDash(ctx) {
   const ptsRedeemed = redReal ? +kpis.redemptions.points : ptsRedeemedEst;
   const ptsUnredeemed = tP;
   const ptsTotal = ptsUnredeemed + ptsRedeemed;
-  const qUnredeemed = (ptsUnredeemed / cfg.qPerPt).toFixed(0);
-  const qRedeemed = (ptsRedeemed / cfg.qPerPt).toFixed(0);
+  // Recalibración (19-sep): el punto vale lo mismo para todos los niveles
+  // (Q0.10) → el pasivo se convierte directo, sin ponderar por mezcla.
+  const ptValue = cfg.pointValue || 0.10;
+  const qUnredeemed = (ptsUnredeemed * ptValue).toFixed(0);
+  const qRedeemed = (ptsRedeemed * ptValue).toFixed(0);
 
   const FUEL_META = {
     super:   { label: 'Súper',   color: '#FF8F3C' },

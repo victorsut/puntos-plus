@@ -1,7 +1,10 @@
 // src/views/client/menu/MenuTerms.jsx
 // Términos y Condiciones (FORMATO GENERAL): numeración en naranja de
 // marca, texto plano sin emojis. Los textos legales son los aprobados
-// en R1a — no editarlos sin pedirlo el dueño.
+// en R1a — no editarlos sin pedirlo el dueño. 19-sep-2026 (pedido del
+// dueño, recalibración C8): acumulación POR GALÓN, sin descuento de
+// canje por nivel y premios disponibles desde un nivel. Las tasas NO se
+// escriben acá (son editables en el admin): el texto remite a la app.
 import { BRAND_ORANGE } from '../../../constants/styles';
 import { SectionHeader } from './menuUi';
 
@@ -26,15 +29,15 @@ export const TERMS_SECS = [
   },
   {
     title: 'ACUMULACIÓN DE PUNTOS',
-    body: 'Los puntos se acumulan según el nivel del miembro: 1 punto por cada Q10.00 de combustible en nivel ORO, 1 punto por cada Q8.00 en nivel PLATINO y 1 punto por cada Q6.00 en nivel BLACK, en las estaciones afiliadas Turkaj I, II y III. Los puntos se asignan al momento de registrar la compra mediante el código QR personal del miembro. El Programa puede otorgar puntos adicionales en eventos especiales, días festivos o aniversarios, según lo determine en cada momento y de forma diferenciada por nivel. Los puntos no tienen valor monetario y no son transferibles entre miembros.',
+    body: 'Los puntos se acumulan por cada galón de combustible comprado en las estaciones afiliadas Turkaj I, II y III, según la tasa de puntos por galón vigente para el nivel del miembro (ORO, PLATINO o BLACK), publicada en la sección Niveles de la aplicación. El resultado de cada compra se redondea al punto entero más cercano y no depende del precio del combustible. Los puntos se asignan al momento de registrar la compra mediante el código QR personal del miembro; una compra que no se registre en ese momento no acumula puntos. El Programa puede otorgar puntos adicionales en eventos especiales, días festivos o aniversarios, según lo determine en cada momento y de forma diferenciada por nivel. Los puntos no tienen valor monetario y no son transferibles entre miembros.',
   },
   {
     title: 'NIVELES DE MEMBRESÍA',
-    body: 'El Programa cuenta con tres niveles basados en el consumo acumulado de galones: ORO (0 a 149 galones), PLATINO (150 a 499 galones) y BLACK (500 galones o más). Cada nivel otorga beneficios diferenciados incluyendo descuentos en canje de premios. El nivel se calcula automáticamente con base en el historial de compras registradas en el Programa.',
+    body: 'El Programa cuenta con tres niveles basados en el consumo acumulado de galones: ORO (0 a 149 galones), PLATINO (150 a 499 galones) y BLACK (500 galones o más). Cada nivel otorga beneficios diferenciados, incluyendo una mayor tasa de puntos por galón y el acceso a premios disponibles únicamente a partir de ciertos niveles. El nivel se calcula automáticamente con base en el historial de compras registradas en el Programa.',
   },
   {
     title: 'CANJE DE PUNTOS',
-    body: 'Los puntos acumulados pueden canjearse por premios del catálogo disponible en la aplicación, sujetos a disponibilidad. El canje requiere la confirmación del miembro a través de la aplicación y la presencia física del miembro en la estación al momento de recibir el premio. Los premios canjeados no son reembolsables ni transferibles. Los miembros PLATINO y BLACK reciben descuentos del 10% y 15% respectivamente sobre el costo en puntos de los premios.',
+    body: 'Los puntos acumulados pueden canjearse por premios del catálogo disponible en la aplicación, sujetos a disponibilidad. El canje requiere la confirmación del miembro a través de la aplicación y la presencia física del miembro en la estación al momento de recibir el premio. Los premios canjeados no son reembolsables ni transferibles. El costo en puntos de cada premio es el mismo para todos los niveles; algunos premios están disponibles únicamente a partir de los niveles PLATINO o BLACK. El Programa puede actualizar el catálogo y el costo en puntos de los premios; los canjes ya realizados no se ven afectados.',
   },
   {
     title: 'RIFA MENSUAL',
@@ -87,7 +90,7 @@ export default function MenuTerms({ TH, onBack }) {
       <div style={{ marginTop: 24, padding: '14px 16px', borderRadius: 16, background: TH.surface }}>
         <div style={{ fontSize: 11, color: TH.sub, textAlign: 'center', lineHeight: 1.6 }}>
           Al utilizar Puntos Plus aceptás estos términos y condiciones.<br />
-          Última actualización: Agosto 2026
+          Última actualización: Septiembre 2026
         </div>
       </div>
     </>

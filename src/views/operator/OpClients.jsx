@@ -8,9 +8,13 @@ import { parseCardCode } from '../../lib/cardCodes';
 // SEC.C.3: physical_cards quedó cerrada — la tarjeta se resuelve por
 // RPC con la sesión del operador.
 import { resolveCardStaff } from '../../services/secureReads';
+import { estimatePoints, fuelPriceFor } from '../../lib/tierSystem';
 
 export default function OpClients(ctx) {
-  const { custs, gT, cfg, fire, opScanMode, setOpScanMode, setPurchaseConfirm, sbConnected, addMemberToCusts } = ctx;
+  const { custs, gT, cfg, fire, opScanMode, setOpScanMode, setPurchaseConfirm, sbConnected, addMemberToCusts, loggedOp, stations = [] } = ctx;
+  // Estación del operador: define el precio vigente (D4) con el que el
+  // servidor deriva los galones — y por tanto los puntos — de la compra.
+  const opStation = stations.find(s => s.id === loggedOp?.stationId) || null;
   const [q, setQ] = useState('');
   const [sel, setSel] = useState(null);
   const [amt, setAmt] = useState('');
@@ -115,6 +119,7 @@ export default function OpClients(ctx) {
       client: selClient,
       amt: monto,
       fuel,
+      station: opStation,
       onConfirm: () => {
         setSel(null); setAmt(''); setScanResult('');
       },
@@ -238,9 +243,11 @@ export default function OpClients(ctx) {
               style={{ ...inputStyle, width: '100%', boxSizing: 'border-box', marginBottom: 8, fontSize: 18, textAlign: 'center', fontWeight: 800 }} />
 
             <div style={{ fontSize: 12, color: '#9E9E9E', marginBottom: 14, textAlign: 'center' }}>
-              {/* F2.1: la conversión es del TIER del cliente (Q10/Q8/Q6) */}
+              {/* Recalibración (19-sep): puntos POR GALÓN del TIER del cliente —
+                  galones = monto / precio vigente. Es una vista previa: el
+                  cálculo real (y las promos) lo hace el servidor. */}
               Puntos a otorgar: <strong style={{ color: '#2E7D32', ...sMono, fontSize: 16 }}>
-                +{Math.floor((parseFloat(amt) || 0) / (selTier.qPerPt ?? cfg.qPerPt))}
+                +{estimatePoints(amt, selTier, cfg, fuelPriceFor(cfg, opStation, fuel))}
               </strong>
             </div>
 

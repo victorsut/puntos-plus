@@ -260,11 +260,11 @@ se ejecutan a mano en el SQL Editor de Supabase (regla de CLAUDE.md §9).
 
 ## 9. Reglas de negocio vigentes (resumen; el detalle manda en CLAUDE.md §1)
 
-- **Puntos por tier:** ORO Q10 = 1 pt · PLATINO Q8 · BLACK Q6 (divisor del tier PREVIO a la compra; editable en Admin). Eventos especiales: 25 / 35 / 50 pts.
+- **Puntos POR GALÓN (recalibración 19-sep-2026):** ORO 3.5 · PLATINO 4.0 · BLACK 4.5 pts/galón, `round(galones × tasa)` con el tier PREVIO a la compra; editable en Admin. El punto vale Q0.10 (10 pts = Q1) para todos los niveles. Eventos especiales: 25 / 35 / 50 pts.
 - **Tiers por galones:** ORO 0–149 · PLATINO 150–499 · BLACK 500+. Card codes `CTOD-` / `CTPD-` / `CTBD-`.
 - **Degradación por inactividad:** 15 días de gracia, caída progresiva desde el día 16, reinicio total a los 45 días de caer a ORO. Motor APAGADO hasta GO-LIVE (`program_config.degradation_enabled`).
 - **Encuestas:** 5/día, espera 75 s oculta, la 5ª da boleto de rifa.
-- **Descuento en canjes:** ORO 0 % · PLATINO 10 % · BLACK 15 %. Descuentos por galón RETIRADOS.
+- **Descuento en canjes: ELIMINADO** (19-sep-2026) — lo reemplazan los premios con nivel mínimo (`rewards.min_tier`; el socio los ve bloqueados al final del catálogo). Descuentos por galón RETIRADOS.
 - **Rifa:** sorteo automático al cierre del mes ponderado por boletos; multi-año.
 - **PROPER (NIT):** socio con NIT → solo CF o su NIT; sin NIT → solo CF. El comprobante de premio se imprime SOLO al entregar.
 - **Alertas de servicio (D24):** umbrales globales editables (default 7 días / 500 km; recordatorios de vencido cada 7 días por fecha y cada 14 por km); silencio por vehículo.

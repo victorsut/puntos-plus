@@ -219,7 +219,7 @@ export default function ClientHome(ctx) {
         <TierDetailModal onClose={() => setShowTierDetail(false)}
           origin={mOrigin} tint={mTint} tierTint={tierTint}
           tierAccent={tierAccent} isBlack={isBlack} dark={dark}
-          cTier={cTier} cfg={cfg} />
+          cTier={cTier} cfg={cfg} rewards={ctx.rewards} />
       )}
 
       {/* WiFi — geolocalización: en la estación muestra red y clave;

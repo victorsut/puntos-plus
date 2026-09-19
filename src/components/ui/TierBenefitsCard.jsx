@@ -7,9 +7,10 @@
 // (Niveles) y el admin (Rules, MemberDetail) — `surface`/`ink`
 // adaptan la tarjeta al tema claro u oscuro de cada vista.
 import { tierAccent, tierBand } from '../../constants/styles';
-import { Fuel, Tag, Wifi, Cake } from './Icons';
+import { Fuel, Tag, Wifi, Cake, Gift } from './Icons';
+import { earnLabel, tierHasExclusives } from '../../lib/tierSystem';
 
-export default function TierBenefitsCard({ t, cfg, pill, surface = '#fff', ink = '#424242', style }) {
+export default function TierBenefitsCard({ t, cfg, pill, surface = '#fff', ink = '#424242', style, rewards }) {
   const ptGal = cfg.tiers?.platino?.gal ?? 150;
   const bkGal = cfg.tiers?.black?.gal ?? 500;
   const ranges = {
@@ -21,8 +22,12 @@ export default function TierBenefitsCard({ t, cfg, pill, surface = '#fff', ink =
   // dueño 24-jul-2026) ni de acceso a baños (decisión del dueño
   // 11-ago-2026): ya no se muestran como beneficio del nivel.
   const bens = [
-    { icon: <Fuel />, txt: `1 pt por cada Q${t.qPerPt ?? cfg.qPerPt}` },
+    // Recalibración (19-sep): puntos POR GALÓN; el descuento de canje se
+    // eliminó (la línea solo sobrevive si la config aún lo trae > 0) y lo
+    // reemplazan los premios disponibles desde el nivel.
+    { icon: <Fuel />, txt: earnLabel(t, cfg) },
     ...(t.redeemDisc > 0 ? [{ icon: <Tag />, txt: `-${Math.round(t.redeemDisc * 100)}% en canje de premios` }] : []),
+    ...(tierHasExclusives(t.name, rewards) ? [{ icon: <Gift />, txt: 'Premios exclusivos del nivel' }] : []),
     ...(t.name !== 'ORO' ? [{ icon: <Wifi />, txt: 'WiFi gratis ilimitado' }] : []),
     { icon: <Cake />, txt: `${t.evtPts} pts en eventos especiales` },
   ];

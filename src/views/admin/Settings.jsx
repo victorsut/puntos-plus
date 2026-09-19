@@ -104,36 +104,46 @@ export default function Settings(ctx) {
     fire('Número de asistencia actualizado', 'success');
   };
 
-  // ─── F2.1 (6-ago): conversión y eventos POR NIVEL ───
-  // ORO Q10=1pt/25pts · PLATINO Q8/35 · BLACK Q6/50 (decisión del
-  // dueño). RPC set_loyalty_config: sesión de admin + whitelist
-  // (solo qPerPt/evtPts — los umbrales de galones NO se editan acá)
-  // + auditoría con razón obligatoria (la economía del programa es
-  // sensible, patrón de los precios de combustible).
+  // ─── Puntos y eventos POR NIVEL ───
+  // RECALIBRACIÓN (19-sep): puntos POR GALÓN — ORO 3.5 · PLATINO 4.0 ·
+  // BLACK 4.5 (eventos 25/35/50). RPC set_loyalty_config: sesión de
+  // admin + whitelist (solo ptsPerGal/evtPts — los umbrales de galones
+  // NO se editan acá) + auditoría con razón obligatoria (la economía
+  // del programa es sensible, patrón de los precios de combustible).
   const [loyaltyForm, setLoyaltyForm] = useState({
-    oro: { qPerPt: '', evtPts: '' },
-    platino: { qPerPt: '', evtPts: '' },
-    black: { qPerPt: '', evtPts: '' },
+    oro: { ptsPerGal: '', evtPts: '' },
+    platino: { ptsPerGal: '', evtPts: '' },
+    black: { ptsPerGal: '', evtPts: '' },
   });
   const [savingLoyalty, setSavingLoyalty] = useState(false);
   const [showLoyaltyReason, setShowLoyaltyReason] = useState(false);
   useEffect(() => {
     const t = cfg.tiers || {};
     setLoyaltyForm({
-      oro:     { qPerPt: String(t.oro?.qPerPt ?? cfg.qPerPt ?? 10), evtPts: String(t.oro?.evtPts ?? 25) },
-      platino: { qPerPt: String(t.platino?.qPerPt ?? 8), evtPts: String(t.platino?.evtPts ?? 35) },
-      black:   { qPerPt: String(t.black?.qPerPt ?? 6),   evtPts: String(t.black?.evtPts ?? 50) },
+      oro:     { ptsPerGal: String(t.oro?.ptsPerGal ?? 3.5),     evtPts: String(t.oro?.evtPts ?? 25) },
+      platino: { ptsPerGal: String(t.platino?.ptsPerGal ?? 4),   evtPts: String(t.platino?.evtPts ?? 35) },
+      black:   { ptsPerGal: String(t.black?.ptsPerGal ?? 4.5),   evtPts: String(t.black?.evtPts ?? 50) },
     });
-  }, [cfg.tiers, cfg.qPerPt]);
+  }, [cfg.tiers]);
 
   const loyaltyInvalid = ['oro', 'platino', 'black'].some(k => {
-    const q = parseInt(loyaltyForm[k].qPerPt, 10);
+    const raw = loyaltyForm[k].ptsPerGal;
+    const r = parseFloat(raw);
     const e = parseInt(loyaltyForm[k].evtPts, 10);
-    return !Number.isInteger(q) || q < 1 || q > 100 || !Number.isInteger(e) || e < 0 || e > 1000;
+    return !/^\d+(\.\d{1,2})?$/.test(raw) || r < 0.1 || r > 20 || !Number.isInteger(e) || e < 0 || e > 1000;
   });
 
+  // ptsPerGal admite hasta 2 decimales (3.5, 4.25); evtPts es entero
   const setLoyaltyField = (tier, field, raw) =>
-    setLoyaltyForm(p => ({ ...p, [tier]: { ...p[tier], [field]: raw.replace(/[^0-9]/g, '').slice(0, 4) } }));
+    setLoyaltyForm(p => ({
+      ...p,
+      [tier]: {
+        ...p[tier],
+        [field]: field === 'ptsPerGal'
+          ? raw.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1').slice(0, 5)
+          : raw.replace(/[^0-9]/g, '').slice(0, 4),
+      },
+    }));
 
   const saveLoyaltyWithReason = async (reason) => {
     if (!sb) { fire('Sin conexión', 'error'); return; }
@@ -146,7 +156,7 @@ export default function Settings(ctx) {
     const pData = {};
     ['oro', 'platino', 'black'].forEach(k => {
       pData[k] = {
-        qPerPt: parseInt(loyaltyForm[k].qPerPt, 10),
+        ptsPerGal: parseFloat(loyaltyForm[k].ptsPerGal),
         evtPts: parseInt(loyaltyForm[k].evtPts, 10),
       };
     });
@@ -205,9 +215,10 @@ export default function Settings(ctx) {
         <div style={card}>
           <div style={cardTitle}>Puntos por Nivel</div>
           <div style={cardHint}>
-            Quetzales necesarios para ganar 1 punto y puntos otorgados por evento
-            especial, según el nivel del cliente. La conversión de cada compra usa
-            el nivel que el cliente tenía antes de esa compra.
+            Puntos que gana el cliente por cada galón de combustible y puntos
+            otorgados por evento especial, según su nivel. Cada compra usa el nivel
+            que el cliente tenía antes de esa compra. El costo del programa ya no
+            depende del precio del galón.
           </div>
           {[
             { k: 'oro', label: 'ORO', color: '#FBBC04' },
@@ -217,11 +228,11 @@ export default function Settings(ctx) {
             <div key={t.k} style={{ display: 'flex', alignItems: 'flex-end', gap: 8, marginBottom: 10 }}>
               <span style={{ width: 74, fontSize: 12, fontWeight: 800, color: t.color, paddingBottom: 10 }}>{t.label}</span>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 9, color: '#777', fontWeight: 700, marginBottom: 3, textTransform: 'uppercase', letterSpacing: .5 }}>Q por punto</div>
+                <div style={{ fontSize: 9, color: '#777', fontWeight: 700, marginBottom: 3, textTransform: 'uppercase', letterSpacing: .5 }}>Pts por galón</div>
                 <input
-                  value={loyaltyForm[t.k].qPerPt}
-                  onChange={e => setLoyaltyField(t.k, 'qPerPt', e.target.value)}
-                  inputMode="numeric"
+                  value={loyaltyForm[t.k].ptsPerGal}
+                  onChange={e => setLoyaltyField(t.k, 'ptsPerGal', e.target.value)}
+                  inputMode="decimal"
                   style={{ ...inputStyleDark, width: '100%', boxSizing: 'border-box', ...sMono, fontSize: 13 }}
                 />
               </div>
@@ -333,20 +344,18 @@ export default function Settings(ctx) {
             <span style={{ color: '#CE93D8', fontWeight: 800, letterSpacing: 1 }}>BLACK</span>
             <span style={{ color: '#fff', fontWeight: 700, fontSize: 12, ...sMono }}>{cfg.tiers?.black?.gal || 500}+ gal</span>
           </div>
-          {cfg.tiers?.platino && (
-            <>
-              {/* El descuento por galón se retiró de los beneficios del
-                  programa (decisión del dueño 24-jul-2026) — ya no se lista. */}
-              <div style={row}>
-                <span style={{ color: '#9E9E9E', fontWeight: 600 }}>PLATINO desc canje</span>
-                <span style={{ ...sMono, color: '#64B5F6' }}>{Math.round(cfg.tiers.platino.discRedeem * 100)}%</span>
-              </div>
-              <div style={{ ...row, borderBottom: 'none' }}>
-                <span style={{ color: '#9E9E9E', fontWeight: 600 }}>BLACK desc canje</span>
-                <span style={{ ...sMono, color: '#CE93D8' }}>{Math.round(cfg.tiers.black.discRedeem * 100)}%</span>
-              </div>
-            </>
-          )}
+          {/* Recalibración (19-sep): el descuento de canje por nivel se
+              ELIMINÓ (igual que el descuento por galón el 24-jul). El punto
+              vale lo mismo para todos; el beneficio del nivel en el canje
+              son los premios con nivel mínimo (Catálogo → Nivel mínimo). */}
+          <div style={row}>
+            <span style={{ color: '#9E9E9E', fontWeight: 600 }}>Valor del punto</span>
+            <span style={{ ...sMono, color: '#81C784' }}>Q{(cfg.pointValue || 0.10).toFixed(2)} · {Math.round(1 / (cfg.pointValue || 0.10))} pts = Q1</span>
+          </div>
+          <div style={{ ...row, borderBottom: 'none' }}>
+            <span style={{ color: '#9E9E9E', fontWeight: 600 }}>Descuento de canje por nivel</span>
+            <span style={{ ...sMono, color: '#777' }}>eliminado</span>
+          </div>
         </div>
 
         {/* Degradación por inactividad */}

@@ -10,7 +10,7 @@ import { SectionHeader } from './menuUi';
 import TierBenefitsCard from '../../../components/ui/TierBenefitsCard';
 
 // ── NIVELES Y BENEFICIOS ───────────────────────────────────
-export function MenuLevels({ cfg, cTier, me, TH, onBack }) {
+export function MenuLevels({ cfg, cTier, me, TH, onBack, rewards }) {
   const ptGal = cfg.tiers?.platino?.gal ?? 150;
   const bkGal = cfg.tiers?.black?.gal ?? 500;
   const tiers = [0, ptGal, bkGal].map(g => makeTier(g, cfg));
@@ -20,7 +20,7 @@ export function MenuLevels({ cfg, cTier, me, TH, onBack }) {
       <SectionHeader title="Niveles y Beneficios" sub="ORO, PLATINO y BLACK" onBack={onBack} TH={TH} />
       {tiers.map(t => (
         <TierBenefitsCard
-          key={t.name} t={t} cfg={cfg}
+          key={t.name} t={t} cfg={cfg} rewards={rewards}
           surface={TH.surface} ink={TH.text}
           pill={cTier?.name === t.name ? `Tu nivel · ${(me?.gallons || 0).toFixed(0)} gal` : null}
           style={{ marginBottom: 14 }}

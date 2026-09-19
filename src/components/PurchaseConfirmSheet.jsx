@@ -1,11 +1,12 @@
 // src/components/PurchaseConfirmSheet.jsx
 // Bottom-sheet de confirmación de compra (vista del OPERADOR): revisa
-// cliente, tarjeta, combustible, monto y los puntos a otorgar (con el
-// divisor qPerPt del tier PREVIO a la compra — F2.1). Vive a nivel raíz
+// cliente, tarjeta, combustible, monto y los puntos a otorgar (puntos
+// POR GALÓN del tier PREVIO a la compra — recalibración 19-sep). Vive a nivel raíz
 // para escapar del overflow:hidden del lienzo. Extraído de App.jsx
 // (división etapa 1, 12-ago-2026) sin cambios de lógica: addPurchase
 // retorna boolean y solo en éxito corre el onConfirm del solicitante.
 import { FUEL_LABELS } from '../constants/config';
+import { estimatePoints, fuelPriceFor } from '../lib/tierSystem';
 
 export default function PurchaseConfirmSheet({ data, gT, cfg, onClose, addPurchase }) {
   return (
@@ -33,7 +34,7 @@ export default function PurchaseConfirmSheet({ data, gT, cfg, onClose, addPurcha
             { l: 'Tarjeta',          v: data.client.cardId || '—',                  mono: true },
             { l: 'Combustible',      v: FUEL_LABELS[data.fuel] },
             { l: 'Monto',            v: `Q${data.amt.toFixed(2)}`,                  large: true },
-            { l: 'Puntos a otorgar', v: `+${Math.floor(data.amt / (gT(data.client.gallons || 0).qPerPt ?? cfg.qPerPt))}`, green: true, large: true },
+            { l: 'Puntos a otorgar', v: `+${estimatePoints(data.amt, gT(data.client.gallons || 0), cfg, fuelPriceFor(cfg, data.station, data.fuel))}`, green: true, large: true },
           ].map((row, i, arr) => (
             <div key={row.l} style={{
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',

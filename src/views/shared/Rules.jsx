@@ -57,7 +57,7 @@ export default function Rules(ctx) {
           <div style={colStack}>
             {tiers.map(t => (
               <TierBenefitsCard
-                key={t.name} t={t} cfg={cfg}
+                key={t.name} t={t} cfg={cfg} rewards={ctx.rewards}
                 surface={AT.card} ink={AT.txt}
                 pill={me && cTier?.name === t.name ? `Tu nivel · ${(me.gallons || 0).toFixed(0)} gal` : null}
               />

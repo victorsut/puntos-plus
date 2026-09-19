@@ -16,7 +16,13 @@ import ReasonModal from '../../components/ui/ReasonModal';
 import { adminWriteCatalog } from '../../services/secureReads';
 
 const CATS  = Object.keys(CAT_LABELS);
-const TIERS = ['todos', 'ORO', 'PLATINO', 'BLACK'];
+// Recalibración C5: nivel MÍNIMO para canjear (PLATINO = PLATINO y BLACK;
+// BLACK = solo BLACK). "Todos" = sin restricción.
+const TIERS = ['todos', 'PLATINO', 'BLACK'];
+const minTierOf = (r) => {
+  const v = String(r.minTier || r.min_tier || r.tier_exclusive || '').toUpperCase();
+  return v === 'PLATINO' || v === 'BLACK' ? v : 'todos';
+};
 
 // Ícono del premio: la UI muestra SVG; en BD viaja la CLAVE semántica
 // (el "emoji" histórico) que RewardIcon resuelve en toda la app.
@@ -64,7 +70,7 @@ export default function AdminCatalog(ctx) {
       name: r.name || '', pts: String(r.points_cost || r.pts || ''), icon: r.icon || '🎁',
       // API v1.4: valor del premio en Q (vacío = sin valor definido)
       value: r.cash_value != null ? String(r.cash_value) : '',
-      cat: r.category || r.cat || 'merch', tier: r.tier_exclusive || r.tier || 'todos',
+      cat: r.category || r.cat || 'merch', tier: minTierOf(r),
       active: r.active !== false, description: r.description || '',
       // D17: localizaciones (vacío = todas las estaciones)
       stationIds: r.stationIds || r.station_ids || [], storeIds: r.storeIds || r.store_ids || [],
@@ -79,7 +85,9 @@ export default function AdminCatalog(ctx) {
     if (!form.name.trim() || !form.pts) { fire('Nombre y puntos son obligatorios'); return; }
     const data = {
       name: form.name.trim(), points_cost: parseInt(form.pts), icon: form.icon,
-      category: form.cat, tier_exclusive: form.tier !== 'todos' ? form.tier : null,
+      category: form.cat, min_tier: form.tier !== 'todos' ? form.tier : null,
+      // espejo para la BD previa a la migración 20260919b (whitelist vieja)
+      tier_exclusive: form.tier !== 'todos' ? form.tier : null,
       active: form.active, description: form.description || null,
       station_ids: form.stationIds, store_ids: form.storeIds,
       // Viaja al POS de PROPER como reward_value; vacío → NULL
@@ -96,7 +104,7 @@ export default function AdminCatalog(ctx) {
     if (sb && sbConnected) {
       const res = await adminWriteCatalog('reward', 'create', { data, audit: adminAudit() });
       if (res.error) { fire('Error: ' + res.error); setSaving(false); return; }
-      setRewards(p => [...p, { ...data, id: res.id, pts: data.points_cost, cat: data.category, tier: data.tier_exclusive }]);
+      setRewards(p => [...p, { ...data, id: res.id, pts: data.points_cost, cat: data.category, minTier: data.min_tier, tier_exclusive: data.min_tier, tier: data.min_tier || undefined }]);
       fire('Premio creado');
     }
     setSaving(false); setShowForm(false); setEditR(null);
@@ -130,7 +138,7 @@ export default function AdminCatalog(ctx) {
           : {};
         if (res.error) { setShowReason(false); setShowForm(true); fire('Error: ' + res.error); return; }
         setRewards(prev => prev.map(r => r.id === eid
-          ? { ...r, ...pending.data, pts: pending.data.points_cost, cat: pending.data.category, tier: pending.data.tier_exclusive }
+          ? { ...r, ...pending.data, pts: pending.data.points_cost, cat: pending.data.category, minTier: pending.data.min_tier, tier_exclusive: pending.data.min_tier, tier: pending.data.min_tier || undefined }
           : r));
         setEditR(null); setForm({ ...EMPTY });
         fire('Premio actualizado');
@@ -215,7 +223,7 @@ export default function AdminCatalog(ctx) {
         {filtered.map(r => {
           const cs = CAT_COLORS[r.category || r.cat] || { bg: '#F5F5F5', c: '#616161' };
           const isActive = r.active !== false;
-          const tier = r.tier_exclusive || r.tier;
+          const tier = minTierOf(r) === 'todos' ? null : minTierOf(r);
           const locs = (r.stationIds || r.station_ids || []).length + (r.storeIds || r.store_ids || []).length;
           return (
             <div key={r.id} style={{
@@ -235,7 +243,7 @@ export default function AdminCatalog(ctx) {
                   <span style={{ ...sMono, fontSize: 11.5, color: '#FBBC04', fontWeight: 800 }}>{(r.points_cost || r.pts || 0).toLocaleString('en-US')} pts</span>
                   {r.cash_value != null && <span style={{ ...sMono, fontSize: 11, color: '#81C784', fontWeight: 800 }}>Q{Number(r.cash_value).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>}
                   <span style={{ fontSize: 9, background: cs.bg, color: cs.c, padding: '2px 7px', borderRadius: 6, fontWeight: 800, letterSpacing: .3 }}>{CAT_LABELS[r.category || r.cat] || r.category || r.cat}</span>
-                  {tier && <span style={{ fontSize: 9, background: 'rgba(251,188,4,.15)', color: '#FBBC04', padding: '2px 7px', borderRadius: 6, fontWeight: 800 }}>{tier}</span>}
+                  {tier && <span style={{ fontSize: 9, background: 'rgba(251,188,4,.15)', color: '#FBBC04', padding: '2px 7px', borderRadius: 6, fontWeight: 800 }}>DESDE {tier}</span>}
                   {locs > 0 && <span style={{ fontSize: 9, background: 'rgba(100,181,246,.15)', color: '#64B5F6', padding: '2px 7px', borderRadius: 6, fontWeight: 800 }}>{locs} LOCALIZACIÓN{locs > 1 ? 'ES' : ''}</span>}
                 </div>
               </div>
@@ -323,7 +331,7 @@ export default function AdminCatalog(ctx) {
                 </div>
               </div>
               <div>
-                <label style={lbl}>Nivel exclusivo</label>
+                <label style={lbl} title="El premio se puede canjear desde este nivel hacia arriba. Los niveles inferiores lo ven bloqueado al final del catálogo.">Nivel mínimo</label>
                 <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                   {TIERS.map(t => (
                     <button key={t} onClick={() => setForm(p => ({ ...p, tier: t }))} style={locChip(form.tier === t)}>{t === 'todos' ? 'Todos' : t}</button>

@@ -16,21 +16,27 @@ export const FUEL_LABELS = {
 // (se sobreescribe con datos de Supabase)
 // ──────────────────────────────────────────────
 export const DEFAULT_CONFIG = {
-  qPerPt: 10,       // Fallback global (la conversión real es POR TIER desde F2.1)
+  // RECALIBRACIÓN (19-sep-2026): el punto vale Q0.10 (10 pts = Q1). Solo
+  // lo usan los KPIs del panel (pasivo de puntos en quetzales).
+  pointValue: 0.10,
   ticketPts: 5,     // 5 pts = 1 boleto de rifa
   regBase: 15,      // Puntos de registro base
   regOptional: 2,   // Puntos por dato opcional
   referralPts: 25,  // Puntos por referido
   surveyPts: 3,     // Puntos por encuesta
   surveyDaily: 5,   // Límite diario de encuestas
-  // F2.1 (6-ago-2026, decisión del dueño): conversión y eventos POR TIER,
-  // editables en Admin → Configuración (RPC set_loyalty_config).
-  // qPerPt: ORO Q10 = 1 pt · PLATINO Q8 · BLACK Q6.
+  // RECALIBRACIÓN (19-sep-2026, decisión del dueño): puntos POR GALÓN y
+  // eventos POR TIER, editables en Admin → Configuración (RPC
+  // set_loyalty_config).
+  // ptsPerGal: ORO 3.5 · PLATINO 4.0 · BLACK 4.5 puntos por galón.
   // evtPts: ORO 25 · PLATINO 35 · BLACK 50 pts por evento especial.
+  // El descuento de canje por nivel se ELIMINÓ (discRedeem queda en 0 por
+  // compatibilidad, igual que discGal); lo reemplazan los premios
+  // disponibles desde un nivel (rewards.min_tier).
   tiers: {
-    oro: { qPerPt: 10, evtPts: 25 },
-    platino: { gal: 150, discGal: 0.15, discRedeem: 0.10, qPerPt: 8, evtPts: 35 },
-    black: { gal: 500, discGal: 0.25, discRedeem: 0.15, qPerPt: 6, evtPts: 50 },
+    oro: { ptsPerGal: 3.5, evtPts: 25 },
+    platino: { gal: 150, discGal: 0.15, discRedeem: 0, ptsPerGal: 4.0, evtPts: 35 },
+    black: { gal: 500, discGal: 0.25, discRedeem: 0, ptsPerGal: 4.5, evtPts: 50 },
   },
   // Degradación real (25-jul-2026, algoritmo del dueño): 15 días de
   // gracia; desde el día 16 los galones caen a UMBRAL − n(n+1)/2 por

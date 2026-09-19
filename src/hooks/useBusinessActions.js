@@ -223,8 +223,8 @@ export default function useBusinessActions({
   // ──────────────────────────────────────────────
   // redeem — delega en RPC redeem_reward
   // ──────────────────────────────────────────────
-  // La RPC valida puntos, calcula descuento por tier, valida exclusividad
-  // de tier, crea la fila en redemptions con confirm_status='none' (default),
+  // La RPC valida puntos y el nivel mínimo del premio (sin descuento
+  // por tier desde la recalibración del 19-sep), crea la fila en redemptions con confirm_status='none' (default),
   // descuenta puntos y registra activity_log.
   // El flujo de confirmación con el operador (OpRedeem) sigue intacto:
   // operador escanea → update confirm_status='pending' → cliente confirma.

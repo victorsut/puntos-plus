@@ -5,10 +5,11 @@
 // iconos SVG. Extraído VERBATIM de ClientHome (división 14-ago).
 import GrowModal from '../../../components/ui/GrowModal';
 import GalaxyDust from '../../../components/ui/GalaxyDust';
-import { Fuel, Tag, Wifi, Cake } from '../../../components/ui/Icons';
+import { Fuel, Tag, Wifi, Cake, Gift } from '../../../components/ui/Icons';
+import { earnLabel, tierHasExclusives } from '../../../lib/tierSystem';
 
 export default function TierDetailModal({
-  onClose, origin, tint, tierTint, tierAccent, isBlack, dark, cTier, cfg,
+  onClose, origin, tint, tierTint, tierAccent, isBlack, dark, cTier, cfg, rewards,
 }) {
   // Beneficios del nivel (FORMATO GENERAL, iconos SVG sin emojis). El
   // WiFi gratis solo aparece en PLATINO/BLACK (en ORO se omite la
@@ -16,8 +17,11 @@ export default function TierDetailModal({
   // galón ni rifa mensual (decisión del dueño 24-jul) ni acceso a
   // baños (decisión del dueño 11-ago).
   const bens = [
-    { icon: <Fuel />, t: `1 pt por cada Q${cTier.qPerPt ?? cfg.qPerPt}` },
+    // Recalibración (19-sep): puntos POR GALÓN; sin descuento de canje —
+    // lo reemplazan los premios disponibles desde el nivel.
+    { icon: <Fuel />, t: earnLabel(cTier, cfg) },
     ...(cTier.redeemDisc > 0 ? [{ icon: <Tag />, t: `-${Math.round(cTier.redeemDisc * 100)}% en canje de premios` }] : []),
+    ...(tierHasExclusives(cTier.name, rewards) ? [{ icon: <Gift />, t: 'Premios exclusivos del nivel' }] : []),
     ...(cTier.name !== 'ORO' ? [{ icon: <Wifi />, t: 'WiFi gratis ilimitado' }] : []),
     { icon: <Cake />, t: `${cTier.evtPts} pts en eventos especiales` },
   ];

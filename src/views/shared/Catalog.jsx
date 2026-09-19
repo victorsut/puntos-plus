@@ -4,12 +4,13 @@
 // categoría en filas con wrap (sin barra de desplazamiento), cards flat
 // sin borde con el ícono SVG del premio (RewardIcon — sin emojis) sobre
 // un cuadro de color sólido por categoría. BLACK conserva su galaxia.
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { bento, BRAND_ORANGE, CAT_LABELS, CAT_COLORS, homeColors, clientMainBg } from '../../constants/styles';
 import RewardIcon from '../../components/ui/RewardIcon';
 import ChipScroller from '../../components/ui/ChipScroller';
 import HistorySheet from '../client/HistorySheet';
-import { Clock } from '../../components/ui/Icons';
+import { Clock, Lock } from '../../components/ui/Icons';
+import { meetsMinTier, tierRank } from '../../lib/tierSystem';
 import { originFromEvent } from '../../lib/motionOrigin';
 import { rewardLocationNames } from '../../lib/rewardLocations';
 
@@ -25,7 +26,16 @@ export default function Catalog(ctx) {
   // El orden lo sigue marcando CAT_LABELS (estable entre renders).
   const usedCats = new Set(visible.map(r => r.cat));
   const cats = ['todos', ...Object.keys(CAT_LABELS).filter(c => usedCats.has(c))];
-  const filtered = catF === 'todos' ? visible : visible.filter(r => r.cat === catF);
+  const inCat = catF === 'todos' ? visible : visible.filter(r => r.cat === catF);
+  // Recalibración C5 (19-sep): premios disponibles DESDE un nivel. El
+  // socio ve ARRIBA los que ya puede canjear por su nivel y AL FINAL,
+  // bloqueados, los de los niveles siguientes (pedido del dueño) —
+  // ordenados por cercanía: primero PLATINO, luego BLACK. El panel admin
+  // (client=false) no bloquea nada. El servidor valida igual.
+  const isLocked = (r) => client && !!me && !meetsMinTier(t.name, r.minTier);
+  const unlocked = inCat.filter(r => !isLocked(r));
+  const locked = inCat.filter(isLocked).sort((a, b) => tierRank(a.minTier) - tierRank(b.minTier));
+  const filtered = [...unlocked, ...locked];
 
   // Si la categoría filtrada se queda sin premios (se desactivó el
   // último desde admin), el filtro cae a Todos — su chip ya no existe.
@@ -132,10 +142,23 @@ export default function Catalog(ctx) {
       <div style={{ padding: '0 14px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         {filtered.map((r, i) => {
           const catColor = CAT_COLORS[r.cat] || '#5E5E63';
-          const cost     = client && me ? Math.round(r.pts * (1 - t.redeemDisc)) : r.pts;
-          const canAfford = client && me ? me.points >= cost : false;
-          return (
-            <div key={r.id} className="pp-tile" onClick={() => {
+          // El descuento de canje por nivel se ELIMINÓ (recalibración C1):
+          // la config lo trae en 0 y el costo es el de lista para todos.
+          const cost     = client && me ? Math.round(r.pts * (1 - (t.redeemDisc || 0))) : r.pts;
+          const lockedR  = isLocked(r);
+          const canAfford = client && me && !lockedR ? me.points >= cost : false;
+          const firstLocked = lockedR && i === unlocked.length;
+          return (<Fragment key={r.id}>
+            {firstLocked && (
+              <div style={{
+                gridColumn: '1 / -1', marginTop: unlocked.length ? 10 : 0,
+                display: 'flex', alignItems: 'center', gap: 8,
+                fontSize: 10.5, fontWeight: 800, letterSpacing: 1.1, textTransform: 'uppercase', color: subTxt,
+              }}>
+                <Lock size={13} /> Disponibles en los siguientes niveles
+              </div>
+            )}
+            <div className="pp-tile" onClick={() => {
               if (!client || !canAfford) return;
               if (setRedeemConfirm) setRedeemConfirm({ reward: r, cost });
               else redeem(r);
@@ -158,7 +181,17 @@ export default function Catalog(ctx) {
               <div style={{ fontSize: 14, fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: canAfford ? good : subTxt }}>
                 {cost} pts
               </div>
-              {t.redeemDisc > 0 && cost < r.pts && (
+              {lockedR && (
+                <div style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 6,
+                  padding: '3px 9px', borderRadius: 8,
+                  background: dark ? 'rgba(255,255,255,.12)' : '#0D0D0D', color: '#fff',
+                  fontSize: 9, fontWeight: 800, letterSpacing: .4,
+                }}>
+                  <Lock size={10} /> DESDE {r.minTier}
+                </div>
+              )}
+              {!lockedR && t.redeemDisc > 0 && cost < r.pts && (
                 <div style={{ fontSize: 10, color: dark ? '#90CAF9' : bento.blue, fontWeight: 700, marginTop: 2 }}>
                   -{Math.round(t.redeemDisc * 100)}% ({r.pts} pts)
                 </div>
@@ -174,7 +207,7 @@ export default function Catalog(ctx) {
                 );
               })()}
             </div>
-          );
+          </Fragment>);
         })}
       </div>
 

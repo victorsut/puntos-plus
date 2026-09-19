@@ -370,7 +370,7 @@ export default function MemberDetail(ctx) {
 
           {/* Nivel y beneficios (ya FORMATO GENERAL) */}
           <TierBenefitsCard
-            t={t} cfg={cfg} surface={AT.card} ink={AT.txt}
+            t={t} cfg={cfg} rewards={ctx.rewards} surface={AT.card} ink={AT.txt}
             pill={`Nivel actual · ${c.gallons.toFixed(0)} gal`}
           />
         </div>

@@ -45,7 +45,7 @@ export default function ClientMenu(ctx) {
   const shell = { minHeight: '100vh', background: TH.bg, padding: '20px 20px 110px' };
 
   if (section === 'cuenta')      return <div style={shell}><MenuAccount ctx={ctx} TH={TH} onBack={closeSection} /></div>;
-  if (section === 'niveles')     return <div style={shell}><MenuLevels cfg={cfg} cTier={cTier} me={me} TH={TH} onBack={closeSection} /></div>;
+  if (section === 'niveles')     return <div style={shell}><MenuLevels cfg={cfg} cTier={cTier} me={me} TH={TH} onBack={closeSection} rewards={ctx.rewards} /></div>;
   if (section === 'inactividad') return <div style={shell}><MenuInactivity cfg={cfg} TH={TH} onBack={closeSection} /></div>;
   if (section === 'terminos')    return <div style={shell}><MenuTerms TH={TH} onBack={closeSection} /></div>;
   if (section === 'acerca')      return <div style={shell}><MenuAbout TH={TH} onBack={closeSection} /></div>;
