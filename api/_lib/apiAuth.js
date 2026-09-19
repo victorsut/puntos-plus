@@ -45,6 +45,7 @@ const STATUS = {
   invalid_action: 400,
   already_delivered: 409,
   not_confirmed: 422,
+  expired: 422,
   method_not_allowed: 405,
   server_error: 500,
 };
@@ -68,6 +69,7 @@ const MESSAGES = {
   invalid_action: 'Acción inválida (request, cancel o deliver)',
   already_delivered: 'Este premio ya fue entregado',
   not_confirmed: 'El cliente aún no ha confirmado la entrega en su app',
+  expired: 'El plazo para reclamar este premio ya venció',
   server_error: 'Error interno, reintentá en unos segundos',
 };
 export const messageFor = (code, detail) => detail || MESSAGES[code] || 'Solicitud inválida';
@@ -88,6 +90,18 @@ export async function authenticate(req, scope) {
   return { clientId: data.client_id, name: data.name };
 }
 
+// v1.4: el DPI del colaborador (operator.dpi) es dato personal — a la
+// bitácora solo llegan sus últimos 4 dígitos.
+export function maskOperatorDpi(body) {
+  const dpi = body?.operator?.dpi ?? body?.operator_dpi;
+  if (dpi == null || dpi === '') return body;
+  const masked = '*********' + String(dpi).replace(/\D/g, '').slice(-4);
+  const out = { ...body };
+  if (out.operator?.dpi != null) out.operator = { ...out.operator, dpi: masked };
+  if (out.operator_dpi != null) out.operator_dpi = masked;
+  return out;
+}
+
 // Bitácora de la llamada (best-effort: nunca bloquea la respuesta).
 export async function logRequest({ clientId, endpoint, idempotencyKey, request, response, status }) {
   try {
@@ -95,7 +109,7 @@ export async function logRequest({ clientId, endpoint, idempotencyKey, request, 
       p_api_client_id: clientId || null,
       p_endpoint: endpoint,
       p_idempotency_key: idempotencyKey || null,
-      p_request: request || null,
+      p_request: request ? maskOperatorDpi(request) : null,
       p_response: response || null,
       p_status_code: status,
     });

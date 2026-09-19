@@ -129,7 +129,7 @@ puntos-plus/
 │   │                             #   vehicleCatalog.js (marcas/modelos + bodyFor), geoGt.js
 │   └── styles/global.css
 ├── supabase/migrations/          # 104 migraciones SQL (se ejecutan A MANO en el SQL Editor)
-├── docs/                         # API-PROPER.md (+html, colección Postman), TIENDAS.md
+├── docs/                         # API-PROPER.md v1.4 (+html, Postman), API-PROPER-CAMBIOS-v1.4 (novedades, md+html), TIENDAS.md
 ├── tools/
 │   ├── artes/                    # pipeline de calco de artes (motor, comparador, historico)
 │   ├── harness/                  # arneses visuales (Vite puerto 3100 + Edge headless)
@@ -174,7 +174,7 @@ anónima (track SEC.C completo, ver ROADMAP).
 - **Rifa:** `raffle_calendar`, `raffle_tickets`, `raffle_entries`.
 - **Vehículos (F6):** `vehicles` (fuente de verdad; `alerts_muted`, `last_service`, `next_service`, `next_service_km`, `tank_gal`, `fuel_pref`…), `vehicle_fuel_logs` (consumos manuales fuera de Turkaj).
 - **Push:** `push_subscriptions`, `notifications` (todo envío; inbox de la campana y dedupe).
-- **API pública:** `api_clients` (API keys bcrypt), `api_requests` (idempotencia + log).
+- **API pública:** `api_clients` (API keys bcrypt), `api_requests` (idempotencia + log; el DPI del colaborador se guarda enmascarado), `operator_external_ids` (v1.4: varios usuarios de PROPER por operador, unidos por DPI).
 - **Config y guardas:** `stations` (+ `fuel_prices` propio por estación, D4), `program_config` (jsonb por clave: `general`, `tiers`, `degradation`, `degradation_enabled`, `fuel_prices`, `fuel_prices_mode`, `company`, `support`, `service_alerts`, `terms_*`, `phone_verification`), `points_write_violations`, `session_violations`.
 
 **Vistas:** `raffle_participants`, `daily_survey_count`, `operator_rating_avg`.

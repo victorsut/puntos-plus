@@ -14,7 +14,7 @@
 //      escrita) — paridad con la vista de operador.
 // POST /api/v1/redemptions
 //      Body: { code, action: 'request'|'cancel'|'deliver',
-//              operator?: { external_id, name } }   (operator obligatorio en deliver)
+//              operator?: { external_id, name, dpi? } }   (operator obligatorio en deliver)
 //      request → marca pending y avisa al celular del cliente
 //      cancel  → desiste (cierra el modal del cliente)
 //      deliver → entrega atómica (exige confirmed) + payload del comprobante
@@ -101,13 +101,18 @@ export default async function handler(req, res) {
   const operator = b.operator || {};
   const action = String(b.action || '').trim().toLowerCase();
 
-  const { data, error } = await sbAdmin.rpc('api_redemption_confirm', {
+  const payload = {
     p_api_client_id: auth.clientId,
     p_code:          String(b.code || '').trim(),
     p_action:        action,
     p_operator_ext:  String(operator.external_id || b.operator_external_id || '').trim() || null,
     p_operator_name: String(operator.name || b.operator_name || '').trim() || null,
-  });
+  };
+  // v1.4: DPI del colaborador (opcional) — mismo criterio que /purchases.
+  const operatorDpi = String(operator.dpi || b.operator_dpi || '').trim();
+  if (operatorDpi) payload.p_operator_dpi = operatorDpi;
+
+  const { data, error } = await sbAdmin.rpc('api_redemption_confirm', payload);
 
   if (error) {
     console.error('[API:redemptions]', error.message);
@@ -118,7 +123,12 @@ export default async function handler(req, res) {
 
   if (data?.error) {
     const status = statusFor(data.error);
-    const body = { error: data.error, message: messageFor(data.error, data.detail) };
+    const body = {
+      error: data.error,
+      message: messageFor(data.error, data.detail),
+      // Premio con plazo vencido (rifa): cuándo venció.
+      ...(data.expired_at ? { expired_at: data.expired_at } : {}),
+    };
     await logRequest({ clientId: auth.clientId, endpoint: 'POST /v1/redemptions',
       request: b, response: body, status });
     return json(res, status, body);

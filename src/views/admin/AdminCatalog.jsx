@@ -36,7 +36,7 @@ const ICON_OPTIONS = [
   { k: '⚽', I: Ball,       t: 'Deporte' },
 ];
 
-const EMPTY = { name: '', pts: '', icon: '🎁', cat: 'merch', tier: 'todos', active: true, description: '', stationIds: [], storeIds: [] };
+const EMPTY = { name: '', pts: '', value: '', icon: '🎁', cat: 'merch', tier: 'todos', active: true, description: '', stationIds: [], storeIds: [] };
 
 export default function AdminCatalog(ctx) {
   const { rewards, setRewards, fire, sbConnected, loggedAdmin, stations = [], stores = [] } = ctx;
@@ -62,6 +62,8 @@ export default function AdminCatalog(ctx) {
     setEditR(r);
     setForm({
       name: r.name || '', pts: String(r.points_cost || r.pts || ''), icon: r.icon || '🎁',
+      // API v1.4: valor del premio en Q (vacío = sin valor definido)
+      value: r.cash_value != null ? String(r.cash_value) : '',
       cat: r.category || r.cat || 'merch', tier: r.tier_exclusive || r.tier || 'todos',
       active: r.active !== false, description: r.description || '',
       // D17: localizaciones (vacío = todas las estaciones)
@@ -80,6 +82,8 @@ export default function AdminCatalog(ctx) {
       category: form.cat, tier_exclusive: form.tier !== 'todos' ? form.tier : null,
       active: form.active, description: form.description || null,
       station_ids: form.stationIds, store_ids: form.storeIds,
+      // Viaja al POS de PROPER como reward_value; vacío → NULL
+      cash_value: form.value === '' ? null : Number(form.value),
     };
     if (editR) {
       if (!loggedAdmin?.id) { fire('Error: sesion admin no disponible. Cerra sesion y volve a ingresar.'); return; }
@@ -229,6 +233,7 @@ export default function AdminCatalog(ctx) {
                 </div>
                 <div style={{ display: 'flex', gap: 6, marginTop: 4, flexWrap: 'wrap', alignItems: 'center' }}>
                   <span style={{ ...sMono, fontSize: 11.5, color: '#FBBC04', fontWeight: 800 }}>{(r.points_cost || r.pts || 0).toLocaleString('en-US')} pts</span>
+                  {r.cash_value != null && <span style={{ ...sMono, fontSize: 11, color: '#81C784', fontWeight: 800 }}>Q{Number(r.cash_value).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>}
                   <span style={{ fontSize: 9, background: cs.bg, color: cs.c, padding: '2px 7px', borderRadius: 6, fontWeight: 800, letterSpacing: .3 }}>{CAT_LABELS[r.category || r.cat] || r.category || r.cat}</span>
                   {tier && <span style={{ fontSize: 9, background: 'rgba(251,188,4,.15)', color: '#FBBC04', padding: '2px 7px', borderRadius: 6, fontWeight: 800 }}>{tier}</span>}
                   {locs > 0 && <span style={{ fontSize: 9, background: 'rgba(100,181,246,.15)', color: '#64B5F6', padding: '2px 7px', borderRadius: 6, fontWeight: 800 }}>{locs} LOCALIZACIÓN{locs > 1 ? 'ES' : ''}</span>}
@@ -258,7 +263,7 @@ export default function AdminCatalog(ctx) {
           }}>
             <div style={{ fontSize: 18, fontWeight: 900, color: '#fff', marginBottom: 16 }}>{editR ? 'Editar premio' : 'Nuevo premio'}</div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 10, marginBottom: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 10, marginBottom: 12 }}>
               <div>
                 <label style={lbl}>Nombre *</label>
                 <input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
@@ -268,6 +273,14 @@ export default function AdminCatalog(ctx) {
                 <label style={lbl}>Puntos *</label>
                 <input value={form.pts} onChange={e => setForm(p => ({ ...p, pts: e.target.value.replace(/[^0-9]/g, '') }))}
                   placeholder="150" inputMode="numeric" style={{ ...inputStyleDark, ...sMono, fontSize: 13, padding: '10px 12px', textAlign: 'center' }} />
+              </div>
+              <div>
+                <label style={lbl}>Valor (Q)</label>
+                <input value={form.value}
+                  onChange={e => setForm(p => ({ ...p, value: e.target.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1') }))}
+                  placeholder="Opcional" inputMode="decimal"
+                  title="Valor del premio en quetzales: se envía al POS al consultar el canje. Puede quedar vacío."
+                  style={{ ...inputStyleDark, ...sMono, fontSize: 13, padding: '10px 12px', textAlign: 'center' }} />
               </div>
             </div>
 

@@ -1,9 +1,9 @@
 // api/v1/members.js — identificación del cliente por QR (F7a, PROPER).
 //
 // GET /api/v1/members?card_code=CTOD-00042
-// Devuelve nombre, nivel, saldo y con qué NIT se le puede facturar.
-// Pensado para el momento ANTES de emitir: el POS avisa al colaborador
-// si la factura debe ir a CF o puede ir al NIT del cliente.
+// Devuelve nombre, nivel, saldo y con qué NIT acumula el cliente.
+// Consulta OPCIONAL de diagnóstico (F7a.1): NO es un paso del flujo de
+// venta — la factura se emite primero y /purchases valida después.
 import { authenticate, logRequest, json, cors, statusFor, messageFor, sbAdmin } from '../_lib/apiAuth.js';
 
 export default async function handler(req, res) {

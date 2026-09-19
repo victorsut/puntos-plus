@@ -6,7 +6,7 @@
 //
 // POST /api/v1/purchases
 // Body: { card_code, fuel_amount, gallons, fuel_type, nit, invoice_no,
-//         total_amount?, operator: { external_id, name, station } }
+//         total_amount?, operator: { external_id, name, station, dpi? } }
 // Header recomendado: Idempotency-Key (nº de factura)
 import { authenticate, logRequest, replay, json, cors, statusFor, messageFor, sbAdmin } from '../_lib/apiAuth.js';
 import { pushToMembers } from '../_lib/push.js';
@@ -55,6 +55,11 @@ export default async function handler(req, res) {
     p_station_ext:   String(operator.station || b.station || b.station_id || '').trim() || null,
     p_total_amount:  b.total_amount != null ? Number(b.total_amount) : null,
   };
+  // v1.4: DPI del colaborador (opcional) — une sus distintos usuarios de
+  // PROPER en un solo operador. Solo viaja al RPC si PROPER lo envía, así
+  // el endpoint sigue funcionando contra la firma anterior del RPC.
+  const operatorDpi = String(operator.dpi || b.operator_dpi || '').trim();
+  if (operatorDpi) payload.p_operator_dpi = operatorDpi;
 
   const { data, error } = await sbAdmin.rpc('api_register_purchase', payload);
 

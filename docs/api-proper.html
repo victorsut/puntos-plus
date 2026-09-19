@@ -452,9 +452,9 @@
       puntos y entregue premios de Puntos Plus, sin modificar su flujo de venta.
     </p>
     <div class="meta-row">
-      <span><b>Versión</b> 1.3</span>
-      <span><b>Fecha</b> 31 de julio de 2026</span>
-      <span><b>Estado</b> propuesta para revisión</span>
+      <span><b>Versión</b> 1.4</span>
+      <span><b>Fecha</b> 19 de septiembre de 2026</span>
+      <span><b>Estado</b> contrato confirmado · integración en curso</span>
       <span><b>Emite</b> Gasolineras Turkaj, Chichicastenango</span>
     </div>
   </header>
@@ -471,8 +471,8 @@
     <a href="#s7"><span class="n">7</span>Flujos completos</a>
     <a href="#s8"><span class="n">8</span>Ambiente de pruebas</a>
     <a href="#s9"><span class="n">9</span>Seguridad</a>
-    <a href="#s10"><span class="n">10</span>Qué necesitamos</a>
-    <a href="#s11"><span class="n">11</span>Preguntas abiertas</a>
+    <a href="#s10"><span class="n">10</span>Acuerdos</a>
+    <a href="#s11"><span class="n">11</span>Temas abiertos</a>
   </nav>
 
   <main>
@@ -595,6 +595,21 @@
           colaborador no está atado a una estación: la estación viaja con la factura).</li>
       </ul>
       <p>No hace falta sincronización previa ni cargar un catálogo a mano.</p>
+      <div class="callout c-key">
+        <div class="callout-label">Nuevo en v1.4 · DPI del colaborador</div>
+        <p>El identificador interno de PROPER puede variar — por ejemplo, si al
+        colaborador se le crea otro usuario en otra sucursal. Para que siga siendo
+        <strong>la misma persona</strong> de nuestro lado, envíen su DPI en
+        <code>operator.dpi</code> (opcional, recomendado).</p>
+        <ul style="margin-bottom:0;">
+          <li>Un <code>external_id</code> nuevo con un DPI que ya conocemos se une al
+            mismo colaborador: conserva su historial de atención y calificaciones.</li>
+          <li>Con o sin espacios/guiones; deben ser <strong>13 dígitos</strong>. Un DPI
+            con otro largo se ignora (la compra se acredita igual).</li>
+          <li>El DPI <strong>nunca</strong> se devuelve en ninguna respuesta y en nuestra
+            bitácora se guarda enmascarado.</li>
+        </ul>
+      </div>
 
       <h3>3.4 · La estación — viene con el colaborador</h3>
       <p>
@@ -604,8 +619,9 @@
         <code>operator.station</code>) y nosotros lo mapeamos. Lo resolvemos en este orden:
       </p>
       <ol>
-        <li>El <strong>código de estación de PROPER</strong> (ej. <code>"1"</code>,
-          <code>"EST-01"</code>) — nos pasan su lista una vez y la configuramos.</li>
+        <li>El <strong>código de estación de PROPER</strong> — ya configurados (v1.4):
+          <code>17261015-1</code> → Turkaj I · <code>17261015-2</code> → Turkaj II ·
+          <code>105978272-3</code> → Turkaj III (Estación de Servicio La Cruz).</li>
         <li>El <strong>nombre</strong> (<code>"Turkaj I"</code>, <code>"turkaj 1"</code>
           — toleramos mayúsculas y espacios).</li>
         <li>Si no viene, <strong>la última estación conocida de ese colaborador</strong>.</li>
@@ -748,7 +764,8 @@
     <span class="tok-key">"operator"</span>: {
       <span class="tok-key">"external_id"</span>: <span class="tok-str">"EMP-017"</span>,
       <span class="tok-key">"name"</span>: <span class="tok-str">"Juan Pérez"</span>,
-      <span class="tok-key">"station"</span>: <span class="tok-str">"1"</span>
+      <span class="tok-key">"dpi"</span>: <span class="tok-str">"2990123450101"</span>,
+      <span class="tok-key">"station"</span>: <span class="tok-str">"17261015-1"</span>
     }
   }'</code></pre>
 
@@ -766,7 +783,8 @@
             <tr><td><code>invoice_no</code></td><td>string</td><td>Recom.</td><td>Número de factura, para conciliación</td></tr>
             <tr><td><code>total_amount</code></td><td>number</td><td>No</td><td>Total facturado. Solo se guarda para conciliar: <strong>no</strong> afecta los puntos</td></tr>
             <tr><td><code>operator.external_id</code></td><td>string</td><td>Sí</td><td>Identificador del colaborador en PROPER</td></tr>
-            <tr><td><code>operator.name</code></td><td>string</td><td>Recom.</td><td>Nombre, para reportes de atención</td></tr>
+            <tr><td><code>operator.name</code></td><td>string</td><td>Recom.</td><td>Nombre <strong>real del colaborador</strong> — es el que ve el cliente en su notificación ("Atendido por Juan")</td></tr>
+            <tr><td><code>operator.dpi</code></td><td>string</td><td>Recom. <span style="color:var(--brand);font-weight:600;">v1.4</span></td><td>DPI del colaborador, 13 dígitos. Une sus distintos usuarios de PROPER en una sola persona (§3.3)</td></tr>
             <tr><td><code>operator.station</code></td><td>string</td><td>Recom.</td><td>Código de estación de PROPER</td></tr>
           </tbody>
         </table>
@@ -785,6 +803,15 @@
         <p>Ejemplo: factura de Q312.50 = Q250 de súper + Q62.50 de tienda → el cliente
         acumula por los Q250. Si la factura <strong>no tiene combustible</strong>,
         devolvemos <code>422 no_fuel_in_invoice</code>.</p>
+      </div>
+
+      <div class="callout">
+        <div class="callout-label" style="color:var(--muted);">Varios combustibles en una misma factura · confirmado en v1.4</div>
+        <p style="margin:0;">Si una factura trae más de un combustible, se envían
+        <strong>sumados</strong> <code>fuel_amount</code>, <code>gallons</code> y
+        <code>total_amount</code>, y en <code>fuel_type</code> el <strong>primero de la
+        lista</strong>. Los puntos no cambian. De nuestro lado la instrucción en pista es
+        emitir una factura por producto, así que el caso debería ser excepcional.</p>
       </div>
 
       <div class="callout">
@@ -854,13 +881,26 @@
   <span class="tok-key">"ok"</span>: true,
   <span class="tok-key">"code"</span>: <span class="tok-str">"TK-3F9A2C"</span>,
   <span class="tok-key">"reward_name"</span>: <span class="tok-str">"Lavado de vehículo"</span>,
+  <span class="tok-key">"reward_value"</span>: <span class="tok-num">75.00</span>,
   <span class="tok-key">"points_spent"</span>: <span class="tok-num">150</span>,
   <span class="tok-key">"member_name"</span>: <span class="tok-str">"Alexander Sut"</span>,
   <span class="tok-key">"card_code"</span>: <span class="tok-str">"CTPD-00113"</span>,
+  <span class="tok-key">"expires_at"</span>: null,
   <span class="tok-key">"delivered"</span>: false,
   <span class="tok-key">"delivered_at"</span>: null,
   <span class="tok-key">"confirm_status"</span>: <span class="tok-str">"none"</span>
 }</code></pre>
+      <div class="callout c-key">
+        <div class="callout-label">Nuevo en v1.4 · valor y vencimiento del premio</div>
+        <p><code>reward_value</code> es el valor del premio <strong>en quetzales</strong>.
+        Puede venir <code>null</code> cuando el premio no tiene un valor monetario
+        definido: el POS debe tolerarlo. Es el valor del premio, <strong>no</strong> lo
+        que pagó el cliente (los premios se pagan con puntos).</p>
+        <p style="margin:0;"><code>expires_at</code> es la fecha límite para reclamarlo
+        (ISO 8601 UTC) o <code>null</code> si no vence. Hoy solo vencen los premios de
+        rifa; pasado el plazo, <code>request</code> y <code>deliver</code> responden
+        <code>422 expired</code>.</p>
+      </div>
       <p>
         No cambia el estado. <code>confirm_status</code> sirve además como
         <strong>poll</strong> durante la espera de confirmación (ver c). Si
@@ -880,7 +920,8 @@
   <span class="tok-key">"member_name"</span>: <span class="tok-str">"Alexander Sut"</span>,
   <span class="tok-key">"pending"</span>: [
     { <span class="tok-key">"code"</span>: <span class="tok-str">"TK-3F9A2C"</span>, <span class="tok-key">"reward_name"</span>: <span class="tok-str">"Lavado de vehículo"</span>,
-      <span class="tok-key">"points_spent"</span>: <span class="tok-num">150</span>, <span class="tok-key">"confirm_status"</span>: <span class="tok-str">"none"</span> }
+      <span class="tok-key">"reward_value"</span>: <span class="tok-num">75.00</span>, <span class="tok-key">"points_spent"</span>: <span class="tok-num">150</span>,
+      <span class="tok-key">"expires_at"</span>: null, <span class="tok-key">"confirm_status"</span>: <span class="tok-str">"none"</span> }
   ]
 }</code></pre>
 
@@ -893,7 +934,7 @@
       <pre><code>{
   <span class="tok-key">"code"</span>: <span class="tok-str">"TK-3F9A2C"</span>,
   <span class="tok-key">"action"</span>: <span class="tok-str">"request"</span>,
-  <span class="tok-key">"operator"</span>: { <span class="tok-key">"external_id"</span>: <span class="tok-str">"EMP-0147"</span>, <span class="tok-key">"name"</span>: <span class="tok-str">"María Tzoc"</span> }
+  <span class="tok-key">"operator"</span>: { <span class="tok-key">"external_id"</span>: <span class="tok-str">"EMP-0147"</span>, <span class="tok-key">"name"</span>: <span class="tok-str">"María Tzoc"</span>, <span class="tok-key">"dpi"</span>: <span class="tok-str">"2990123450101"</span> }
 }</code></pre>
       <p>
         Al cliente <strong>le aparece la solicitud en su app al instante</strong> (si la
@@ -927,6 +968,7 @@
   <span class="tok-key">"status"</span>: <span class="tok-str">"delivered"</span>,
   <span class="tok-key">"code"</span>: <span class="tok-str">"TK-3F9A2C"</span>,
   <span class="tok-key">"reward_name"</span>: <span class="tok-str">"Lavado de vehículo"</span>,
+  <span class="tok-key">"reward_value"</span>: <span class="tok-num">75.00</span>,
   <span class="tok-key">"points_spent"</span>: <span class="tok-num">150</span>,
   <span class="tok-key">"member_name"</span>: <span class="tok-str">"Alexander Sut"</span>,
   <span class="tok-key">"redeemed_at"</span>: <span class="tok-str">"2026-07-28T18:22:10.000Z"</span>,
@@ -970,6 +1012,7 @@
             <tr><td>400</td><td><code>invalid_action</code></td><td><code>action</code> distinto de request, cancel, deliver</td></tr>
             <tr><td>409</td><td><code>already_delivered</code></td><td>El premio ya fue entregado — no se entrega dos veces</td></tr>
             <tr><td>422</td><td><code>not_confirmed</code></td><td>El cliente aún no confirmó la entrega en su app</td></tr>
+            <tr><td>422</td><td><code>expired</code></td><td>El plazo para reclamar el premio venció (solo premios con <code>expires_at</code>). Incluye <code>expired_at</code></td></tr>
             <tr><td>500</td><td><code>server_error</code></td><td>Error nuestro — reintentar en unos segundos</td></tr>
           </tbody>
         </table>
@@ -1085,6 +1128,9 @@
         <li><code>deliver</code> de un premio ya entregado → <code>409 already_delivered</code></li>
         <li>Pendientes por tarjeta (<code>?card_code=</code>) → lista correcta</li>
         <li>Código escrito a mano (sin escáner) → mismo resultado que el QR</li>
+        <li><strong>v1.4</strong> · Estación enviada con su código de PROPER (<code>17261015-1</code>…) → acredita en la correcta</li>
+        <li><strong>v1.4</strong> · Mismo <code>operator.dpi</code> con dos <code>external_id</code> distintos → ambas compras quedan en el mismo colaborador</li>
+        <li><strong>v1.4</strong> · Consulta de canje → trae <code>reward_value</code> (número o <code>null</code>) y <code>expires_at</code></li>
       </ul>
     </section>
 
@@ -1102,29 +1148,28 @@
         <li><strong>Rotación:</strong> si sospechan que la llave se filtró, avisen y la
           revocamos en minutos.</li>
         <li><strong>Datos personales:</strong> la API expone solo lo mínimo — nombre,
-          nivel, saldo y NIT enmascarado. No devolvemos teléfono, DPI, dirección ni correo.</li>
+          nivel, saldo y NIT enmascarado. No devolvemos teléfono, DPI, dirección ni correo.
+          El DPI del colaborador que nos envían tampoco se devuelve y se guarda enmascarado
+          en la bitácora.</li>
       </ul>
     </section>
 
     <section id="s10">
-      <h2><span class="n">10</span>Qué necesitamos de PROPER</h2>
-      <ol>
-        <li><strong>Confirmación del contrato</strong> — si los campos de §5.3 están
-          disponibles al cerrar una factura. Los tres críticos: <strong>galones
-          despachados</strong>, <strong>monto de la porción de combustible</strong> y
-          <strong>NIT emitido</strong>.</li>
-        <li><strong>Desglose de combustible en facturas mixtas</strong> — confirmar que
-          pueden separar la línea de combustible del resto de productos. Es lo único que
-          necesitamos discriminado.</li>
-        <li><strong>Identificador del colaborador</strong> — qué campo usarán como
-          <code>external_id</code> y si es estable en el tiempo.</li>
-        <li><strong>Códigos de estación</strong> — su lista con el código que manejan,
-          para dejar el mapeo configurado de nuestro lado.</li>
-        <li><strong>Modelo de llamada</strong> — si los POS llamarán directo a nuestra API
-          o a través de un servidor intermedio de PROPER (recomendamos lo segundo).</li>
-        <li><strong>Volumen estimado</strong> — transacciones por día y por estación, para
-          dimensionar límites de uso.</li>
-      </ol>
+      <h2><span class="n">10</span>Acuerdos con PROPER</h2>
+      <p>Respuestas de PROPER del 19 de septiembre de 2026 a lo que pedíamos en la v1.3:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Tema</th><th>Acuerdo</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>Contrato</td><td>Confirmado: PROPER dispone de galones despachados, monto de combustible y NIT emitido</td></tr>
+            <tr><td>2</td><td>Facturas mixtas</td><td>PROPER envía en <code>fuel_amount</code> solo la suma de combustibles. <code>total_amount</code> debería llevar el <strong>total de la factura</strong> (con tienda) para conciliar</td></tr>
+            <tr><td>3</td><td>Colaborador</td><td><code>external_id</code> = usuario interno de PROPER (puede variar por sucursal) + <strong><code>operator.dpi</code></strong> como dato estable (§3.3)</td></tr>
+            <tr><td>4</td><td>Estaciones</td><td><code>17261015-1</code>, <code>17261015-2</code>, <code>105978272-3</code> — configurados (§3.4)</td></tr>
+            <tr><td>5</td><td>Modelo de llamada</td><td>Servidor de PROPER ⇄ nuestra API (no desde el POS). La llave vive solo en ese servidor</td></tr>
+            <tr><td>6</td><td>Volumen estimado</td><td><strong>Pendiente</strong> — transacciones por día y por estación, para dimensionar límites de uso</td></tr>
+          </tbody>
+        </table>
+      </div>
       <div class="callout c-ok">
         <div class="callout-label">Anulaciones</div>
         <p style="margin:0;">Nada que hacer: una factura anulada no afecta los puntos ya
@@ -1133,18 +1178,21 @@
     </section>
 
     <section id="s11">
-      <h2><span class="n">11</span>Preguntas abiertas de nuestro lado</h2>
+      <h2><span class="n">11</span>Temas abiertos</h2>
       <ul>
-        <li><strong>Combustible por bomba:</strong> pedimos <code>fuel_type</code> como
-          texto. Si manejan códigos de producto, mándenos la tabla y hacemos el mapeo.</li>
-        <li><strong>Varios combustibles en una misma factura</strong> (súper y diésel para
-          dos vehículos): hoy esperamos un solo <code>fuel_type</code> con la suma. Si
-          ocurre con frecuencia, podemos aceptar un arreglo de líneas.</li>
+        <li><strong>Combustible por bomba — cerrado.</strong> El producto es general y la
+          bomba es un parámetro aparte que no necesitamos: <code>fuel_type</code> sigue
+          siendo <code>super</code>, <code>regular</code> o <code>diesel</code>.</li>
+        <li><strong>Varios combustibles en una factura — cerrado.</strong> Se envían
+          sumados con el primer <code>fuel_type</code> de la lista (§5.3).</li>
         <li><strong>Facturas a crédito o con varias formas de pago:</strong> para nosotros
           es indistinto — acreditamos sobre el consumo de combustible facturado.</li>
-        <li><strong>Cliente sin tarjeta escaneada:</strong> si el colaborador olvida
-          escanear, la factura no acumula. ¿Necesitan poder acumular después, con la
-          factura ya cerrada? Se puede habilitar con un plazo (ej. mismo día).</li>
+        <li><strong>Cliente sin tarjeta escaneada (acumular después):</strong> en
+          definición de nuestro lado. Hasta que les enviemos la regla, la acumulación se
+          hace únicamente al momento de la factura.</li>
+        <li><strong>Nombre del colaborador:</strong> en las pruebas recibimos
+          <code>operator.name = "PROPER"</code>. En producción necesitamos el nombre real,
+          porque es el que ve el cliente al calificar la atención.</li>
       </ul>
     </section>
 
@@ -1152,10 +1200,10 @@
 
   <footer class="foot">
     <p>
-      <strong>Este documento es una propuesta.</strong> Todo campo o comportamiento es
-      negociable antes de fijar la versión 1 del contrato. Cualquier duda sobre los
-      ejemplos o el ambiente de pruebas, la resolvemos por el canal que les resulte más
-      cómodo.
+      <strong>Versión 1.4.</strong> Todos los cambios de esta versión son
+      <strong>aditivos</strong>: lo que ya integraron sigue funcionando sin tocarlo.
+      Cualquier duda sobre los ejemplos o el ambiente de pruebas, la resolvemos por el
+      canal que les resulte más cómodo.
     </p>
     <p style="margin-bottom:0;">Puntos Plus · Gasolineras Turkaj · Chichicastenango, Guatemala</p>
   </footer>

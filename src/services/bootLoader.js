@@ -46,6 +46,7 @@ export async function loadFromSupabase({
         pts: r.points_cost, cat: r.category, tier: r.tier_exclusive || undefined,
         points_cost: r.points_cost, category: r.category, tier_exclusive: r.tier_exclusive,
         description: r.description, active: r.active !== false,
+        cash_value: r.cash_value ?? null,   // API v1.4: valor en Q (lo edita el admin)
         // D17: localizaciones de canje (null = todas las estaciones)
         stationIds: r.station_ids || null, storeIds: r.store_ids || null,
         station_ids: r.station_ids || null, store_ids: r.store_ids || null,

@@ -1,7 +1,8 @@
 # API de integración Puntos Plus ⇄ PROPER
 
-**Versión del documento:** 1.3 · 31 de julio de 2026 (ambiente de pruebas con datos reales)
-**Estado:** propuesta técnica para revisión de PROPER
+**Versión del documento:** 1.4 · 19 de septiembre de 2026 (incorpora las respuestas de PROPER a §10 y §11)
+**Estado:** contrato confirmado por PROPER — integración en curso
+**Novedades de esta versión:** ver `docs/API-PROPER-CAMBIOS-v1.4.md` (solo lo que cambió)
 **Contacto:** Puntos Plus — Gasolineras Turkaj, Chichicastenango
 
 ---
@@ -110,6 +111,18 @@ que aparece y lo reutiliza después. Ese espejo:
 No hace falta una sincronización previa ni un catálogo cargado a mano: el
 primer envío del colaborador lo da de alta.
 
+**DPI del colaborador (v1.4, opcional pero recomendado).** El identificador
+interno de PROPER puede variar — por ejemplo, si al colaborador se le crea
+otro usuario en otra sucursal. Para que siga siendo **la misma persona** de
+nuestro lado, envíen su DPI en `operator.dpi`:
+
+- Si llega un `external_id` nuevo con un DPI que ya conocemos, lo unimos al
+  mismo colaborador: conserva su historial de atención y calificaciones.
+- Aceptamos el DPI con o sin espacios/guiones; deben ser **13 dígitos**. Un
+  DPI con otro largo se ignora (la compra se acredita igual).
+- El DPI **nunca** se devuelve en ninguna respuesta y en nuestra bitácora se
+  guarda enmascarado.
+
 ### 3.4 La estación — viene con el colaborador
 
 Cada colaborador porta su propio POS e **inicia sesión en PROPER**, que ya le
@@ -119,8 +132,15 @@ dispositivo**: manden el código de estación que ya manejan (en
 
 Aceptamos tres formas, en este orden:
 
-1. El **código de estación de PROPER** (ej. `"1"`, `"EST-01"`) — nos pasan su
-   lista una vez y la configuramos de nuestro lado.
+1. El **código de estación de PROPER** — ya configurados de nuestro lado
+   (v1.4) con la lista que nos entregaron:
+
+   | Código PROPER | Estación en Puntos Plus |
+   |---|---|
+   | `17261015-1` | Turkaj I |
+   | `17261015-2` | Turkaj II |
+   | `105978272-3` | Turkaj III (Estación de Servicio La Cruz) |
+
 2. El **nombre** (`"Turkaj I"`, `"turkaj 1"` — toleramos mayúsculas y espacios).
 3. Si no viene, usamos **la última estación conocida de ese colaborador**.
 
@@ -248,7 +268,7 @@ curl -X POST "https://puntosplus.vercel.app/api/v1/purchases" \
     "nit": "CF",
     "invoice_no": "FAC-2026-000123",
     "total_amount": 312.50,
-    "operator": { "external_id": "EMP-017", "name": "Juan Pérez", "station": "1" }
+    "operator": { "external_id": "EMP-017", "name": "Juan Pérez", "dpi": "2990123450101", "station": "17261015-1" }
   }'
 ```
 
@@ -264,7 +284,8 @@ curl -X POST "https://puntosplus.vercel.app/api/v1/purchases" \
 | `invoice_no` | string | Recomendado | Número de factura, para conciliación |
 | `total_amount` | number | Opcional | Total de la factura (con tienda). Solo se guarda para conciliar: **no** afecta los puntos |
 | `operator.external_id` | string | Sí | Identificador del colaborador en PROPER |
-| `operator.name` | string | Recomendado | Nombre, para reportes de atención |
+| `operator.name` | string | Recomendado | Nombre **real del colaborador** (es el que ve el cliente en su notificación: "Atendido por Juan") |
+| `operator.dpi` | string | Recomendado (v1.4) | DPI del colaborador, 13 dígitos. Une sus distintos usuarios de PROPER en una sola persona (§3.3) |
 | `operator.station` | string | Recomendado | Código de estación de PROPER (§3.4) |
 
 > **Compatibilidad:** aceptamos `amount` como alias de `fuel_amount` y
@@ -281,6 +302,14 @@ factura incluye otros productos, manden:
 Ejemplo: factura de Q312.50 = Q250 de súper + Q62.50 de tienda → el cliente
 acumula por los Q250. Si la factura **no tiene combustible**, devolvemos
 `422 no_fuel_in_invoice` y no se acredita nada.
+
+#### Varios combustibles en una misma factura (confirmado en v1.4)
+
+Criterio acordado con PROPER: si una factura trae más de un combustible, se
+envían **sumados** `fuel_amount`, `gallons` y `total_amount`, y en
+`fuel_type` el **primero de la lista**. Los puntos no cambian (dependen del
+monto de combustible). De nuestro lado la instrucción operativa en pista es
+emitir **una factura por producto**, así que el caso debería ser excepcional.
 
 #### Sobre los precios y los galones
 
@@ -377,15 +406,27 @@ curl -X GET "https://puntosplus.vercel.app/api/v1/redemptions?code=TK-3F9A2C" \
   "code": "TK-3F9A2C",
   "reward_name": "Lavado de vehículo",
   "category": "servicio",
+  "reward_value": 75.00,
   "points_spent": 150,
   "member_name": "Alexander Sut",
   "card_code": "CTPD-00113",
   "created_at": "2026-07-28T18:22:10.000Z",
+  "expires_at": null,
   "delivered": false,
   "delivered_at": null,
   "confirm_status": "none"
 }
 ```
+
+**Campos nuevos en v1.4:**
+
+- `reward_value` — valor del premio **en quetzales** (number). Puede venir
+  `null` cuando el premio no tiene un valor monetario definido: el POS debe
+  tolerarlo. Es el valor del premio, **no** lo que pagó el cliente (los
+  premios se pagan con puntos).
+- `expires_at` — fecha límite para reclamarlo (ISO 8601 UTC) o `null` si
+  **no vence**. Hoy solo vencen los premios de rifa; pasado el plazo,
+  `request` y `deliver` responden `422 expired`.
 
 No cambia el estado. `confirm_status` sirve además como **poll** durante la
 espera de confirmación (ver c). Si `delivered` viene en `true`, el premio ya
@@ -408,8 +449,9 @@ curl -X GET "https://puntosplus.vercel.app/api/v1/redemptions?card_code=CTOD-000
   "card_code": "CTOD-00042",
   "pending": [
     { "code": "TK-3F9A2C", "reward_name": "Lavado de vehículo",
-      "category": "servicio", "points_spent": 150,
-      "created_at": "2026-07-28T18:22:10.000Z", "confirm_status": "none" }
+      "category": "servicio", "reward_value": 75.00, "points_spent": 150,
+      "created_at": "2026-07-28T18:22:10.000Z", "expires_at": null,
+      "confirm_status": "none" }
   ]
 }
 ```
@@ -429,8 +471,8 @@ curl -X POST "https://puntosplus.vercel.app/api/v1/redemptions" \
 
 ```json
 { "ok": true, "status": "pending", "code": "TK-3F9A2C",
-  "reward_name": "Lavado de vehículo", "member_name": "Alexander Sut",
-  "reward_icon": "🚿", "points_spent": 150 }
+  "reward_name": "Lavado de vehículo", "reward_value": 75.00,
+  "member_name": "Alexander Sut", "reward_icon": "🚿", "points_spent": 150 }
 ```
 
 Al cliente **le aparece la solicitud en su app al instante** (si la tenía
@@ -458,7 +500,7 @@ curl -X POST "https://puntosplus.vercel.app/api/v1/redemptions" \
   -d '{
     "code": "TK-3F9A2C",
     "action": "deliver",
-    "operator": { "external_id": "EMP-0147", "name": "María Tzoc" }
+    "operator": { "external_id": "EMP-0147", "name": "María Tzoc", "dpi": "2990123450101" }
   }'
 ```
 
@@ -469,6 +511,7 @@ curl -X POST "https://puntosplus.vercel.app/api/v1/redemptions" \
   "code": "TK-3F9A2C",
   "reward_name": "Lavado de vehículo",
   "category": "servicio",
+  "reward_value": 75.00,
   "points_spent": 150,
   "member_name": "Alexander Sut",
   "redeemed_at": "2026-07-28T18:22:10.000Z",
@@ -512,6 +555,7 @@ mostrar al colaborador.
 | 400 | `invalid_action` | `action` distinto de `request`, `cancel`, `deliver` |
 | 409 | `already_delivered` | El premio ya fue entregado — no se entrega dos veces |
 | 422 | `not_confirmed` | El cliente aún no confirmó la entrega en su app (§5.4) |
+| 422 | `expired` | El plazo para reclamar el premio venció (solo premios con `expires_at`). Incluye `expired_at` |
 | 405 | `method_not_allowed` | Método HTTP incorrecto |
 | 500 | `server_error` | Error nuestro — reintentar en unos segundos |
 
@@ -606,6 +650,9 @@ Sugerimos validar estos casos:
 - [ ] `deliver` de un premio ya entregado → `409 already_delivered`
 - [ ] Pendientes por tarjeta (`?card_code=`) → lista correcta
 - [ ] Código escrito a mano (sin escáner) → mismo resultado que el QR
+- [ ] **(v1.4)** Estación enviada con su código de PROPER (`17261015-1`…) → acredita en la correcta
+- [ ] **(v1.4)** Mismo `operator.dpi` con dos `external_id` distintos → ambas compras quedan en el mismo colaborador
+- [ ] **(v1.4)** Consulta de canje → trae `reward_value` (número o `null`) y `expires_at`
 
 ---
 
@@ -627,27 +674,16 @@ Sugerimos validar estos casos:
 
 ---
 
-## 10. Qué necesitamos de PROPER
+## 10. Acuerdos con PROPER (respuestas del 19-sep-2026)
 
-Para cerrar la integración nos ayudaría recibir:
-
-1. **Confirmación del contrato** — si los campos de §5.3 están disponibles en su
-   sistema al momento de cerrar una factura. Los tres críticos son:
-   **galones despachados**, **monto de la porción de combustible** y **NIT
-   emitido**.
-2. **Desglose de combustible en facturas mixtas** — confirmar que pueden
-   separar la línea de combustible del resto de productos. Es lo único que
-   necesitamos que venga discriminado.
-3. **Identificador del colaborador** — qué campo usarán como `external_id`
-   (código de empleado, usuario con el que inicia sesión, etc.) y si es estable
-   en el tiempo.
-4. **Códigos de estación** — su lista de estaciones con el código que manejan,
-   para dejar el mapeo configurado de nuestro lado (§3.4).
-5. **Modelo de llamada** — si los POS llamarán directo a nuestra API o a través
-   de un servidor intermedio de PROPER (recomendamos lo segundo: la llave queda
-   protegida y ustedes controlan reintentos y trazabilidad).
-6. **Volumen estimado** — transacciones por día y por estación, para dimensionar
-   límites de uso.
+| # | Tema | Acuerdo |
+|---|---|---|
+| 1 | Contrato | Confirmado: PROPER dispone de galones despachados, monto de combustible y NIT emitido |
+| 2 | Facturas mixtas | PROPER envía en `fuel_amount` solo la suma de combustibles. `total_amount` debería llevar el **total de la factura** (con tienda) para conciliar |
+| 3 | Identificador del colaborador | `external_id` = usuario interno de PROPER (puede variar por sucursal) + **`operator.dpi`** como dato estable (§3.3) |
+| 4 | Códigos de estación | `17261015-1`, `17261015-2`, `105978272-3` — configurados (§3.4) |
+| 5 | Modelo de llamada | Servidor de PROPER ⇄ nuestra API (no desde el POS). La llave vive solo en ese servidor |
+| 6 | Volumen estimado | **Pendiente** — transacciones por día y por estación, para dimensionar límites de uso |
 
 > **Anulaciones: nada que hacer.** Como se explica en §4.1, una factura anulada
 > no afecta los puntos ya acreditados. No hay endpoint de reverso ni necesitan
@@ -655,20 +691,21 @@ Para cerrar la integración nos ayudaría recibir:
 
 ---
 
-## 11. Preguntas abiertas de nuestro lado
+## 11. Temas abiertos
 
-- **Combustible por bomba:** pedimos `fuel_type` como texto (`super`,
-  `regular`, `diesel`). Si manejan códigos de producto, mándenos la tabla y
-  hacemos el mapeo de nuestro lado.
-- **Varios combustibles en una misma factura** (p. ej. súper y diésel para dos
-  vehículos): hoy esperamos un solo `fuel_type` con la suma de galones y monto.
-  Si esto ocurre con frecuencia, podemos aceptar un arreglo de líneas.
+- **Combustible por bomba — cerrado.** El producto es general y la bomba es un
+  parámetro aparte que no necesitamos: `fuel_type` sigue siendo `super`,
+  `regular` o `diesel`.
+- **Varios combustibles en una factura — cerrado.** Se envían sumados con el
+  primer `fuel_type` de la lista (§5.3).
 - **Facturas a crédito o con varias formas de pago:** para nosotros es
   indistinto — acreditamos sobre el consumo de combustible facturado.
-  Confirmar si comparten ese criterio.
-- **Cliente sin tarjeta escaneada:** si el colaborador olvida escanear, la
-  factura simplemente no acumula. ¿Necesitan poder acumular después, con la
-  factura ya cerrada? Se puede habilitar con un plazo (ej. mismo día).
+- **Cliente sin tarjeta escaneada (acumular después):** **en definición** de
+  nuestro lado. Hasta que les enviemos la regla, la acumulación se hace
+  únicamente al momento de la factura.
+- **Nombre del colaborador:** en las pruebas recibimos `operator.name =
+  "PROPER"`. En producción necesitamos el nombre real, porque es el que ve el
+  cliente al calificar la atención.
 
 ---
 
@@ -678,3 +715,14 @@ Cualquier duda sobre el contrato, ejemplos o pruebas, escribinos y lo
 resolvemos por el canal que les resulte más cómodo. Este documento es una
 propuesta: **todo campo o comportamiento es negociable** antes de fijar la
 versión 1 de la API.
+
+---
+
+## Historial de versiones
+
+| Versión | Fecha | Cambios |
+|---|---|---|
+| 1.4 | 19-sep-2026 | `operator.dpi`; `reward_value` y `expires_at` en canjes; error `expired` documentado; códigos de estación configurados; criterio de varios combustibles; §10/§11 con los acuerdos. Detalle en `API-PROPER-CAMBIOS-v1.4.md` |
+| 1.3 | 31-jul-2026 | Ambiente de pruebas con datos reales; canje completo desde el POS |
+| 1.2 | 29-jul-2026 | Facturas anuladas no revierten puntos |
+| 1.1 | 29-jul-2026 | Factura primero; facturas mixtas; estación por colaborador |

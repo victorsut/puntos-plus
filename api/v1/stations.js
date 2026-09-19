@@ -1,9 +1,10 @@
 // api/v1/stations.js — catálogo de estaciones (F7a, PROPER).
 //
 // GET /api/v1/stations
-// PROPER necesita el `station_id` de Puntos Plus para enviarlo en cada
-// compra. Se consulta una vez y se guarda en la configuración del POS
-// (cada dispositivo pertenece a una estación fija).
+// Solo REFERENCIA: la estación viaja con cada factura
+// (`operator.station` = código de estación de PROPER, mapeado en
+// stations.external_code). Sirve para cotejar ese mapeo — el POS no
+// necesita configurar nada por dispositivo.
 import { authenticate, json, cors, statusFor, messageFor, sbAdmin } from '../_lib/apiAuth.js';
 
 export default async function handler(req, res) {
