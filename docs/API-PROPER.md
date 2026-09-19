@@ -2,7 +2,7 @@
 
 **Versión del documento:** 1.4 · 19 de septiembre de 2026 (incorpora las respuestas de PROPER a §10 y §11)
 **Estado:** contrato confirmado por PROPER — integración en curso
-**Novedades de esta versión:** ver `docs/API-PROPER-CAMBIOS-v1.4.md` (solo lo que cambió)
+**Novedades de esta versión:** ver `docs/NOVEDADES/API-PROPER-CAMBIOS-v1.4.md` (solo lo que cambió)
 **Contacto:** Puntos Plus — Gasolineras Turkaj, Chichicastenango
 
 ---
@@ -767,7 +767,7 @@ versión 1 de la API.
 
 | Versión | Fecha | Cambios |
 |---|---|---|
-| 1.4 | 19-sep-2026 | Acumulación solo al momento de la factura + candado de factura única (`invoice_no` obligatorio, `invoice_already_credited`); `operator.dpi`; `reward_value` y `expires_at` en canjes; error `expired` documentado; códigos de estación configurados; criterio de varios combustibles; §10/§11 con los acuerdos. Detalle en `API-PROPER-CAMBIOS-v1.4.md` |
+| 1.4 | 19-sep-2026 | Acumulación solo al momento de la factura + candado de factura única (`invoice_no` obligatorio, `invoice_already_credited`); `operator.dpi`; `reward_value` y `expires_at` en canjes; error `expired` documentado; códigos de estación configurados; criterio de varios combustibles; §10/§11 con los acuerdos. Detalle en `NOVEDADES/API-PROPER-CAMBIOS-v1.4.md` |
 | 1.3 | 31-jul-2026 | Ambiente de pruebas con datos reales; canje completo desde el POS |
 | 1.2 | 29-jul-2026 | Facturas anuladas no revierten puntos |
 | 1.1 | 29-jul-2026 | Factura primero; facturas mixtas; estación por colaborador |

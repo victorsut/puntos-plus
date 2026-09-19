@@ -4,8 +4,8 @@
 // Puntos Plus) del contrato principal docs/api-proper.html.
 //
 // Uso:  node tools/docs/build-cambios.cjs 1.4
-//   lee   docs/API-PROPER-CAMBIOS-v1.4.md
-//   emite docs/api-proper-cambios-v1.4.html
+//   lee   docs/NOVEDADES/API-PROPER-CAMBIOS-v1.4.md
+//   emite docs/NOVEDADES/api-proper-cambios-v1.4.html
 //
 // Conversor Markdown MÍNIMO — cubre solo lo que usan estos documentos:
 // h1–h3, párrafos, tablas, listas (- y - [ ]), citas (>), bloques ```json
@@ -16,7 +16,7 @@ const path = require('path');
 const ver = process.argv[2];
 if (!ver) { console.error('Falta la versión (ej. 1.4)'); process.exit(1); }
 const root = path.join(__dirname, '..', '..');
-const md = fs.readFileSync(path.join(root, 'docs', `API-PROPER-CAMBIOS-v${ver}.md`), 'utf8').replace(/\r\n/g, '\n');
+const md = fs.readFileSync(path.join(root, 'docs', 'NOVEDADES', `API-PROPER-CAMBIOS-v${ver}.md`), 'utf8').replace(/\r\n/g, '\n');
 const base = fs.readFileSync(path.join(root, 'docs', 'api-proper.html'), 'utf8');
 const style = base.slice(base.indexOf('<style>'), base.indexOf('</style>') + 8);
 
@@ -161,6 +161,6 @@ ${out.join('\n')}
 
 </div>
 `;
-const dest = path.join(root, 'docs', `api-proper-cambios-v${ver}.html`);
+const dest = path.join(root, 'docs', 'NOVEDADES', `api-proper-cambios-v${ver}.html`);
 fs.writeFileSync(dest, html);
 console.log('OK →', path.relative(root, dest), `(${sec} secciones)`);

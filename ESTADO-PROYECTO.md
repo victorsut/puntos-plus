@@ -129,7 +129,7 @@ puntos-plus/
 │   │                             #   vehicleCatalog.js (marcas/modelos + bodyFor), geoGt.js
 │   └── styles/global.css
 ├── supabase/migrations/          # 104 migraciones SQL (se ejecutan A MANO en el SQL Editor)
-├── docs/                         # API-PROPER.md v1.4 (+html, Postman), API-PROPER-CAMBIOS-v1.4 (novedades, md+html), TIENDAS.md
+├── docs/                         # API-PROPER.md v1.4 (+html, Postman), NOVEDADES/ (un documento de novedades de la API por versión, md+html), TIENDAS.md
 ├── tools/
 │   ├── artes/                    # pipeline de calco de artes (motor, comparador, historico)
 │   ├── harness/                  # arneses visuales (Vite puerto 3100 + Edge headless)
