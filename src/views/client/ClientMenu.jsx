@@ -143,7 +143,7 @@ export default function ClientMenu(ctx) {
 
       {/* Canal de asistencia (WhatsApp / llamada + horario en vivo) */}
       {supportOpen && (
-        <SupportSheet onClose={() => setSupportOpen(false)} dark={dark} phone={cfg?.supportPhone} />
+        <SupportSheet onClose={() => setSupportOpen(false)} dark={dark} phone={cfg?.supportPhone} showTour />
       )}
     </div>
   );

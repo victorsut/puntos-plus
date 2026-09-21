@@ -37,7 +37,7 @@ export default function BottomNav({ items, current, onSelect, view, tierName, da
         if (n.isQR && isC) {
           const qrActive = current === 'qr';
           return (
-            <button key="qr" onClick={(e) => onSelect('qr', e)} style={{
+            <button key="qr" data-tour="nav-qr" onClick={(e) => onSelect('qr', e)} style={{
               flex: '1 1 0', minWidth: 0,
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
               background: 'none', border: 'none', cursor: 'pointer',
@@ -72,7 +72,7 @@ export default function BottomNav({ items, current, onSelect, view, tierName, da
 
         // ── Botones normales ──────────────────────────────
         return (
-          <button key={n.id} onClick={(e) => onSelect(n.id, e)} style={{
+          <button key={n.id} data-tour={`nav-${n.id}`} onClick={(e) => onSelect(n.id, e)} style={{
             flex: '1 1 0', minWidth: 0,
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
             padding: '4px 0', background: 'none', border: 'none',

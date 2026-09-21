@@ -2012,6 +2012,22 @@ runtime en Vercel (7 días). Deuda: 6 socios (cuentas de prueba/legado de
 junio) con saldo ≠ libro mayor; check_member_exists sin límite de ritmo;
 llave Pruebas y espejos de prueba activos (GO-LIVE).
 
+**TUTORIAL INTERACTIVO DEL CLIENTE (21-sep, pedido del dueño):** recorrido
+de 11 pasos con coach marks (capa oscura con foco recortado por máscara SVG,
+anillo naranja pulsante y tarjeta con flecha) sobre los botones principales
+del inicio: bienvenida, tarjeta de nivel/puntos, QR, Canjes, Rifa, Vehículos,
+Promociones, Encuesta, Notificaciones, Menú y Asistencia. Avanzar / Atrás /
+Omitir, barra de progreso, botón físico de volver = omitir, modo claro y
+oscuro. Posiciones medidas en vivo (getBoundingClientRect, con scroll al
+elemento). Se muestra al CREAR LA CUENTA y CADA VEZ QUE SE ABRE SESIÓN en el
+dispositivo (transición authScreen → logged; la sesión restaurada no
+dispara), tras el splash; reapertura manual desde Asistencia y ayuda ("Ver el
+tutorial de la app", junto a WhatsApp). Sin migración. Piezas:
+`src/lib/tour.js` (marca pp_tour_pending + evento), `components/tour/`
+(ClientTour motor, ClientTourGate disparo, tourSteps contenido), anclas
+`data-tour` en BottomNav, HomeHeader, TierCardBento, BentoTile (prop tourId),
+PromoBentoTile; montado en AppModals. Arnés `tools/harness/tour.html?step=N`.
+
 ### Versión 4.4 — 19 de septiembre de 2026
 
 **API PROPER v1.4** (PROPER integra contra producción desde el 16-sep): DPI

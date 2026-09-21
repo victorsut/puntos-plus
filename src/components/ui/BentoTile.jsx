@@ -12,12 +12,14 @@ import { bento } from '../../constants/styles';
 export default function BentoTile({
   color, icon, title, sub, onClick, ink = '#fff', titleColor,
   dimmed = false, badge = null, span = 1, square = false, index = 0,
+  tourId = null, // ancla del tutorial interactivo (data-tour)
   children,
 }) {
   const wide = span === 2;
   return (
     <div
       onClick={onClick}
+      data-tour={tourId || undefined}
       // pp-bento-row: en pantallas cortas los tiles medianos pasan a
       // layout horizontal (icono a la izquierda) para que el home quepa.
       className={`pp-tile${!wide && !square ? ' pp-bento-row' : ''}`}

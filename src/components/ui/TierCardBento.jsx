@@ -45,6 +45,7 @@ export default function TierCardBento({ me, cTier, onOpenDetail, onPointsTap }) 
     <div
       onClick={onOpenDetail}
       className="pp-tile"
+      data-tour="pts-card"
       style={{
         borderRadius: bento.radius,
         padding: shortScr ? '14px 18px' : '18px 20px',

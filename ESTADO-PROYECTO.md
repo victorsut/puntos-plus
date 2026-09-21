@@ -251,6 +251,8 @@ se ejecutan a mano en el SQL Editor de Supabase (regla de CLAUDE.md §9).
 - Canjes: por código, confirmación al socio (Realtime), entrega atómica con comprobante e impresión térmica (`window.print`, `print_logs`). Rifa: venta de boletos.
 - Con PROPER activo el colaborador NO usa esta vista: el POS llama a la API y la estación viaja en cada factura.
 
+- Tutorial interactivo (21-sep): 11 coach marks sobre los botones principales del inicio; aparece al crear la cuenta y al abrir sesión; reapertura desde Asistencia y ayuda (`components/tour/`, anclas `data-tour`).
+
 ### Admin (shell lateral, desktop-first)
 - Dashboard con KPIs reales (Q por combustible y por estación, puntos canjeados = suma de `points_spent`) y tops; Socios (ficha completa, ajustes de puntos auditados, reset de contraseña); Personal (operadores + admins); Catálogo de premios (localizaciones y tiendas asociadas); Promociones (cards con imagen) y Reglas de promoción (motor); Rifas; Estaciones (WiFi, horario, coordenadas, código PROPER); Días especiales.
 - Configuración: identidad de la empresa, puntos por nivel y eventos, precios de combustible (globales o por estación, D4), degradación (interruptor), soporte, alertas de servicio (umbrales D24), administradores, API externa (lista de llaves con estado y uso; generar y desactivar/reactivar con motivo auditado, 21-sep), términos.

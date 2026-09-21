@@ -9,9 +9,10 @@
 // editable en Admin → Configuración vía set_support_phone).
 import { useState, useEffect } from 'react';
 import { bento, BRAND_ORANGE } from '../../constants/styles';
-import { Whatsapp, Phone, Clock } from './Icons';
+import { Whatsapp, Phone, Clock, Info } from './Icons';
 import { phoneMask } from '../../lib/inputMasks';
 import useBackLayer from '../../hooks/useBackLayer';
+import { openTour } from '../../lib/tour';
 
 // Hora REAL de Guatemala vía Intl (independiente de la zona del
 // dispositivo — un cliente de viaje ve el horario correcto del negocio)
@@ -25,7 +26,9 @@ const isOpenNow = () => {
   return !['Sat', 'Sun'].includes(day) && hour >= 8 && hour < 16;
 };
 
-export default function SupportSheet({ onClose, dark, phone }) {
+// showTour (21-sep): muestra "Ver el tutorial de la app" — solo con
+// sesión de cliente (Inicio y Menú); en el login no aplica.
+export default function SupportSheet({ onClose, dark, phone, showTour = false }) {
   const num  = (phone || '49741067').replace(/\D/g, '');
   const ink  = dark ? '#fff' : '#0D0D0D';
   const sub  = dark ? 'rgba(255,255,255,.55)' : '#9E9E9E';
@@ -74,6 +77,25 @@ export default function SupportSheet({ onClose, dark, phone }) {
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: bento.green, color: '#fff', borderRadius: 16, padding: 15, fontFamily: "'DM Sans'", fontSize: 14, fontWeight: 800, textDecoration: 'none', marginBottom: 10 }}>
           <Whatsapp /> Escribir por WhatsApp
         </a>
+
+        {/* Tutorial interactivo (21-sep): se cierra la hoja y el gate
+            lleva al inicio y arranca desde el primer paso */}
+        {showTour && (
+          <button onClick={() => { close(); setTimeout(openTour, 240); }} style={{
+            display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left',
+            background: card, border: 'none', borderRadius: 16, padding: '13px 14px', marginBottom: 10,
+            cursor: 'pointer', color: ink, fontFamily: "'DM Sans'",
+          }}>
+            <span style={{ width: 36, height: 36, borderRadius: 11, background: BRAND_ORANGE, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Info />
+            </span>
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <span style={{ display: 'block', fontSize: 13.5, fontWeight: 800 }}>Ver el tutorial de la app</span>
+              <span style={{ display: 'block', fontSize: 12, color: sub, marginTop: 2 }}>Un recorrido de un minuto por lo básico</span>
+            </span>
+            <span style={{ fontSize: 20, color: sub, fontWeight: 700 }}>›</span>
+          </button>
+        )}
 
         {/* Sin WhatsApp: el número siempre visible + llamada directa */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: card, borderRadius: 16, padding: '13px 14px' }}>

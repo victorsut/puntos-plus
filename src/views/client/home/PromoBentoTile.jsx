@@ -17,6 +17,7 @@ export default function PromoBentoTile({ activePromos, promoIdx, setPromoIdx, on
   return (
     <div
       className="pp-tile"
+      data-tour="tile-promos"
       onTouchStart={(e) => {
         promoTouchRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         promoSwipedRef.current = false;

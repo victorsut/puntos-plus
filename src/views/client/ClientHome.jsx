@@ -165,7 +165,7 @@ export default function ClientHome(ctx) {
 
         {/* 4 · Encuesta de Satisfacción (sustituye a "Encuentra Shell" — D34) */}
         <BentoTile
-          index={3} color={htp.survey} ink={htp.surveyInk} titleColor={htp.surveyTitle}
+          index={3} tourId="tile-survey" color={htp.survey} ink={htp.surveyInk} titleColor={htp.surveyTitle}
           icon={<SurveyIcon color={htp.surveyInk} />} title="Encuesta de Satisfacción"
           sub={mySurveyCount >= cfg.surveyDaily
             ? 'Completaste las de hoy'
@@ -299,7 +299,7 @@ export default function ClientHome(ctx) {
           leídas al abrir (el badge se apaga al instante). */}
       {/* Canal de asistencia (WhatsApp / llamada + horario en vivo) */}
       {supportOpen && (
-        <SupportSheet onClose={() => setSupportOpen(false)} dark={dark} phone={cfg?.supportPhone} />
+        <SupportSheet onClose={() => setSupportOpen(false)} dark={dark} phone={cfg?.supportPhone} showTour />
       )}
 
       {showNotifs && (

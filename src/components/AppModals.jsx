@@ -20,6 +20,7 @@ import RedeemConfirmRequestModal from './RedeemConfirmRequestModal';
 import RedeemConfirmSheet from './RedeemConfirmSheet';
 import PurchaseConfirmSheet from './PurchaseConfirmSheet';
 import ClientQrSheet from './ClientQrSheet';
+import ClientTourGate from './tour/ClientTourGate';
 
 export default function AppModals({
   ctx, toast,
@@ -157,6 +158,10 @@ export default function AppModals({
         dark={dark}
         onClose={() => setSpecialBonusModal(prev => ({ ...prev, open: false }))}
       />
+
+      {/* ── Tutorial interactivo del cliente (21-sep): al crear la cuenta
+          y al abrir sesión; reapertura desde Asistencia y ayuda ── */}
+      <ClientTourGate ctx={ctx} />
 
       {/* Aviso de nueva version disponible (Service Worker) */}
       <UpdateAvailable />

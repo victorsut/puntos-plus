@@ -28,7 +28,7 @@ export default function HomeHeader({
   // Campana de notificaciones (28-jul): badge con las sin leer; abre
   // el inbox (NotificationsSheet) con container transform desde el ícono.
   const bellBtn = (extraStyle) => (
-    <button onClick={onOpenNotifs} aria-label="Notificaciones" style={{
+    <button onClick={onOpenNotifs} aria-label="Notificaciones" data-tour="header-bell" style={{
       width: 42, height: 42, border: 'none', cursor: 'pointer',
       background: 'none', color: headerTxt, position: 'relative',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -51,7 +51,7 @@ export default function HomeHeader({
 
   // Canal de asistencia (4-ago): icono de ayuda a la par de la campana
   const helpBtn = () => (
-    <button onClick={onOpenSupport} aria-label="Asistencia y ayuda" style={{
+    <button onClick={onOpenSupport} aria-label="Asistencia y ayuda" data-tour="header-help" style={{
       width: 42, height: 42, border: 'none', cursor: 'pointer',
       background: 'none', color: headerTxt,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -62,7 +62,7 @@ export default function HomeHeader({
   );
 
   const menuBtn = () => (
-    <button onClick={onOpenMenu} aria-label="Menú" style={{
+    <button onClick={onOpenMenu} aria-label="Menú" data-tour="header-menu" style={{
       width: 42, height: 42, border: 'none', cursor: 'pointer',
       background: 'none', color: headerTxt,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
