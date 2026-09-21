@@ -295,7 +295,7 @@ DECLARE
   v_mid   uuid;
   v_out   jsonb := '{}'::jsonb;
   r       RECORD;
-  f       RECORD;
+  c       RECORD;   -- fila del recorrido cronológico (no usar f: es el alias de la subconsulta del FOR externo)
   v_first RECORD;
   v_last  RECORD;
   v_gal   numeric;
@@ -333,7 +333,7 @@ BEGIN
     v_anchor_km := NULL; v_win_gal := 0; v_sum_km := 0; v_sum_gal := 0; v_windows := 0; v_last_kmgal := NULL;
 
     -- Recorrido cronológico: anclas = km + lleno (dado o inferido ≥85 % del tanque)
-    FOR f IN
+    FOR c IN
       SELECT t.created_at, t.gallons, t.km_reading,
              COALESCE(t.full_tank,
                       r.tank_gal IS NOT NULL AND r.tank_gal > 0 AND t.gallons >= 0.85 * r.tank_gal) AS is_full
@@ -344,15 +344,15 @@ BEGIN
       ) t
       ORDER BY t.created_at ASC
     LOOP
-      v_win_gal := v_win_gal + COALESCE(f.gallons, 0);
-      IF f.km_reading IS NOT NULL AND f.is_full THEN
-        IF v_anchor_km IS NOT NULL AND f.km_reading - v_anchor_km >= 10 AND v_win_gal > 0 THEN
-          v_sum_km  := v_sum_km + (f.km_reading - v_anchor_km);
+      v_win_gal := v_win_gal + COALESCE(c.gallons, 0);
+      IF c.km_reading IS NOT NULL AND c.is_full THEN
+        IF v_anchor_km IS NOT NULL AND c.km_reading - v_anchor_km >= 10 AND v_win_gal > 0 THEN
+          v_sum_km  := v_sum_km + (c.km_reading - v_anchor_km);
           v_sum_gal := v_sum_gal + v_win_gal;
           v_windows := v_windows + 1;
-          v_last_kmgal := round((f.km_reading - v_anchor_km) / v_win_gal, 1);
+          v_last_kmgal := round((c.km_reading - v_anchor_km) / v_win_gal, 1);
         END IF;
-        v_anchor_km := f.km_reading;
+        v_anchor_km := c.km_reading;
         v_win_gal := 0;
       END IF;
     END LOOP;
