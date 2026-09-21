@@ -551,7 +551,6 @@
       <ul>
         <li>Tipo <code>number</code> con hasta 2 decimales, o <strong><code>null</code></strong>. Es <code>null</code> cuando el premio no tiene un valor monetario definido (por ejemplo, un artículo promocional): el POS debe tolerarlo y no asumir cero.</li>
         <li>Es el <strong>valor del premio</strong>, no un monto cobrado: los premios se pagan con puntos (<code>points_spent</code>) y el cliente no paga nada al recibirlos.</li>
-        <li>El descuento de canje que tienen algunos niveles reduce los <strong>puntos</strong> gastados, no el valor del premio.</li>
         <li>Los premios obtenidos por promoción o por rifa (<code>points_spent: 0</code>) también traen su valor cuando está definido.</li>
       </ul>
       <h3>2.3 <code>expires_at</code> — fecha límite para reclamar el premio</h3>

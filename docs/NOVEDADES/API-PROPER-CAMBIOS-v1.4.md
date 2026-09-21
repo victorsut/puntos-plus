@@ -118,8 +118,6 @@ monetario al que equivale el premio.
   promocional): el POS debe tolerarlo y no asumir cero.
 - Es el **valor del premio**, no un monto cobrado: los premios se pagan con
   puntos (`points_spent`) y el cliente no paga nada al recibirlos.
-- El descuento de canje que tienen algunos niveles reduce los **puntos**
-  gastados, no el valor del premio.
 - Los premios obtenidos por promoción o por rifa (`points_spent: 0`) también
   traen su valor cuando está definido.
 
