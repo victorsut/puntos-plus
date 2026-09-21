@@ -10,18 +10,21 @@ import { useState } from 'react';
 import { sMono, adminTheme as AT, inputStyleDark } from '../../../constants/styles';
 import { createApiClient } from '../../../services/adminAuthService';
 
-export default function ApiKeyModal({ fire, onClose }) {
+// 20260921: `audit` (quién genera, para admin_audit_log) y `onCreated`
+// (la tarjeta de llaves recarga su lista) son opcionales.
+export default function ApiKeyModal({ fire, onClose, audit, onCreated }) {
   const [apiName, setApiName] = useState('PROPER');
   const [apiKey, setApiKey] = useState('');
   const [apiBusy, setApiBusy] = useState(false);
   const genApiKey = async () => {
     if (!apiName.trim()) { fire('Poné un nombre para identificar el sistema', 'error'); return; }
     setApiBusy(true);
-    const res = await createApiClient(apiName.trim());
+    const res = await createApiClient(apiName.trim(), undefined, audit);
     setApiBusy(false);
     if (res.error) { fire(res.error, 'error'); return; }
     setApiKey(res.api_key || '');
     fire('Llave generada — copiala ahora', 'success');
+    onCreated?.();
   };
 
   return (

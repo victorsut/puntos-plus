@@ -1,8 +1,8 @@
 # Puntos Plus — Roadmap de Producto
 
-> **Versión:** 4.3
+> **Versión:** 4.5
 > **Fecha de creación:** 17 de mayo de 2026
-> **Última actualización:** 5 de septiembre de 2026
+> **Última actualización:** 21 de septiembre de 2026
 > **Estado:** Vivo (este documento evoluciona con el proyecto)
 > **Alcance v4.3 (5-sep-2026):** solo documentación de **F8 Puntos Plus Business v0.3**: nueve ajustes del dueño (B19-B27) — puntos de la empresa por GALONES con conversión propia editable en el admin, premios de combustible facturados a CF o al NIT de la empresa con control separado del dinero depositado, canjes con puntos que NO vencen, control de facturación (% facturado / por facturar), niveles de empresa pendientes, app normal solo para particulares, catálogo corporativo asignable con puntos→combustible, corte a la hora acordada y **cobro único al saldo al emitir el vale** (v0.2 duplicaba el cobro). Sigue EN PAUSA hasta definir premios y niveles; nada construido. Ver Changelog.
 > **Alcance v4.2 (4-sep-2026):** **F6 VEHÍCULOS EN PRODUCCIÓN PARA TODOS** (rollout, mig `20260904`) + cierre de las decisiones **D24** (umbrales editables y silencio por vehículo, `20260904b`) y **D4** (precios por estación, `20260904c`), D22 reconciliada como cerrada, dashboard con canjes reales (`20260904d`), inicio con el arte del vehículo principal, rifa con carrusel de meses, historiales con filtros compactos, y Historial/Canjes/Rifa con bloque superior fijo. Deuda documental saldada (`ESTADO-PROYECTO.md`). Restante de desarrollo: solo GO-LIVE. Ver Changelog.
@@ -1938,6 +1938,25 @@ Cambios mayores van en commits separados con mensaje `docs: actualizar ROADMAP �
 ---
 
 ## Changelog
+
+### Versión 4.5 — 21 de septiembre de 2026
+
+**Flecos de la recalibración CERRADOS** (validados por el dueño en celular:
+canje PLATINO sin descuento, premio "Lavado VIP + Shampoo Cera" con nivel
+mínimo PLATINO visible bloqueado al final para ORO y canjeable para PLATINO;
+Artifact del contrato v1.4 ya publicado).
+
+**GO-LIVE · gestión de llaves de la API externa** (migración
+`20260921_api_clients_gestion_llaves`): Admin → Configuración → API externa
+ahora LISTA las llaves (nombre, prefijo de 16 chars, estado, creación, último
+uso, llamadas totales y en 7 días, permisos) y permite DESACTIVAR / REACTIVAR
+cada una con motivo obligatorio y auditoría en `admin_audit_log` (RPCs
+`list_api_clients`, `toggle_api_client_active`; `api_create_client` también
+audita). Desactivar es reversible: `api_authenticate` responde 401 mientras
+`active=false` y vuelve a aceptar la misma llave al reactivar. Columnas
+`api_clients.deactivated_at/deactivated_by`. Componente `ApiClientsCard.jsx`
+(Settings.jsx adelgaza). NINGUNA llave se desactivó: la revocación de
+"Pruebas" sigue en el checklist de GO-LIVE como decisión del dueño.
 
 ### Versión 4.4 — 19 de septiembre de 2026
 

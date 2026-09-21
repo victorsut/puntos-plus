@@ -16,7 +16,9 @@ import ServiceAlertsCard from './settings/ServiceAlertsCard';
 import ReasonModal from '../../components/ui/ReasonModal';
 // División 15-ago-2026 (regla de 500 líneas): los modales de llaves
 // API y de precios de combustible viven en views/admin/settings/.
-import ApiKeyModal from './settings/ApiKeyModal';
+// 20260921: la tarjeta de la API externa (lista de llaves + generar +
+// desactivar/reactivar con motivo) vive completa en ApiClientsCard.
+import ApiClientsCard from './settings/ApiClientsCard';
 import FuelPricesCard from './settings/FuelPricesCard';
 
 export default function Settings(ctx) {
@@ -176,9 +178,6 @@ export default function Settings(ctx) {
     fire('Puntos por nivel actualizados', 'success');
   };
 
-  // ─── F7a: llaves de la API externa (PROPER) ───
-  // El modal (con su estado y generación) vive en settings/ApiKeyModal.
-  const [showApiModal, setShowApiModal] = useState(false);
 
   // ── estilos (FORMATO GENERAL Admin v2) ──────────────────
   const card = { background: AT.card, borderRadius: 16, border: `1px solid ${AT.border}`, padding: 16 };
@@ -396,17 +395,12 @@ export default function Settings(ctx) {
           <div style={{ marginTop: 8, fontSize: 11, color: '#81C784', fontWeight: 700 }}>Cualquier compra (desde Q10) resetea el reloj</div>
         </div>
 
-        {/* F7a: llaves de la API externa (PROPER) */}
-        <div style={card}>
-          <div style={cardTitle}>API Externa (PROPER)</div>
-          <div style={cardHint}>
-            Llaves de acceso para sistemas externos que acumulan puntos y entregan
-            premios (POS de PROPER). Cada llave se muestra una sola vez al generarla.
-          </div>
-          <button onClick={() => setShowApiModal(true)} style={ghostCardBtn('#80CBC4')}>
-            Generar llave de API
-          </button>
-        </div>
+        {/* F7a + 20260921: llaves de la API externa (PROPER) — lista,
+            generar y desactivar/reactivar con motivo (ApiClientsCard) */}
+        <ApiClientsCard
+          fire={fire} loggedAdmin={loggedAdmin}
+          card={card} cardTitle={cardTitle} cardHint={cardHint} ghostCardBtn={ghostCardBtn}
+        />
 
         {/* D24: umbrales de las alertas push de servicio de vehículos */}
         <ServiceAlertsCard
@@ -415,11 +409,6 @@ export default function Settings(ctx) {
         />
 
       </div>
-
-      {/* ─── F7a: Modal de llaves de la API externa ─── */}
-      {showApiModal && (
-        <ApiKeyModal fire={fire} onClose={() => setShowApiModal(false)} />
-      )}
 
       {/* ─── F2.1: motivo del cambio de puntos por nivel ─── */}
       <ReasonModal

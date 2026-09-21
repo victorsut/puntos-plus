@@ -200,12 +200,38 @@ export async function updateAdminPassword(targetId, newPassword, { currentPasswo
 /**
  * F7a: genera una llave de API para un sistema externo (PROPER).
  * La llave viaja EN CLARO una sola vez — no puede recuperarse después.
+ * 20260921: acepta auditoría (quién la generó); el servidor la registra
+ * si viene adminId.
  */
-export async function createApiClient(name, scopes) {
+export async function createApiClient(name, scopes, audit = {}) {
   return adminRpc('api_create_client', {
     p_name: name,
     ...(scopes ? { p_scopes: scopes } : {}),
+    ...auditParams(audit),
   }, 'apiKey');
+}
+
+/**
+ * 20260921: llaves de la API externa (sin hash; prefijo + estado + uso).
+ * Devuelve [] si no hay sesión o si la migración aún no corrió.
+ */
+export async function fetchApiClients() {
+  const token = getAdminToken()?.token;
+  if (!sb || !token) return [];
+  const { data, error } = await sb.rpc('list_api_clients', { p_session_token: token });
+  if (error) { console.error('[adminAuth:apiList]', error.message); return []; }
+  return Array.isArray(data) ? data : [];
+}
+
+/**
+ * 20260921: desactiva o reactiva una llave de la API externa. Motivo
+ * obligatorio (el servidor lo exige) y auditoría atómica. Reversible:
+ * reactivar vuelve a aceptar la MISMA llave.
+ */
+export async function toggleApiClientActive(clientId, newActive, audit = {}) {
+  return adminRpc('toggle_api_client_active', {
+    p_client_id: clientId, p_new_active: newActive, ...auditParams(audit),
+  }, 'apiToggle');
 }
 
 /** Activa/desactiva un admin (no permite auto-desactivarse ni dejar 0 activos). */
