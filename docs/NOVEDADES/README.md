@@ -12,8 +12,9 @@ PROPER cuando sale una versión nueva; el contrato completo sigue siendo
 ## Cómo agregar una versión
 
 1. Redactar `API-PROPER-CAMBIOS-vX.Y.md` en esta carpeta (misma estructura
-   que el anterior: resumen, integraciones nuevas, modificaciones,
-   correcciones, pendientes y pruebas sugeridas).
+   que el anterior: resumen, integraciones nuevas, modificaciones y
+   correcciones — sin pendientes internos ni listas de pruebas, decisión del
+   dueño 21-sep).
 2. Generar su versión web con la identidad del contrato y el PDF que se
    envía a PROPER: `node tools/docs/build-cambios.cjs X.Y` →
    `api-proper-cambios-vX.Y.html` + `API-PROPER-Novedades-vX.Y.pdf`

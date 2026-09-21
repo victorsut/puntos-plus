@@ -465,8 +465,6 @@
     <a href="#c2"><span class="n">2</span>Integraciones nuevas</a>
     <a href="#c3"><span class="n">3</span>Modificaciones y criterios confirmados</a>
     <a href="#c4"><span class="n">4</span>Correcciones</a>
-    <a href="#c5"><span class="n">5</span>Pendientes</a>
-    <a href="#c6"><span class="n">6</span>Pruebas sugeridas para esta versión</a>
   </nav>
 
   <main>
@@ -646,36 +644,6 @@
       <ul>
         <li><code>TK-3F9A2C</code> y <code>CTOD-00042</code> son <strong>ejemplos ilustrativos</strong> del documento y no existen (responden 404). Los códigos reales de prueba son los del apartado 8: tarjetas <code>CTPD-95176</code> (antes <code>CTOD-95176</code>: Cliente Prueba 1 subió a PLATINO durante sus pruebas, y con el nivel cambia la letra de la tarjeta) y <code>CTOD-93935</code>, y la lista viva de canjes se obtiene con <code>GET /v1/redemptions?card_code=CTPD-95176</code>.</li>
         <li><code>GET /v1/members</code> y <code>GET /v1/redemptions</code> leen sus parámetros de la <strong>query string</strong> (<code>?card_code=…</code> o <code>?code=…</code>). Sin parámetro responden <code>400 invalid_card_code</code> / <code>404 redemption_not_found</code>.</li>
-      </ul>
-    </section>
-
-    <section id="c5">
-      <h2><span class="n">05</span>Pendientes</h2>
-      <div class="table-wrap"><table>
-        <thead><tr><th>Tema</th><th>Quién</th><th>Estado</th></tr></thead>
-        <tbody>
-          <tr><td><strong>Volumen estimado</strong> (transacciones por día y por estación)</td><td>PROPER</td><td>Pendiente — lo necesitamos para dimensionar límites de uso</td></tr>
-          <tr><td>Acumulación posterior (cliente sin tarjeta escaneada al facturar)</td><td>—</td><td><strong>Cerrado:</strong> no habrá. Los puntos se asignan siempre al momento de la factura (3.1)</td></tr>
-          <tr><td>Modelo de llamada servidor ⇄ API</td><td>—</td><td>Confirmado: la llave vive solo en el servidor de PROPER</td></tr>
-        </tbody>
-      </table></div>
-    </section>
-
-    <section id="c6">
-      <h2><span class="n">06</span>Pruebas sugeridas para esta versión</h2>
-      <ul class="checks">
-        <li>Compra con <code>operator.station = "17261015-1"</code> → <code>station: "Turkaj I"</code> en la respuesta</li>
-        <li>Compra con <code>operator.station = "105978272-3"</code> → <code>station: "Turkaj III"</code></li>
-        <li>Dos compras con el <strong>mismo</strong> <code>operator.dpi</code> y <code>external_id</code> distintos → nos confirman y verificamos que quedaron en el mismo colaborador</li>
-        <li>Compra con <code>operator.dpi</code> inválido (menos de 13 dígitos) → acredita normal</li>
-        <li><code>GET /v1/redemptions?code=…</code> → trae <code>reward_value</code> y <code>expires_at</code></li>
-        <li><code>GET /v1/redemptions?card_code=…</code> → cada pendiente trae <code>reward_value</code> y <code>expires_at</code></li>
-        <li>Premio sin valor definido → <code>reward_value: null</code> sin romper el POS</li>
-        <li><code>deliver</code> → el comprobante incluye <code>reward_value</code></li>
-        <li>Misma factura enviada dos veces <strong>sin</strong> <code>Idempotency-Key</code> → <code>409 invoice_already_credited</code>, <code>same_card: true</code></li>
-        <li>Misma factura con <strong>otra tarjeta</strong> → <code>409 invoice_already_credited</code>, <code>same_card: false</code></li>
-        <li>Misma factura con la <strong>misma</strong> <code>Idempotency-Key</code> → respuesta original con <code>replayed: true</code> (sin cambios)</li>
-        <li>Compra sin <code>invoice_no</code> → <code>422 missing_invoice_no</code></li>
       </ul>
       <p>La colección de Postman actualizada (<code>PuntosPlus-PROPER.postman_collection.json</code>, v1.4) ya incluye <code>operator.dpi</code> y el código de estación en sus variables.</p>
     </section>

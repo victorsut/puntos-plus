@@ -279,32 +279,5 @@ Dos observaciones de la bitácora de sus pruebas, por si ayudan:
   string** (`?card_code=…` o `?code=…`). Sin parámetro responden `400
   invalid_card_code` / `404 redemption_not_found`.
 
----
-
-## 5. Pendientes
-
-| Tema | Quién | Estado |
-|---|---|---|
-| **Volumen estimado** (transacciones por día y por estación) | PROPER | Pendiente — lo necesitamos para dimensionar límites de uso |
-| Acumulación posterior (cliente sin tarjeta escaneada al facturar) | — | **Cerrado:** no habrá. Los puntos se asignan siempre al momento de la factura (3.1) |
-| Modelo de llamada servidor ⇄ API | — | Confirmado: la llave vive solo en el servidor de PROPER |
-
----
-
-## 6. Pruebas sugeridas para esta versión
-
-- [ ] Compra con `operator.station = "17261015-1"` → `station: "Turkaj I"` en la respuesta
-- [ ] Compra con `operator.station = "105978272-3"` → `station: "Turkaj III"`
-- [ ] Dos compras con el **mismo** `operator.dpi` y `external_id` distintos → nos confirman y verificamos que quedaron en el mismo colaborador
-- [ ] Compra con `operator.dpi` inválido (menos de 13 dígitos) → acredita normal
-- [ ] `GET /v1/redemptions?code=…` → trae `reward_value` y `expires_at`
-- [ ] `GET /v1/redemptions?card_code=…` → cada pendiente trae `reward_value` y `expires_at`
-- [ ] Premio sin valor definido → `reward_value: null` sin romper el POS
-- [ ] `deliver` → el comprobante incluye `reward_value`
-- [ ] Misma factura enviada dos veces **sin** `Idempotency-Key` → `409 invoice_already_credited`, `same_card: true`
-- [ ] Misma factura con **otra tarjeta** → `409 invoice_already_credited`, `same_card: false`
-- [ ] Misma factura con la **misma** `Idempotency-Key` → respuesta original con `replayed: true` (sin cambios)
-- [ ] Compra sin `invoice_no` → `422 missing_invoice_no`
-
 La colección de Postman actualizada (`PuntosPlus-PROPER.postman_collection.json`,
 v1.4) ya incluye `operator.dpi` y el código de estación en sus variables.
