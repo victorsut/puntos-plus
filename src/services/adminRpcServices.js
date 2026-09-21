@@ -39,7 +39,8 @@ export async function updateFuelPrices(prices, audit = {}) {
     params.p_admin_email = audit.adminEmail;
     params.p_reason_text = audit.reasonText;
   }
-  return callRpc('update_fuel_prices', params);
+  // SEC.C.7 (21-sep): sesión de admin obligatoria — el RPC la valida
+  return callRpc('update_fuel_prices', params, { sessionToken: getAdminToken()?.token ?? null });
 }
 
 // ── D4 (4-sep): interruptor global vs por estación + precios de una

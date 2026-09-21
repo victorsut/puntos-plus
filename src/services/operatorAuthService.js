@@ -145,7 +145,11 @@ export async function createOperatorRPC({
   stationId = null, phone = null, email = null, bomba = null, turno = 'Matutino',
 }, audit = {}) {
   if (!sb) return { data: null, error: { message: 'Sin conexión al servidor' } };
+  // SEC.C.7 (21-sep): sesión de admin obligatoria (el RPC la valida)
+  const token = getAdminToken()?.token;
+  if (!token) return { data: null, error: { message: 'Sesión de admin no disponible' } };
   const params = {
+    p_session_token: token,
     p_name: name,
     p_username: (username || '').trim().toLowerCase(),
     p_password: password,
@@ -217,7 +221,9 @@ export async function fetchOperatorsFull() {
  */
 export async function updateOperatorPassword(operatorId, newPassword, audit = {}) {
   if (!sb) return { ok: false, error: { message: 'Sin conexión al servidor' } };
-  const params = { p_id: operatorId, p_new_password: newPassword };
+  const token = getAdminToken()?.token; // SEC.C.7
+  if (!token) return { ok: false, error: { message: 'Sesión de admin no disponible' } };
+  const params = { p_session_token: token, p_id: operatorId, p_new_password: newPassword };
   if (audit.adminId) {
     params.p_admin_id = audit.adminId;
     params.p_admin_name = audit.adminName;
@@ -243,7 +249,9 @@ export async function updateOperatorPassword(operatorId, newPassword, audit = {}
  */
 export async function toggleOperatorActive(operatorId, newActive, audit = {}) {
   if (!sb) return { ok: false, error: { message: 'Sin conexión al servidor' } };
-  const params = { p_id: operatorId, p_new_active: newActive };
+  const token = getAdminToken()?.token; // SEC.C.7
+  if (!token) return { ok: false, error: { message: 'Sesión de admin no disponible' } };
+  const params = { p_session_token: token, p_id: operatorId, p_new_active: newActive };
   if (audit.adminId) {
     params.p_admin_id = audit.adminId;
     params.p_admin_name = audit.adminName;

@@ -35,6 +35,7 @@ export default function Settings(ctx) {
     const next = !cfg.degradEnabled;
     setSavingDegrad(true);
     const { data, error } = await sb.rpc('set_degradation_enabled', {
+      p_session_token: getAdminToken()?.token ?? null, // SEC.C.7: sesión obligatoria
       p_enabled: next,
       p_admin_id: loggedAdmin.id,
       p_admin_name: loggedAdmin.name,

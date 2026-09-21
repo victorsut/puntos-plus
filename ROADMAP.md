@@ -1990,6 +1990,28 @@ exacta ("llena el tanque y marca Sí, quedó lleno"). (3) Costo por km con el
 DESCARTADO por ahora: la reserva como segunda ancla. Fix `20260921c`:
 `list_my_vehicle_stats` fallaba por un alias repetido.
 
+**SEC.C.7 · CIERRE DE RPCs ADMINISTRATIVAS SIN SESIÓN (21-sep, diagnóstico
+pedido por el dueño; migración `20260921e_sec_c7…`):** cinco funciones SECURITY
+DEFINER ejecutables con la llave pública y SIN validar sesión (solo recibían
+p_admin_id para auditoría): `create_operator`, `update_operator_password`,
+`toggle_operator_active`, `update_fuel_prices`, `set_degradation_enabled` —
+un tercero podía crear/tomar operadores, alterar precios (→ galones → puntos)
+o encender la degradación. Ahora exigen p_session_token de ADMIN (estricto;
+DROP + CREATE; frontend actualizado en operatorAuthService, adminRpcServices y
+Settings). Además: REVOKE a anon de internas (vehicles_sync_from_json,
+vehicles_mirror_to_member, hash_member_password, pick_best_promo,
+auto_enable_rls, rls_auto_enable); las tres vistas SECURITY DEFINER
+(raffle_participants con nombres de socios, daily_survey_count,
+operator_rating_avg) pasan a security_invoker y quedan cerradas a anon;
+search_path fijo en 9 funciones. Verificado sin hallazgos: RLS en las 40
+tablas, columnas PII cerradas (members/operators/purchases/redemptions solo
+exponen columnas no sensibles), api_* revocadas, API pública 401 sin llave,
+crons 401 sin secreto, puntos de compras post-recalibración = round(gal ×
+tasa) en 5/5, canjes a precio completo, catálogo = valor × 10, sin errores de
+runtime en Vercel (7 días). Deuda: 6 socios (cuentas de prueba/legado de
+junio) con saldo ≠ libro mayor; check_member_exists sin límite de ritmo;
+llave Pruebas y espejos de prueba activos (GO-LIVE).
+
 ### Versión 4.4 — 19 de septiembre de 2026
 
 **API PROPER v1.4** (PROPER integra contra producción desde el 16-sep): DPI
