@@ -106,7 +106,7 @@ export default function ClientMenu(ctx) {
           (estructura de la referencia) */}
       <div style={{ background: TH.surface, borderRadius: 20, overflow: 'hidden', marginBottom: 12 }}>
         {MENU_ITEMS.map((item, i) => (
-          <button key={item.id} onClick={() => item.id === 'ayuda' ? setSupportOpen(true) : setSection(item.id)} style={{
+          <button key={item.id} data-tour={`menu-${item.id}`} onClick={() => item.id === 'ayuda' ? setSupportOpen(true) : setSection(item.id)} style={{
             width: '100%', display: 'flex', alignItems: 'center', gap: 12,
             padding: '15px 16px', border: 'none', background: 'none',
             borderTop: i > 0 ? `1px solid ${TH.divider}` : 'none',
@@ -120,7 +120,7 @@ export default function ClientMenu(ctx) {
 
         {/* Apariencia: elegir modo claro/oscuro (sol/luna) — misma
             elección que ofrece el login; persiste en el dispositivo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderTop: `1px solid ${TH.divider}` }}>
+        <div data-tour="menu-theme" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderTop: `1px solid ${TH.divider}` }}>
           <span style={{ display: 'flex', color: TH.header, flexShrink: 0 }}>{modeChoice ? <Moon /> : <Sun />}</span>
           <span style={{ flex: 1, fontSize: 14, fontWeight: 700, color: TH.header }}>Apariencia</span>
           <ModeToggle dark={modeChoice} setUiMode={setUiMode} />
@@ -128,7 +128,7 @@ export default function ClientMenu(ctx) {
       </div>
 
       {/* Cerrar sesión — tarjeta aparte en rojo, sin chevron (referencia) */}
-      <button onClick={logout} style={{
+      <button data-tour="menu-logout" onClick={logout} style={{
         width: '100%', display: 'flex', alignItems: 'center', gap: 12,
         padding: '15px 16px', borderRadius: 20, border: 'none',
         background: TH.surface, cursor: 'pointer',

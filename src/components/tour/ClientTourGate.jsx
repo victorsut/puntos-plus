@@ -50,5 +50,5 @@ export default function ClientTourGate({ ctx }) {
   }, [open, isC, me?.id, authScreen, cScr]);
 
   if (!open || !isC || !me) return null;
-  return <ClientTour dark={dark} onClose={() => { clearTourPending(); setOpen(false); }} />;
+  return <ClientTour dark={dark} cScr={cScr} setCScr={setCScr} onClose={() => { clearTourPending(); setOpen(false); }} />;
 }

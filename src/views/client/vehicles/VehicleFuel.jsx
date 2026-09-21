@@ -235,7 +235,7 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
   };
 
   return (
-    <div style={{ marginTop: 22 }}>
+    <div data-tour="veh-fuel" style={{ marginTop: 22 }}>
       <div style={lbl}>Rendimiento y consumo</div>
 
       {/* Indicadores del vehículo activo */}
@@ -290,7 +290,7 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
 
       {/* E3b: registrar consumo MANUAL (carga fuera de Turkaj) */}
       {!reg ? (
-        <button onClick={() => setReg(true)} style={{
+        <button data-tour="veh-fuel-log" onClick={() => setReg(true)} style={{
           width: '100%', marginTop: 10, padding: 13, borderRadius: 15, cursor: 'pointer',
           border: `1.5px dashed ${dark ? 'rgba(255,255,255,.25)' : 'rgba(0,0,0,.18)'}`,
           background: 'transparent', color: ink,
@@ -307,7 +307,7 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
           E3d: CONTRAÍDO por defecto (pedido del dueño — la vista del
           vehículo se saturaba); el encabezado despliega/contrae */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '18px 0 8px' }}>
-        <button onClick={() => setHistOpen(o => !o)} style={{
+        <button data-tour="veh-history" onClick={() => setHistOpen(o => !o)} style={{
           border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
           display: 'inline-flex', alignItems: 'center', gap: 7,
         }}>

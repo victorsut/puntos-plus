@@ -80,6 +80,7 @@ export default function VehicleBentoTile({ me, htp, onOpen }) {
   const common = {
     index: 1, square: true, color: htp.vehicle, titleColor: htp.vehicleTitle, ink,
     title: 'Vehículo', sub: 'Administra y consulta tus vehículos', onClick: onOpen,
+    tourId: 'tile-vehicle', // ancla del tutorial
   };
 
   if (!main) {

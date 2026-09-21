@@ -59,7 +59,8 @@ function Harness() {
         </button>
         {nbtn('nav-raf', 'Rifa')}{nbtn('nav-veh', 'Vehículos')}
       </div>
-      {open && <ClientTour dark={dark} onClose={() => setOpen(false)} />}
+      {/* sin pantallas reales: los pasos de otras pestañas se saltan solos */}
+      {open && <ClientTour dark={dark} cScr="home" setCScr={() => {}} onClose={() => setOpen(false)} />}
     </div>
   );
 }

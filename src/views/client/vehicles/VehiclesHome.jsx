@@ -194,7 +194,7 @@ export default function VehiclesHome({ ctx, vehicles, setVehicles }) {
             {vehicles.length === 0 ? 'Agrega el primero' : `${vehicles.length} registrado${vehicles.length === 1 ? '' : 's'}`}
           </div>
         </div>
-        <button onClick={() => setForm({ vehicle: null })} style={{
+        <button data-tour="veh-add" onClick={() => setForm({ vehicle: null })} style={{
           padding: '10px 16px', borderRadius: 13, border: 'none', cursor: 'pointer',
           background: dark ? '#fff' : '#0D0D0D', color: dark ? '#0D0D0D' : '#fff',
           fontFamily: "'DM Sans'", fontSize: 13, fontWeight: 800,
@@ -210,7 +210,7 @@ export default function VehiclesHome({ ctx, vehicles, setVehicles }) {
           <div style={{ fontSize: 14, color: sub, lineHeight: 1.6, maxWidth: 280, margin: '14px auto 20px' }}>
             Registra tu vehículo para personalizarlo, llevar su kilometraje y sus servicios.
           </div>
-          <button onClick={() => setForm({ vehicle: null })} style={{
+          <button data-tour="veh-empty-cta" onClick={() => setForm({ vehicle: null })} style={{
             padding: '14px 26px', borderRadius: 15, border: 'none', cursor: 'pointer',
             background: BRAND_ORANGE, color: '#fff', fontFamily: "'DM Sans'", fontSize: 14, fontWeight: 800,
           }}>Agregar mi primer vehículo</button>
@@ -218,7 +218,7 @@ export default function VehiclesHome({ ctx, vehicles, setVehicles }) {
       ) : (
         <>
           {/* ── Carrusel héroe con swipe ── */}
-          <div {...swipe.handlers} style={{ ...swipe.viewportStyle, borderRadius: 22, margin: '10px 0 4px' }}>
+          <div data-tour="veh-carousel" {...swipe.handlers} style={{ ...swipe.viewportStyle, borderRadius: 22, margin: '10px 0 4px' }}>
             <div ref={swipe.trackRef} style={swipe.trackStyle}>
               {vehicles.map((veh, i) => {
                 const t = typeInfo(veh.vtype);
@@ -313,7 +313,7 @@ export default function VehiclesHome({ ctx, vehicles, setVehicles }) {
           {/* ── Datos relevantes ── */}
           <div ref={tilesRef} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
             {tiles.map(tl => (
-              <div key={tl.k} style={{ background: cardBg, borderRadius: 17, padding: '13px 14px' }}>
+              <div key={tl.k} data-tour={tl.k === 'service' ? 'veh-service' : undefined} style={{ background: cardBg, borderRadius: 17, padding: '13px 14px' }}>
                 <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', color: sub }}>{tl.label}</div>
                 <div style={{
                   fontSize: tl.k === 'km' ? 19 : 15.5, fontWeight: 800, marginTop: 5,
@@ -343,7 +343,7 @@ export default function VehiclesHome({ ctx, vehicles, setVehicles }) {
 
           {/* ── Acciones del vehículo activo ── */}
           <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
-            <button onClick={() => setForm({ vehicle: v, mode: 'data' })} style={{
+            <button data-tour="veh-settings" onClick={() => setForm({ vehicle: v, mode: 'data' })} style={{
               flex: 1, padding: 14, borderRadius: 15, border: 'none', cursor: 'pointer',
               background: hp.vehicle, color: '#fff', fontFamily: "'DM Sans'", fontSize: 13.5, fontWeight: 800,
             }}>Datos y ajustes</button>

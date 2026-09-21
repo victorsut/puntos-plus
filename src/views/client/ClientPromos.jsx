@@ -53,7 +53,7 @@ export default function ClientPromos(ctx) {
 
       {/* Chips de categorías: una sola fila que se reparte el ancho —
           nunca desborda, nunca muestra barra de desplazamiento */}
-      <div style={{ display: 'flex', gap: 7, padding: '6px 14px 16px' }}>
+      <div data-tour="promos-chips" style={{ display: 'flex', gap: 7, padding: '6px 14px 16px' }}>
         {CHIPS.map(c => {
           const on = chip === c.v;
           return (
@@ -85,7 +85,7 @@ export default function ClientPromos(ctx) {
       )}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, padding: '0 14px' }}>
         {visible.map((p, i) => (
-          <div key={p.id} className="pp-tile" style={{ animationDelay: `${i * 60}ms`, borderRadius: 20 }}>
+          <div key={p.id} className="pp-tile" data-tour={i === 0 ? "promos-card" : undefined} style={{ animationDelay: `${i * 60}ms`, borderRadius: 20 }}>
             <PromoCard promo={p} ratio="3:4" />
           </div>
         ))}

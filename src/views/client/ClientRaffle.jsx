@@ -104,7 +104,7 @@ export default function ClientRaffle(ctx) {
 
   const stickyBg = (dark || isBlack) ? clientMainBg(cTier?.name, true) : bento.pageBg;
   const buyCard = isCurrent && (
-        <div ref={buyRef} style={{ margin: '0 16px 14px', padding: '12px 14px', borderRadius: 20, background: surface }}>
+        <div ref={buyRef} data-tour="raf-buy" style={{ margin: '0 16px 14px', padding: '12px 14px', borderRadius: 20, background: surface }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
             <span style={{ fontSize: 12, color: subTxt, fontWeight: 600 }}>Tus puntos</span>
             <span style={{ fontSize: 15, fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: headerTxt }}>{me.points}</span>
@@ -143,7 +143,7 @@ export default function ClientRaffle(ctx) {
       {/* ── Bloque PEGAJOSO: encabezado + carrusel (+ compra) ── */}
       <div style={{ position: 'sticky', top: 0, zIndex: 2, background: stickyBg }}>
       {/* Header compacto: navegación de meses integrada al título */}
-      <div style={{ display: 'flex', alignItems: 'center', padding: '14px 12px 10px' }}>
+      <div data-tour="raf-header" style={{ display: 'flex', alignItems: 'center', padding: '14px 12px 10px' }}>
         <button onClick={() => swipe.go(viewMonth - 1)} aria-label="Mes anterior" style={navBtn(viewMonth > 0)}>
           <Back />
         </button>
@@ -173,7 +173,7 @@ export default function ClientRaffle(ctx) {
       {shortScr && buyCard}
 
       {/* ── Participantes (orden aleatorio, yo primero) ── */}
-      <div ref={partsRef} style={{ padding: '0 16px' }}>
+      <div ref={partsRef} data-tour="raf-parts" style={{ padding: '0 16px' }}>
         <div style={{ fontSize: 11, fontWeight: 800, color: subTxt, textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 10 }}>
           Participantes ({parts.length})
         </div>

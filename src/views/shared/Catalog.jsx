@@ -91,12 +91,12 @@ export default function Catalog(ctx) {
           Catálogo de Premios
         </div>
         {client && me && (
-          <div style={{ fontSize: 11, fontWeight: 600, color: subTxt, marginTop: 1 }}>
+          <div data-tour="cat-points" style={{ fontSize: 11, fontWeight: 600, color: subTxt, marginTop: 1 }}>
             Tenés <span style={{ fontWeight: 800, color: good, fontVariantNumeric: 'tabular-nums' }}>{me.points} pts</span> para canjear
           </div>
         )}
         {client && me && (
-          <button onClick={(e) => setPendSheet({ origin: originFromEvent(e) })} aria-label="Canjes pendientes" style={{
+          <button data-tour="cat-pending" onClick={(e) => setPendSheet({ origin: originFromEvent(e) })} aria-label="Canjes pendientes" style={{
             position: 'absolute', right: 10, top: 12,
             width: 40, height: 40, border: 'none', cursor: 'pointer', padding: 0,
             borderRadius: 12, background: 'none', color: headerTxt,
@@ -120,7 +120,7 @@ export default function Catalog(ctx) {
 
       {/* Filtros por categoría — chips desplazables sin barra visible
           (ChipScroller: desvanecido en bordes = hay más) */}
-      <ChipScroller padding="10px 14px 16px">
+      <div data-tour="cat-chips"><ChipScroller padding="10px 14px 16px">
         {cats.map(c => {
           const on = catF === c;
           return (
@@ -135,7 +135,7 @@ export default function Catalog(ctx) {
             </button>
           );
         })}
-      </ChipScroller>
+      </ChipScroller></div>
       </div>
 
       {/* Grid de premios — cards flat sin borde */}
@@ -158,7 +158,7 @@ export default function Catalog(ctx) {
                 <Lock size={13} /> Disponibles en los siguientes niveles
               </div>
             )}
-            <div className="pp-tile" onClick={() => {
+            <div className="pp-tile" data-tour={i === 0 ? "cat-reward" : undefined} onClick={() => {
               if (!client || !canAfford) return;
               if (setRedeemConfirm) setRedeemConfirm({ reward: r, cost });
               else redeem(r);

@@ -152,7 +152,7 @@ export default function ClientHome(ctx) {
 
         {/* 3 · WiFi (beneficio PLATINO/BLACK — D34) */}
         <BentoTile
-          index={2} color={htp.wifi} ink={htp.wifiInk || '#fff'} titleColor={htp.wifiTitle}
+          index={2} tourId="tile-wifi" color={htp.wifi} ink={htp.wifiInk || '#fff'} titleColor={htp.wifiTitle}
           icon={<WifiIcon color={htp.wifiInk || '#fff'} />} title="WiFi"
           sub={cTier.name === 'ORO' ? 'Disponible desde nivel PLATINO' : 'Conéctate a nuestro WiFi gratis'}
           dimmed={cTier.name === 'ORO'}
@@ -179,7 +179,7 @@ export default function ClientHome(ctx) {
 
         {/* 5 · Ubicación */}
         <BentoTile
-          index={4} color={htp.location} ink={htp.locationInk || '#fff'} titleColor={htp.locationTitle}
+          index={4} tourId="tile-location" color={htp.location} ink={htp.locationInk || '#fff'} titleColor={htp.locationTitle}
           icon={<PinIcon color={htp.locationInk || '#fff'} />} title="Ubicación"
           sub="Ubica nuestras estaciones"
           onClick={(e) => { setModalOrigin(withTint(e, hp.location)); setShowMap(true); }}
@@ -187,7 +187,7 @@ export default function ClientHome(ctx) {
 
         {/* 6 · Historial de canjes */}
         <BentoTile
-          index={5} color={htp.redeems} ink={htp.redeemsInk || '#fff'} titleColor={htp.redeemsTitle}
+          index={5} tourId="tile-redeems" color={htp.redeems} ink={htp.redeemsInk || '#fff'} titleColor={htp.redeemsTitle}
           icon={<TicketStarIcon color={htp.redeemsInk || '#fff'} />} title="Historial de Canjes"
           sub={`${myRedeemed.length} canje${myRedeemed.length === 1 ? '' : 's'} realizados`}
           onClick={(e) => setHistSheet({ type: 'canjes', origin: originFromEvent(e), tint: hp.redeems, accent: hp.redeems, accentInk: hp.redeemsInk })}
@@ -195,7 +195,7 @@ export default function ClientHome(ctx) {
 
         {/* 7 · Historial de compras (ancho completo) */}
         <BentoTile
-          index={6} span={2} color={htp.purchases} titleColor={htp.purchasesTitle} ink={htp.purchasesInk || '#fff'}
+          index={6} span={2} tourId="tile-purchases" color={htp.purchases} titleColor={htp.purchasesTitle} ink={htp.purchasesInk || '#fff'}
           icon={<BagIcon size={32} color={htp.purchasesInk} />} title="Historial de Compras"
           sub="Compras y todos tus movimientos de puntos"
           onClick={(e) => setHistSheet({ type: 'compras', origin: originFromEvent(e), tint: hp.purchases, accent: hp.purchasesAccent || hp.purchases, accentInk: hp.purchasesAccentInk })}

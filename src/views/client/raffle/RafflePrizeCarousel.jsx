@@ -36,7 +36,7 @@ export default function RafflePrizeCarousel({
             const PrizeIcon = rewardIconFor({ name: rm.name || '', icon: rm.icon || '' });
             return (
               <div key={i} ref={el => { slideRefs.current[i] = el; }} style={swipe.slideStyle(i)}>
-                <div style={{ padding: '16px 16px 12px', borderRadius: 20, background: surface, textAlign: 'center' }}>
+                <div data-tour={i === idx ? "raf-prize" : undefined} style={{ padding: '16px 16px 12px', borderRadius: 20, background: surface, textAlign: 'center' }}>
                   <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: subTxt, marginBottom: 10 }}>
                     Premio de {rm.m}
                   </div>
