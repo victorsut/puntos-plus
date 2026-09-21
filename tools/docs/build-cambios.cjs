@@ -164,3 +164,58 @@ ${out.join('\n')}
 const dest = path.join(root, 'docs', 'NOVEDADES', `api-proper-cambios-v${ver}.html`);
 fs.writeFileSync(dest, html);
 console.log('OK →', path.relative(root, dest), `(${sec} secciones)`);
+
+// ── PDF (21-sep-2026): el archivo que se ENVÍA a PROPER ────────────
+// Imprime el HTML con Edge headless (Chromium imprime siempre en esquema
+// claro; data-theme="light" lo fija también en pantalla). Reglas de
+// impresión: una columna sin índice lateral, Letter, sin cortar bloques
+// de código, tablas ni avisos. Se omite con `--no-pdf` o si no hay Edge.
+if (!process.argv.includes('--no-pdf')) {
+  const { execFileSync } = require('child_process');
+  const os = require('os');
+  const edge = [
+    'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+    'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
+  ].find((p) => fs.existsSync(p));
+  if (!edge) {
+    console.warn('PDF omitido: no se encontró Microsoft Edge (imprimí el HTML a PDF manualmente).');
+  } else {
+    const print = `
+<style>
+  @page { size: Letter; margin: 16mm 14mm 18mm 14mm; }
+  @media print {
+    html { scroll-behavior: auto; }
+    body { background: #fff !important; font-size: 12.5px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .shell { display: block !important; max-width: none !important; padding: 0 !important; }
+    nav.toc { display: none !important; }
+    main, p, ul, ol { max-width: none !important; }
+    .masthead { padding: 0 0 18px !important; margin-bottom: 24px !important; }
+    h1 { font-size: 30px !important; }
+    h2 { font-size: 20px !important; break-after: avoid; }
+    h3, h4 { break-after: avoid; }
+    section { margin-bottom: 34px !important; }
+    pre, table, .callout, .endpoint, .flow li, .checks li { break-inside: avoid; }
+    pre { font-size: 11px !important; white-space: pre-wrap !important; word-break: break-word; }
+    pre code { white-space: pre-wrap !important; }
+    .table-wrap { overflow: visible !important; }
+    table { min-width: 0 !important; font-size: 12px !important; }
+    a { color: inherit; text-decoration: none; }
+  }
+</style>`;
+    const wrapper = `<!doctype html><html lang="es" data-theme="light"><head><meta charset="utf-8">` +
+      `<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light">${print}</head>` +
+      `<body>${html}</body></html>`;
+    const tmp = path.join(os.tmpdir(), `pp-novedades-v${ver}-print.html`);
+    fs.writeFileSync(tmp, wrapper);
+    const pdf = path.join(root, 'docs', 'NOVEDADES', `API-PROPER-Novedades-v${ver}.pdf`);
+    if (fs.existsSync(pdf)) fs.unlinkSync(pdf); // Edge no sobreescribe
+    execFileSync(edge, [
+      '--headless=new', '--disable-gpu', '--no-pdf-header-footer',
+      '--virtual-time-budget=8000', `--print-to-pdf=${pdf}`,
+      'file:///' + tmp.replace(/\\/g, '/'),
+    ], { stdio: 'ignore', timeout: 90000 });
+    fs.unlinkSync(tmp);
+    const kb = Math.round(fs.statSync(pdf).size / 1024);
+    console.log('OK →', path.relative(root, pdf), `(${kb} KB)`);
+  }
+}
