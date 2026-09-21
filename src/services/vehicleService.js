@@ -99,6 +99,18 @@ export async function setMyFuelLoadFull({ loadId, source, full }) {
   }, { sessionToken: getMemberToken()?.token ?? null });
 }
 
+// ── F6 E3g: movimientos del vehículo (historial) ──────────────
+// { ok, events: [{ id, vehicle_id, event_type, data, created_at }] }
+// event_type: 'created' | 'updated' | 'service' | 'alerts_muted'.
+// vehicleId null = todos los vehículos del socio.
+export async function listMyVehicleEvents({ vehicleId = null, limit = 60 } = {}) {
+  if (!sb) return { data: null, error: { message: 'Sin conexión al servidor' } };
+  return callRpc('list_my_vehicle_events', {
+    p_vehicle_id: vehicleId,
+    p_limit: limit,
+  }, { sessionToken: getMemberToken()?.token ?? null });
+}
+
 export async function deleteMyFuelLog(logId) {
   if (!sb) return { data: null, error: { message: 'Sin conexión al servidor' } };
   return callRpc('delete_my_fuel_log', {

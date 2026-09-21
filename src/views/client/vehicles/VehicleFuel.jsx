@@ -18,17 +18,28 @@
 import { useEffect, useMemo, useState } from 'react';
 import { BRAND_ORANGE } from '../../../constants/styles';
 import { VEHICLE_TYPES } from '../../../components/ui/VehicleIcons';
-import { assignPurchaseVehicle, deleteMyFuelLog, listMyFuelHistory, setMyFuelLoadFull } from '../../../services/vehicleService';
+import { assignPurchaseVehicle, deleteMyFuelLog, listMyFuelHistory, listMyVehicleEvents, setMyFuelLoadFull } from '../../../services/vehicleService';
 import { fuelSummary, fuelWindows, isFullLoad, isInferredFull } from '../../../lib/fuelEconomy';
 import { MonthBars, TrendChart } from './VehicleCharts';
 import FuelLogForm from './FuelLogForm';
 import FuelHistoryRow from './FuelHistoryRow';
+import FuelEventRow from './FuelEventRow';
 import { fmtN, fmtDay, fmtMonth } from './fuelFmt';
 
-// `preload`: datos iniciales para el arnés de vista previa (sin backend);
-// en producción no se pasa y el historial baja por list_my_fuel_history.
-export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onStatsDirty, preload = null }) {
+// `preload` / `preloadEvents`: datos iniciales para el arnés de vista
+// previa (sin backend); en producción no se pasan y bajan por RPC.
+export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onStatsDirty, preload = null, preloadEvents = null }) {
   const [loads, setLoads] = useState(preload);    // null=cargando · false=sin RPC · []=vacío
+  // E3g: movimientos del vehículo (servicios, alta, edición, silencio)
+  // — se intercalan con las cargas en el Historial del vehículo. Si la
+  // migración 20260921d no está, queda [] y el historial sigue igual.
+  const [events, setEvents] = useState(preloadEvents || []);
+  const fetchEvents = () => listMyVehicleEvents().then(({ data }) => {
+    setEvents(data?.ok && Array.isArray(data.events) ? data.events : []);
+  });
+  // se recarga cuando cambia la ficha del vehículo activo (el padre
+  // reemplaza el objeto al confirmar un servicio o editar datos)
+  useEffect(() => { if (!preloadEvents) fetchEvents(); }, [preloadEvents, vehicle]); // eslint-disable-line react-hooks/exhaustive-deps
   const [editableDays, setEditableDays] = useState(30);
   const [editingId, setEditingId] = useState(null);   // fila con el editor de vehículo abierto
   const [fullOpenId, setFullOpenId] = useState(null); // fila con las opciones de tanque abiertas
@@ -117,7 +128,12 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
   const kmgal = summary.kmPerGal ?? st?.km_per_gal ?? null;
   const method = summary.method ?? st?.km_per_gal_method ?? null;
   const galCarga = st?.fuel_count > 0 ? st.total_gallons / st.fuel_count : null;
-  const qGal = st?.total_gallons > 0 ? st.total_amount / st.total_gallons : null;
+  // Costo por km con el ÚLTIMO precio pagado (pedido del dueño 21-sep):
+  // Q/gal de la carga más reciente del vehículo con monto y galones;
+  // el promedio histórico queda solo de respaldo.
+  const lastPriced = mine.find(l => +l.amount > 0 && +l.gallons > 0);
+  const qGal = lastPriced ? +lastPriced.amount / +lastPriced.gallons
+    : (st?.total_gallons > 0 ? st.total_amount / st.total_gallons : null);
   const costoKm = qGal && kmgal > 0 ? qGal / kmgal : null;
   const frecuencia = useMemo(() => {
     if (mine.length < 2) return null;
@@ -134,16 +150,22 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
   // (E3d: caída ≥10 % vs tu promedio = aviso; solo con ≥3 ventanas)
   const trendPct = summary.trendPct;
   const n = summary.windows.length;
+  // Estimado: se muestra desde la SEGUNDA carga con km (decisión del
+  // dueño: el socio quiere ver movimiento aunque aún no sea exacto)
+  const kmLoads = mine.filter(l => l.km_reading != null).length;
   const kmNote = trendPct != null
     ? `${trendPct >= 0 ? '▲' : '▼'} ${Math.abs(trendPct)}% vs tu promedio${trendPct <= -10 ? ' — revisa servicio, llantas o presión' : ''}`
     : method === 'full' ? `De lleno a lleno · ${n} medición${n === 1 ? '' : 'es'}`
-    : method === 'estimate' ? 'Estimado — marca tus llenados completos para afinarlo'
-    : hasKm ? 'Marca un llenado completo con tus km para medirlo'
+    : method === 'estimate' ? `Estimado con ${kmLoads} cargas · llena el tanque para afinarlo`
+    : hasKm ? 'Con tu próxima carga con km verás un estimado'
     : 'Reporta tus km recorridos al calificar';
+  // Sugerencia de LLENAR EL TANQUE (dueño, 21-sep): mientras no haya
+  // medición exacta y ya existan cargas, se le explica cómo lograrla.
+  const nudge = method !== 'full' && mine.length >= 2;
 
   const insights = [
     { k: 'kmgal', label: 'Rendimiento', value: kmgal ? `${fmtN(kmgal)} km/gal` : '—', note: kmNote, warn: trendPct != null && trendPct <= -10 },
-    { k: 'costo', label: 'Costo por km', value: costoKm ? `Q${fmtN(costoKm, 2)}` : '—', note: costoKm ? `A Q${fmtN(qGal, 2)} el galón` : 'Necesita rendimiento' },
+    { k: 'costo', label: 'Costo por km', value: costoKm ? `Q${fmtN(costoKm, 2)}` : '—', note: costoKm ? `A Q${fmtN(qGal, 2)} el galón${lastPriced ? ' (última carga)' : ''}` : 'Necesita rendimiento' },
     { k: 'mes', label: 'Costo mensual', value: costoMes ? `~Q${fmtN(costoMes, 0)}` : '—', note: costoMes ? `A tu ritmo de ${fmtN(st.km_per_day, 0)} km/día` : 'Necesita rendimiento y ritmo' },
     { k: 'auto', label: 'Autonomía', value: autonomia ? `~${fmtN(autonomia, 0)} km` : '—', note: autonomia ? `Por tanque de ${fmtN(vehicle.tank_gal)} gal` : 'Agrega el tanque en Datos y ajustes' },
     { k: 'galc', label: 'Por carga', value: galCarga ? `${fmtN(galCarga)} gal` : '—', note: galCarga ? `Q${fmtN(st.total_amount / st.fuel_count, 0)} en promedio` : 'Aún sin cargas' },
@@ -155,6 +177,12 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
   // los vehículos + cargas sin asignar) — ahí vive el editor de reasignación.
   const visible = Array.isArray(loads) ? (showAll ? loads : mine) : [];
   const othersN = Array.isArray(loads) ? loads.length - mine.length : 0;
+  // E3g: cargas + movimientos del vehículo en una sola línea de tiempo
+  const visibleEvents = showAll ? events : events.filter(e => e.vehicle_id === vehicle?.id);
+  const timeline = useMemo(() => [
+    ...visible.map(l => ({ kind: 'load', at: new Date(l.created_at).getTime(), l })),
+    ...visibleEvents.map(e => ({ kind: 'event', at: new Date(e.created_at).getTime(), e })),
+  ].sort((a, b) => b.at - a.at), [visible, visibleEvents]);
   useEffect(() => { setShowAll(false); }, [vehicle?.id]);
   const canEdit = (l) => (Date.now() - new Date(l.created_at)) / 86400000 <= editableDays;
   const lastKm = Math.max(vehicle.km || 0, ...mine.filter(l => l.km_reading != null).map(l => l.km_reading));
@@ -221,6 +249,17 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
         ))}
       </div>
 
+      {/* Sugerencia para lograr la medición exacta */}
+      {nudge && (
+        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', background: dark ? 'rgba(250,84,8,.12)' : 'rgba(250,84,8,.08)', borderRadius: 15, padding: '11px 13px', marginTop: 10 }}>
+          <span style={{ width: 8, height: 8, borderRadius: 4, background: BRAND_ORANGE, flexShrink: 0, marginTop: 5 }} />
+          <div style={{ fontSize: 11.5, color: ink, fontWeight: 600, lineHeight: 1.5 }}>
+            <b>Llena el tanque</b> la próxima vez y marca <b>"Sí, quedó lleno"</b> junto con tus km recorridos.
+            Con dos llenados completos medimos tu rendimiento exacto; mientras, ves un estimado.
+          </div>
+        </div>
+      )}
+
       {/* E3e/E3f: rendimiento por llenado — una medición por ventana de
           lleno a lleno, con el promedio ponderado punteado (≥2 ventanas) */}
       {trendPoints.length >= 2 && (
@@ -272,7 +311,7 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
           border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
           display: 'inline-flex', alignItems: 'center', gap: 7,
         }}>
-          <span style={lbl}>Historial de cargas{Array.isArray(loads) && loads.length > 0 ? ` (${showAll ? loads.length : mine.length})` : ''}</span>
+          <span style={lbl}>Historial del vehículo{timeline.length > 0 ? ` (${timeline.length})` : ''}</span>
           <svg width="13" height="13" viewBox="0 0 16 16" style={{ color: sub, transform: histOpen ? 'rotate(180deg)' : 'none', transition: 'transform .18s' }}>
             <path d="M3.5 6 8 10.5 12.5 6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -300,7 +339,13 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
         </div>
       )}
 
-      {histOpen && visible.map(l => {
+      {histOpen && timeline.map(item => {
+        if (item.kind === 'event') {
+          const e = item.e; const veh = vehById[e.vehicle_id];
+          return <FuelEventRow key={`e-${e.id}`} e={e} dark={dark} ink={ink} sub={sub} cardBg={cardBg}
+            name={showAll ? vehName(e.vehicle_id) : null} dot={veh?.color} />;
+        }
+        const l = item.l;
         const veh = vehById[l.vehicle_id];
         const tank = veh?.tank_gal;
         return (

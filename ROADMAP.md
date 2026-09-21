@@ -1976,6 +1976,20 @@ VehicleFuel.jsx dividido en FuelLogForm, FuelHistoryRow y fuelFmt. Arnés
 titular 170). **Vocabulario (decisión del dueño):** en la UI se dice
 "kilómetros recorridos", nunca "odómetro".
 
+**F6 E3g · HISTORIAL DEL VEHÍCULO + ajustes del dueño (21-sep, tarde;
+migración `20260921d_historial_vehiculo_eventos`):** (1) tabla
+`vehicle_events` (created / updated con diff whitelisteado / service /
+alerts_muted) escrita por `save_my_vehicle` y `confirm_my_vehicle_service`,
+leída por `list_my_vehicle_events`; relleno histórico del alta y del último
+servicio; el "Historial de cargas" pasa a "Historial del vehículo" con
+cargas y movimientos en una sola línea de tiempo (`FuelEventRow`). (2) Sin
+llenados: el ESTIMADO se muestra desde la segunda carga con km (el socio
+quiere ver movimiento) y una sugerencia explica cómo lograr la medición
+exacta ("llena el tanque y marca Sí, quedó lleno"). (3) Costo por km con el
+ÚLTIMO precio pagado (Q/gal de la carga más reciente), no el promedio.
+DESCARTADO por ahora: la reserva como segunda ancla. Fix `20260921c`:
+`list_my_vehicle_stats` fallaba por un alias repetido.
+
 ### Versión 4.4 — 19 de septiembre de 2026
 
 **API PROPER v1.4** (PROPER integra contra producción desde el 16-sep): DPI

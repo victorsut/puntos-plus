@@ -56,15 +56,25 @@ if (q.get('old') === '1') {
   }
 }
 
+// E3g: movimientos del vehículo (servicio confirmado, alta, edición)
+const events = [
+  { id: 'e3', vehicle_id: navi.id, event_type: 'service', created_at: '2026-09-11T18:00:00.000Z',
+    data: { done_on: '2026-09-11', km: 19120, next_service: null, next_service_km: 21000 } },
+  { id: 'e2', vehicle_id: navi.id, event_type: 'updated', created_at: '2026-09-03T15:00:00.000Z',
+    data: { changes: { tank_gal: { from: null, to: 1.0 }, fuel_pref: { from: null, to: 'regular' } } } },
+  { id: 'e1', vehicle_id: navi.id, event_type: 'created', created_at: '2026-08-18T14:00:00.000Z',
+    data: { vtype: 'moto', brand: 'Honda', model: 'Navi', plate: 'M033LDJ' } },
+];
+
 function Harness() {
   useEffect(() => {
-    if (q.get('hist') === '1') setTimeout(() => { [...document.querySelectorAll('button')].find(b => b.textContent.startsWith('Historial de cargas'))?.click(); }, 150);
+    if (q.get('hist') === '1') setTimeout(() => { [...document.querySelectorAll('button')].find(b => b.textContent.startsWith('Historial del vehículo'))?.click(); }, 150);
     if (q.get('reg') === '1') setTimeout(() => { [...document.querySelectorAll('button')].find(b => b.textContent.trim() === '+ Registrar consumo')?.click(); }, 150);
   }, []);
   return (
     <div style={{ minHeight: '100vh', background: dark ? '#0D0D0F' : '#fff', padding: '16px 18px 40px', maxWidth: 384, margin: '0 auto', boxSizing: 'border-box' }}>
       <VehicleFuel dark={dark} fire={(m) => console.log('[toast]', m)} vehicles={[navi]} vehicle={navi}
-        stats={stats} onStatsDirty={() => {}} preload={loads} />
+        stats={stats} onStatsDirty={() => {}} preload={loads} preloadEvents={events} />
     </div>
   );
 }
