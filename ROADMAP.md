@@ -2026,7 +2026,14 @@ tutorial de la app", junto a WhatsApp). Sin migración. Piezas:
 `src/lib/tour.js` (marca pp_tour_pending + evento), `components/tour/`
 (ClientTour motor, ClientTourGate disparo, tourSteps contenido), anclas
 `data-tour` en BottomNav, HomeHeader, TierCardBento, BentoTile (prop tourId),
-PromoBentoTile; montado en AppModals. Arnés `tools/harness/tour.html?step=N`.
+PromoBentoTile; montado en AppModals. Arnés `tools/harness/tour.html?step=N`. **Ampliado el mismo día a 31 pasos** (pedido: "un poco
+más extenso, opciones de cada pestaña"): cada paso declara `screen` y el
+motor abre la pestaña, salta los pasos cuyo elemento no existe (sin
+vehículos → veh-empty-cta en vez del carrusel; sin premios; mes pasado en la
+rifa) y vuelve al Inicio al cerrar. Recorre Inicio (11), barra (2), Canjes
+(4), Rifa (3), Vehículos (7, alternativos), Menú (3) y cierre. Anclas en
+Catalog, ClientRaffle, RafflePrizeCarousel, VehiclesHome, VehicleFuel,
+ClientPromos, ClientMenu y todos los cuadros del inicio.
 
 ### Versión 4.4 — 19 de septiembre de 2026
 
