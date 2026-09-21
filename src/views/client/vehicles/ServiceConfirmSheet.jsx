@@ -3,7 +3,7 @@
 // push/inbox de servicio o el botón "¿Ya hiciste el servicio?" de la
 // ventana Vehículos cuando el servicio está en época o vencido.
 // Dos pasos: (1) ¿ya lo hiciste? — "Aún no" cierra y los recordatorios
-// SIGUEN llegando; (2) "Sí" → fecha en que se hizo, odómetro y el
+// SIGUEN llegando; (2) "Sí" → fecha en que se hizo, km recorridos y el
 // PRÓXIMO servicio (fecha y/o km, al menos uno) → RPC
 // confirm_my_vehicle_service; al guardar, las alertas se cortan solas
 // porque el próximo servicio vuelve a estar en el futuro.

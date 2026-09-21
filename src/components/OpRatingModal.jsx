@@ -29,13 +29,15 @@ export default function OpRatingModal({
   const [closing, setClosing] = useState(false);
   const launchedRef = useRef(false);
 
-  // ── F6 E2: asignación de la carga a un vehículo + odómetro ──
+  // ── F6 E2: asignación de la carga a un vehículo + km recorridos ──
   // El server ya la auto-asignó al PRINCIPAL (trigger); acá el cliente
-  // la confirma/cambia y opcionalmente reporta el km. Solo si el socio
-  // tiene vehículos (rollout a todos el 4-sep: ya no hay beta).
+  // la confirma/cambia y opcionalmente reporta los km recorridos y si
+  // el tanque quedó lleno (E3f: base del rendimiento de lleno a lleno).
+  // Solo si el socio tiene vehículos (rollout a todos el 4-sep).
   const [vehOpts, setVehOpts] = useState(null);   // null | vehículos del miembro
   const [vehSel, setVehSel] = useState(null);     // id elegido
   const [kmText, setKmText] = useState('');
+  const [fullSel, setFullSel] = useState(null);   // ¿tanque lleno? true/false/null
   const vehInitial = useRef(null);                // id auto-asignado (principal)
   const vehSent = useRef(false);                  // la asignación ya se envió
   useEffect(() => {
@@ -51,16 +53,16 @@ export default function OpRatingModal({
   }, [sbConnected, data.purchaseId]);
 
   // Envía la asignación UNA vez si hay algo que decir: vehículo distinto
-  // del auto-asignado o lectura de odómetro. Fire-and-forget (no bloquea
-  // el cierre); errores solo a consola (p. ej. compra >7 días).
+  // del auto-asignado, km recorridos o respuesta de tanque lleno.
+  // Fire-and-forget (no bloquea el cierre); errores solo a consola.
   const flushVehicle = useCallback(() => {
     if (vehSent.current || !vehSel || !data.purchaseId) return;
     const km = /^\d{1,7}$/.test(kmText.trim()) ? parseInt(kmText.trim(), 10) : null;
-    if (vehSel === vehInitial.current && km == null) return;
+    if (vehSel === vehInitial.current && km == null && fullSel == null) return;
     vehSent.current = true;
-    assignPurchaseVehicle({ purchaseId: data.purchaseId, vehicleId: vehSel, km })
+    assignPurchaseVehicle({ purchaseId: data.purchaseId, vehicleId: vehSel, km, fullTank: fullSel })
       .then(({ error }) => { if (error) console.error('[Vehículo]', error); });
-  }, [vehSel, kmText, data.purchaseId]);
+  }, [vehSel, kmText, fullSel, data.purchaseId]);
 
   // D35: el modal cierra con la animación INVERSA a la apertura
   // (fadeUpOut) antes de desmontar — todos los caminos de salida
@@ -189,7 +191,7 @@ export default function OpRatingModal({
             )}
 
             {/* F6 E2: ¿a cuál vehículo va esta carga? (solo betas con
-                vehículos) — chips + odómetro opcional; se envía al
+                vehículos) — chips + km recorridos + ¿tanque lleno?; se envía al
                 calificar u omitir */}
             {vehOpts && (
               <div style={{ textAlign: 'left', marginBottom: 16 }}>
@@ -215,11 +217,13 @@ export default function OpRatingModal({
                     );
                   })}
                 </div>
+                {/* Vocabulario (dueño, 21-sep): "kilómetros recorridos", no
+                    "odómetro" — los que marca el tablero del vehículo */}
                 <input
                   inputMode="numeric" pattern="[0-9]*" maxLength={7}
                   value={kmText}
                   onChange={e => { setKmText(e.target.value.replace(/\D/g, '')); vehSent.current = false; }}
-                  placeholder="Odómetro actual en km (opcional)"
+                  placeholder="Kilómetros recorridos (opcional)"
                   style={{
                     width: '100%', boxSizing: 'border-box', marginTop: 8,
                     padding: '10px 12px', borderRadius: 12,
@@ -237,10 +241,28 @@ export default function OpRatingModal({
                   if (kmIn == null || !(sel?.km > 0) || kmIn >= sel.km) return null;
                   return (
                     <div style={{ fontSize: 10.5, color: '#E65100', fontWeight: 700, marginTop: 5, lineHeight: 1.4 }}>
-                      Ojo: es menor que la última lectura de este vehículo ({sel.km.toLocaleString('en-US')} km) — revísala si es un error.
+                      Ojo: es menor que los últimos km de este vehículo ({sel.km.toLocaleString('en-US')} km) — revísalos si es un error.
                     </div>
                   );
                 })()}
+                {/* E3f: ¿quedó el tanque lleno? — ancla del rendimiento de
+                    lleno a lleno (las cargas parciales se suman a la
+                    siguiente). Sin respuesta = se infiere por el tanque. */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: dark ? '#E0E0E0' : '#424242', marginRight: 2 }}>¿Llenaste el tanque?</span>
+                  {[{ v: true, t: 'Sí, quedó lleno' }, { v: false, t: 'No, fue parcial' }].map(o => {
+                    const on = fullSel === o.v;
+                    return (
+                      <button key={String(o.v)} onClick={() => { setFullSel(on ? null : o.v); vehSent.current = false; }} style={{
+                        padding: '7px 11px', borderRadius: 11, cursor: 'pointer', whiteSpace: 'nowrap',
+                        border: on ? `1.5px solid ${BRAND_ORANGE}` : `1.5px solid ${dark ? 'rgba(255,255,255,.15)' : 'rgba(0,0,0,.12)'}`,
+                        background: on ? (dark ? 'rgba(221,29,33,.16)' : '#FDECEA') : 'transparent',
+                        color: on ? (dark ? '#FF8A80' : '#C62828') : (dark ? '#E0E0E0' : '#424242'),
+                        fontFamily: "'DM Sans'", fontSize: 12, fontWeight: 800,
+                      }}>{o.t}</button>
+                    );
+                  })}
+                </div>
               </div>
             )}
 

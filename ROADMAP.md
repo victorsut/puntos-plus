@@ -1958,6 +1958,24 @@ audita). Desactivar es reversible: `api_authenticate` responde 401 mientras
 (Settings.jsx adelgaza). NINGUNA llave se desactivó: la revocación de
 "Pruebas" sigue en el checklist de GO-LIVE como decisión del dueño.
 
+**F6 E3f · RENDIMIENTO DE LLENO A LLENO** (reporte del dueño con la Navi de
+Ezer: Q10 tras 119 km → 567 km/gal; llenar tras 30 km → 33 km/gal; migración
+`20260921b_rendimiento_lleno_a_lleno`): cada carga puede marcarse como
+TANQUE LLENO (pregunta Sí/No en el modal de calificación y en el registro
+manual; sin respuesta se infiere lleno con ≥85 % de la capacidad del tanque).
+Ancla = carga con km recorridos y tanque lleno; entre dos anclas los km se
+dividen entre TODO el combustible cargado después de la primera hasta la
+segunda inclusive (las parciales se suman a la ventana). Ventanas válidas
+≥10 km; titular = Σkm/Σgal (ponderado); tendencia solo con ≥3 ventanas; sin
+anclas, estimador anterior etiquetado "estimado". Algoritmo en
+`src/lib/fuelEconomy.js` (cliente) y `list_my_vehicle_stats` (servidor,
+devuelve `km_per_gal_method/_windows/_last`). Estado corregible desde el
+historial (`set_my_fuel_load_full`, compras 30 días / manuales siempre).
+VehicleFuel.jsx dividido en FuelLogForm, FuelHistoryRow y fuelFmt. Arnés
+`tools/harness/fuel.html` con los datos reales de la Navi (194 y 134 km/gal,
+titular 170). **Vocabulario (decisión del dueño):** en la UI se dice
+"kilómetros recorridos", nunca "odómetro".
+
 ### Versión 4.4 — 19 de septiembre de 2026
 
 **API PROPER v1.4** (PROPER integra contra producción desde el 16-sep): DPI

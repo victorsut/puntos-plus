@@ -37,19 +37,24 @@ export async function deleteMyVehicle(vehicleId) {
 
 // ── F6 E2: combustible + telemetría ──────────────────────────
 // El cliente confirma/cambia el vehículo de una compra desde el
-// modal de calificación y opcionalmente reporta el odómetro
-// (ventana de 7 días server-side; todo validado como suyo).
-export async function assignPurchaseVehicle({ purchaseId, vehicleId, km = null }) {
+// modal de calificación y opcionalmente reporta los km recorridos y
+// si el tanque quedó lleno (E3f; ventana de 30 días server-side;
+// todo validado como suyo). fullTank: true/false/null (sin respuesta).
+export async function assignPurchaseVehicle({ purchaseId, vehicleId, km = null, fullTank = null }) {
   if (!sb) return { data: null, error: { message: 'Sin conexión al servidor' } };
   return callRpc('assign_purchase_vehicle', {
     p_purchase_id: purchaseId,
     p_vehicle_id: vehicleId,
     p_km: km,
+    ...(fullTank != null ? { p_full_tank: fullTank } : {}),
   }, { sessionToken: getMemberToken()?.token ?? null });
 }
 
 // Telemetría por vehículo: { ok, stats: { <vehicleId>: { fuel_count,
-// total_gallons, total_amount, last_fuel_at, km_per_gal, km_per_day } } }
+// total_gallons, total_amount, last_fuel_at, km_per_gal,
+// km_per_gal_method ('full' | 'estimate' | null), km_per_gal_windows,
+// km_per_gal_last, km_per_day } } } — E3f: rendimiento de lleno a lleno
+// (ver src/lib/fuelEconomy.js, espejo del algoritmo server-side).
 export async function listMyVehicleStats() {
   if (!sb) return { data: null, error: { message: 'Sin conexión al servidor' } };
   return callRpc('list_my_vehicle_stats', {}, { sessionToken: getMemberToken()?.token ?? null });
@@ -69,14 +74,28 @@ export async function listMyFuelHistory(limit = 40) {
 
 // ── F6 E3b: consumos MANUALES (cargas fuera de Turkaj) ───────
 // Completan la telemetría: con llenados parciales el rendimiento
-// solo es correcto si TODO el combustible entre lecturas cuenta.
-export async function addMyFuelLog({ vehicleId, gallons, amount = null, km = null }) {
+// solo es correcto si TODO el combustible entre llenados cuenta.
+// fullTank (E3f): ¿quedó el tanque lleno? true/false/null.
+export async function addMyFuelLog({ vehicleId, gallons, amount = null, km = null, fullTank = null }) {
   if (!sb) return { data: null, error: { message: 'Sin conexión al servidor' } };
   return callRpc('add_my_fuel_log', {
     p_vehicle_id: vehicleId,
     p_gallons: gallons,
     p_amount: amount,
     p_km: km,
+    ...(fullTank != null ? { p_full_tank: fullTank } : {}),
+  }, { sessionToken: getMemberToken()?.token ?? null });
+}
+
+// E3f: marcar/desmarcar "tanque lleno" en una carga del historial
+// (compras dentro de la ventana de 30 días; registros manuales sin
+// límite). source: 'turkaj' | 'manual'. full: true/false/null.
+export async function setMyFuelLoadFull({ loadId, source, full }) {
+  if (!sb) return { data: null, error: { message: 'Sin conexión al servidor' } };
+  return callRpc('set_my_fuel_load_full', {
+    p_load_id: loadId,
+    p_source: source,
+    p_full: full,
   }, { sessionToken: getMemberToken()?.token ?? null });
 }
 
@@ -88,7 +107,7 @@ export async function deleteMyFuelLog(logId) {
 }
 
 // ── F6 E4: CONFIRMAR servicio realizado + programar el próximo ──
-// Estampa last_service/last_service_km, avanza el odómetro si la
+// Estampa last_service/last_service_km, avanza los km recorridos si la
 // lectura es mayor y fija next_service / next_service_km (al menos
 // uno) — con eso las alertas del cron se cortan solas.
 export async function confirmMyVehicleService({ vehicleId, doneOn, km = null, nextService = null, nextServiceKm = null }) {

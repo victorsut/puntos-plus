@@ -43,6 +43,7 @@ PWA en producción activa.
 - **Responsividad:** debe funcionar en navegadores in-app (WhatsApp, Instagram) y móvil.
 - **Modo claro/oscuro (24-jul-2026):** la vista cliente tiene ambos modos. `ctx.dark` (App.jsx) es la fuente de verdad; se elige con sol/luna en login y Menú (`ModeToggle`), persiste en localStorage `pp_mode`; sin elección: BLACK oscuro, ORO/PLATINO claro. Las SUPERFICIES (fondos, tarjetas, textos) se bifurcan por `dark`; la IDENTIDAD del tier (tierBand, galaxia de la tarjeta, paleta homeColors) NO cambia con el modo. Componentes nuevos del cliente deben soportar ambos modos.
 - **Estilo:** seguir patrones existentes en `src/constants/styles.js` (inputStyle, btnStyle, sMono, adminTheme, clientTheme).
+- **Rendimiento de vehículos (F6 E3f, 21-sep-2026):** se calcula DE LLENO A LLENO — cada carga lleva `full_tank` (pregunta "¿Llenaste el tanque?" en el modal de calificación y en el registro manual; NULL se infiere lleno con ≥85 % de `tank_gal`); entre dos llenados con km, los km se dividen entre TODO el combustible cargado en medio (parciales incluidas); ventanas ≥10 km; titular ponderado; tendencia solo con ≥3 ventanas. El algoritmo vive en `src/lib/fuelEconomy.js` (cliente) y `list_my_vehicle_stats` (servidor): cualquier cambio va en AMBOS con las mismas constantes. **Vocabulario del cliente (decisión del dueño):** "kilómetros recorridos", nunca "odómetro".
 
 ## 4. Estructura del Proyecto
 

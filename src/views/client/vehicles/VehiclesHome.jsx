@@ -124,7 +124,7 @@ export default function VehiclesHome({ ctx, vehicles, setVehicles }) {
   const serviceDays = v ? daysUntil(v.next_service) : null;
   const kmLeft = v && v.next_service_km != null && v.km != null ? v.next_service_km - v.km : null;
   // E2: telemetría del vehículo activo + estimación de días al servicio
-  // por km según su ritmo real (km/día de las lecturas de odómetro)
+  // por km según su ritmo real (km/día de los km recorridos reportados)
   const st = v ? stats[v.id] : null;
   const kmEta = kmLeft != null && kmLeft > 0 && st?.km_per_day > 0
     ? Math.ceil(kmLeft / st.km_per_day) : null;
@@ -135,7 +135,7 @@ export default function VehiclesHome({ ctx, vehicles, setVehicles }) {
     if (!hasDate && !hasKm) return { value: '—', note: 'Sin programar — agrégalo al editar', warn: false };
     const kmVal = hasKm ? `${v.next_service_km.toLocaleString('en-US')} km` : null;
     const kmNote = !hasKm ? null
-      : kmLeft == null ? 'Meta de odómetro (actualiza tu km)'
+      : kmLeft == null ? 'Meta de km (actualiza tus km recorridos)'
       : kmLeft <= 0 ? `Pasado por ${Math.abs(kmLeft).toLocaleString('en-US')} km`
       : `Faltan ${kmLeft.toLocaleString('en-US')} km${kmEta ? ` · ≈ ${kmEta} día${kmEta === 1 ? '' : 's'}` : ''}`;
     const dateNote = !hasDate ? null
