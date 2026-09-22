@@ -10,9 +10,13 @@ import { useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import '../../src/styles/global.css';
 import VehicleFuel from '../../src/views/client/vehicles/VehicleFuel';
+import ClientTour from '../../src/components/tour/ClientTour';
+import { TOUR_STEPS } from '../../src/components/tour/tourSteps';
 import { fuelSummary } from '../../src/lib/fuelEconomy';
 
 const q = new URLSearchParams(location.search);
+// ?tour=veh-fuel|veh-fuel-log|veh-history: monta el tutorial y avanza hasta ese paso (22-sep)
+const tourTo = q.get('tour');
 const dark = q.get('dark') === '1';
 
 const navi = {
@@ -75,8 +79,21 @@ function Harness() {
     <div style={{ minHeight: '100vh', background: dark ? '#0D0D0F' : '#fff', padding: '16px 18px 40px', maxWidth: 384, margin: '0 auto', boxSizing: 'border-box' }}>
       <VehicleFuel dark={dark} fire={(m) => console.log('[toast]', m)} vehicles={[navi]} vehicle={navi}
         stats={stats} onStatsDirty={() => {}} preload={loads} preloadEvents={events} />
+      {tourTo && <ClientTour dark={dark} cScr="veh" setCScr={() => {}} onClose={() => {}} initialStep={Math.max(0, TOUR_STEPS.findIndex(s => s.target === tourTo))} />}
     </div>
   );
 }
 
 createRoot(document.getElementById('root')).render(<Harness />);
+
+
+// ?dbg=1: rótulo con las medidas reales del foco y de la tarjeta del tutorial
+if (tourTo && q.get('dbg') === '1') setInterval(() => {
+  const ring = document.querySelector('.pp-tour-ring'), card = document.querySelector('.pp-pop');
+  const el = document.querySelector('[data-tour="' + tourTo + '"]');
+  let d = document.getElementById('pp-dbg');
+  if (!d) { d = document.createElement('div'); d.id = 'pp-dbg'; d.style.cssText = 'position:fixed;left:4px;top:2px;z-index:999;font:700 10px monospace;color:#0f0;background:#000;padding:2px 4px;white-space:pre'; document.body.appendChild(d); }
+  const r = el?.getBoundingClientRect();
+  d.textContent = 'vh ' + innerHeight + ' vw ' + innerWidth + ' | el ' + (r ? Math.round(r.top) + '/' + Math.round(r.height) : '-') +
+    ' | ring ' + (ring ? ring.style.top + '/' + ring.style.height : '-') + ' | card ' + (card ? Math.round(card.getBoundingClientRect().top) + '..' + Math.round(card.getBoundingClientRect().bottom) : '-');
+}, 200);

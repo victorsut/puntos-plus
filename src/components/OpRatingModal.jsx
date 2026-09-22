@@ -19,6 +19,11 @@ import { rateOperatorSecure } from '../services/secureReads';
 import { listMyVehicles, assignPurchaseVehicle } from '../services/vehicleService';
 import { VEHICLE_TYPES } from './ui/VehicleIcons';
 
+// Rótulo común de las tres preguntas del vehículo (carga asignada a,
+// kilómetros recorridos, ¿llenaste el tanque?) — misma tipografía y
+// énfasis para que se lean como preguntas por contestar (dueño, 22-sep)
+const qLabel = { fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', color: '#9E9E9E', marginBottom: 8 };
+
 export default function OpRatingModal({
   data, onClose, dark, memberId, sbConnected, fire,
   cfg, mySurveyCount, accent, accentInk,
@@ -195,9 +200,9 @@ export default function OpRatingModal({
                 calificar u omitir */}
             {vehOpts && (
               <div style={{ textAlign: 'left', marginBottom: 16 }}>
-                <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', color: '#9E9E9E', marginBottom: 8 }}>
-                  Carga asignada a
-                </div>
+                {/* Tres preguntas con el MISMO rótulo (dueño, 22-sep): que el
+                    socio entienda que son cosas por contestar */}
+                <div style={qLabel}>Carga asignada a</div>
                 <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
                   {vehOpts.map(veh => {
                     const t = VEHICLE_TYPES.find(x => x.k === veh.vtype) || VEHICLE_TYPES[VEHICLE_TYPES.length - 1];
@@ -219,13 +224,14 @@ export default function OpRatingModal({
                 </div>
                 {/* Vocabulario (dueño, 21-sep): "kilómetros recorridos", no
                     "odómetro" — los que marca el tablero del vehículo */}
+                <div style={{ ...qLabel, marginTop: 14 }}>Kilómetros recorridos</div>
                 <input
                   inputMode="numeric" pattern="[0-9]*" maxLength={7}
                   value={kmText}
                   onChange={e => { setKmText(e.target.value.replace(/\D/g, '')); vehSent.current = false; }}
-                  placeholder="Kilómetros recorridos (opcional)"
+                  placeholder="Los que marca tu tablero (opcional)"
                   style={{
-                    width: '100%', boxSizing: 'border-box', marginTop: 8,
+                    width: '100%', boxSizing: 'border-box',
                     padding: '10px 12px', borderRadius: 12,
                     border: `1.5px solid ${dark ? 'rgba(255,255,255,.15)' : 'rgba(0,0,0,.12)'}`,
                     background: dark ? 'rgba(255,255,255,.06)' : '#FAFAFA',
@@ -248,17 +254,18 @@ export default function OpRatingModal({
                 {/* E3f: ¿quedó el tanque lleno? — ancla del rendimiento de
                     lleno a lleno (las cargas parciales se suman a la
                     siguiente). Sin respuesta = se infiere por el tanque. */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: dark ? '#E0E0E0' : '#424242', marginRight: 2 }}>¿Llenaste el tanque?</span>
+                <div style={{ ...qLabel, marginTop: 14 }}>¿Llenaste el tanque?</div>
+                {/* Las dos opciones al MISMO nivel, en una sola línea (dueño, 22-sep) */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   {[{ v: true, t: 'Sí, quedó lleno' }, { v: false, t: 'No, fue parcial' }].map(o => {
                     const on = fullSel === o.v;
                     return (
                       <button key={String(o.v)} onClick={() => { setFullSel(on ? null : o.v); vehSent.current = false; }} style={{
-                        padding: '7px 11px', borderRadius: 11, cursor: 'pointer', whiteSpace: 'nowrap',
+                        padding: '10px 8px', borderRadius: 12, cursor: 'pointer', whiteSpace: 'nowrap',
                         border: on ? `1.5px solid ${BRAND_ORANGE}` : `1.5px solid ${dark ? 'rgba(255,255,255,.15)' : 'rgba(0,0,0,.12)'}`,
                         background: on ? (dark ? 'rgba(221,29,33,.16)' : '#FDECEA') : 'transparent',
                         color: on ? (dark ? '#FF8A80' : '#C62828') : (dark ? '#E0E0E0' : '#424242'),
-                        fontFamily: "'DM Sans'", fontSize: 12, fontWeight: 800,
+                        fontFamily: "'DM Sans'", fontSize: 12.5, fontWeight: 800,
                       }}>{o.t}</button>
                     );
                   })}

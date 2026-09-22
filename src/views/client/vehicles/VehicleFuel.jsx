@@ -235,18 +235,23 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
   };
 
   return (
-    <div data-tour="veh-fuel" style={{ marginTop: 22 }}>
-      <div style={lbl}>Rendimiento y consumo</div>
+    <div style={{ marginTop: 22 }}>
+      {/* El ancla del tutorial (paso "Rendimiento y consumo") cubre SOLO el
+          título y los indicadores: el bloque completo (sugerencia, gráficas,
+          botones) es más alto que la pantalla y tapaba la tarjeta del paso */}
+      <div data-tour="veh-fuel">
+        <div style={lbl}>Rendimiento y consumo</div>
 
-      {/* Indicadores del vehículo activo */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 8 }}>
-        {insights.map(t => (
-          <div key={t.k} style={{ background: cardBg, borderRadius: 17, padding: '12px 14px' }}>
-            <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', color: sub }}>{t.label}</div>
-            <div style={{ fontSize: 15.5, fontWeight: 800, marginTop: 5, color: t.warn ? '#E65100' : ink }}>{t.value}</div>
-            <div style={{ fontSize: 10.5, color: t.warn ? '#E65100' : sub, fontWeight: 600, marginTop: 3 }}>{t.note}</div>
-          </div>
-        ))}
+        {/* Indicadores del vehículo activo */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 8 }}>
+          {insights.map(t => (
+            <div key={t.k} style={{ background: cardBg, borderRadius: 17, padding: '12px 14px' }}>
+              <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', color: sub }}>{t.label}</div>
+              <div style={{ fontSize: 15.5, fontWeight: 800, marginTop: 5, color: t.warn ? '#E65100' : ink }}>{t.value}</div>
+              <div style={{ fontSize: 10.5, color: t.warn ? '#E65100' : sub, fontWeight: 600, marginTop: 3 }}>{t.note}</div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Sugerencia para lograr la medición exacta */}

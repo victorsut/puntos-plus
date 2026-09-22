@@ -26,11 +26,14 @@ import { TOUR_STEPS } from './tourSteps';
 const PAD = 8;          // holgura del foco alrededor del elemento
 const GAP = 16;         // separación entre foco y tarjeta (incluye la flecha)
 const CARD_W = 300;
+const CARD_SPACE = 250; // alto reservado a la tarjeta (texto + botones) + margen
+const TOP_MARGIN = 12;  // borde superior del foco cuando el elemento es alto
 const CLOSE_MS = 200;
 const FIND_TRIES = 60;  // × 50 ms = 3 s (las pestañas son chunks lazy)
 
-export default function ClientTour({ dark, cScr, setCScr, onClose }) {
-  const [i, setI] = useState(0);
+// initialStep: solo para los arneses de verificación (arrancar en un paso dado)
+export default function ClientTour({ dark, cScr, setCScr, onClose, initialStep = 0 }) {
+  const [i, setI] = useState(initialStep);
   const [rect, setRect] = useState(null);       // caja del objetivo en viewport
   const [ready, setReady] = useState(false);    // objetivo medido (o paso centrado)
   const [closing, setClosing] = useState(false);
@@ -78,10 +81,22 @@ export default function ClientTour({ dark, cScr, setCScr, onClose }) {
         return;
       }
       const r = el.getBoundingClientRect();
-      const out = r.top < 0 || r.bottom > window.innerHeight;
+      // Elemento ALTO (p. ej. el bloque completo de rendimiento): no cabe
+      // junto con la tarjeta → se lleva su parte superior al borde de la
+      // pantalla y el foco se RECORTA (ver geometría) para que la
+      // descripción y los botones queden siempre visibles (dueño, 22-sep).
+      const tall = r.height + 2 * PAD > window.innerHeight - CARD_SPACE - TOP_MARGIN;
+      const out = tall ? Math.abs(r.top - TOP_MARGIN - PAD) > 4 : (r.top < 0 || r.bottom > window.innerHeight);
       if (out && !scrolled.current) {
         scrolled.current = true;
-        el.scrollIntoView({ block: 'center', behavior: 'instant' });
+        el.scrollIntoView({ block: tall ? 'start' : 'center', behavior: 'instant' });
+        if (tall) {
+          // dejar el margen del foco por encima del elemento (el contenedor
+          // que se desplaza es el lienzo del cliente o la ventana)
+          let sc = el.parentElement;
+          while (sc && !(sc.scrollHeight > sc.clientHeight && /auto|scroll/.test(getComputedStyle(sc).overflowY))) sc = sc.parentElement;
+          (sc || document.scrollingElement)?.scrollBy?.(0, -(TOP_MARGIN + PAD));
+        }
         setTimeout(measure, 80);
         return;
       }
@@ -101,14 +116,23 @@ export default function ClientTour({ dark, cScr, setCScr, onClose }) {
   // ── geometría de la tarjeta ──
   const vw = window.innerWidth, vh = window.innerHeight;
   const cardW = Math.min(CARD_W, vw - 32);
-  let cardStyle, arrow = null;
+  let cardStyle, arrow = null, focus = null;
   if (rect) {
-    const cx = rect.x + rect.w / 2;
+    // Foco: el elemento con holgura; si es más alto que el espacio libre
+    // sobre la tarjeta, se RECORTA por abajo (se ve su parte superior y
+    // la tarjeta queda debajo, siempre a la vista)
+    focus = { x: rect.x - PAD, y: rect.y - PAD, w: rect.w + 2 * PAD, h: rect.h + 2 * PAD };
+    const maxH = vh - CARD_SPACE - Math.max(focus.y, TOP_MARGIN);
+    if (focus.h > maxH && !(vh - (focus.y + focus.h) > CARD_SPACE)) {
+      focus.y = Math.max(focus.y, TOP_MARGIN);
+      focus.h = Math.max(120, maxH);
+    }
+    const cx = focus.x + focus.w / 2;
     const left = Math.max(16, Math.min(cx - cardW / 2, vw - cardW - 16));
-    const below = vh - (rect.y + rect.h + PAD) > 240;   // ¿cabe debajo?
+    const below = vh - (focus.y + focus.h) > CARD_SPACE - 10;   // ¿cabe debajo?
     cardStyle = below
-      ? { left, top: rect.y + rect.h + PAD + GAP }
-      : { left, bottom: vh - (rect.y - PAD) + GAP };
+      ? { left, top: focus.y + focus.h + GAP }
+      : { left, bottom: vh - focus.y + GAP };
     arrow = { x: Math.max(18, Math.min(cx - left, cardW - 18)), up: below };
   } else {
     cardStyle = { left: (vw - cardW) / 2, top: '50%', transform: 'translateY(-50%)' };
@@ -118,7 +142,6 @@ export default function ClientTour({ dark, cScr, setCScr, onClose }) {
   const ink = dark ? '#fff' : '#0D0D0D';
   const sub = dark ? 'rgba(255,255,255,.6)' : '#6E6E73';
   const soft = dark ? 'rgba(255,255,255,.1)' : '#F2F2F5';
-  const focus = rect ? { x: rect.x - PAD, y: rect.y - PAD, w: rect.w + 2 * PAD, h: rect.h + 2 * PAD } : null;
   const section = step.section ? `${step.section} · ` : '';
 
   return (

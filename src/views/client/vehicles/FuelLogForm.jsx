@@ -85,11 +85,12 @@ export default function FuelLogForm({ dark, ink, sub, cardBg, vehicle, vehName, 
       </div>
 
       {/* E3f: ¿quedó el tanque lleno? */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 12, fontWeight: 700, color: ink, marginRight: 2 }}>¿Llenaste el tanque?</span>
+      <div style={{ fontSize: 10, fontWeight: 700, color: sub, marginTop: 12, marginBottom: 4 }}>¿Llenaste el tanque?</div>
+      {/* Las dos opciones al mismo nivel, en una sola línea (dueño, 22-sep) */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         {[{ v: true, t: 'Sí, quedó lleno' }, { v: false, t: 'No, fue parcial' }].map(o => (
           <button key={String(o.v)} onClick={() => setRg(p => ({ ...p, full: p.full === o.v ? null : o.v }))}
-            style={chip(rg.full === o.v)}>{o.t}</button>
+            style={{ ...chip(rg.full === o.v), padding: '10px 8px' }}>{o.t}</button>
         ))}
       </div>
       <div style={{ fontSize: 10.5, color: sub, fontWeight: 600, lineHeight: 1.5, marginTop: 8 }}>
