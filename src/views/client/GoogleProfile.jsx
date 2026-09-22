@@ -52,18 +52,18 @@ export default function GoogleProfile(ctx) {
   const [showTerms, setShowTerms] = useState(false);
 
   // ── Verificar si el telefono o DPI ya existe en Supabase ─
-  const checkPhoneDuplicate = async (phone) => {
-    if (!sb || !phone) return false;
-    // SEC.C.1: el teléfono ya no es legible por la API abierta — el
-    // chequeo de duplicados es un RPC que solo devuelve booleanos.
-    const { data } = await sb.rpc('check_member_exists', { p_phone: phone.trim() });
-    return !!data?.phone_exists;
-  };
-
-  const checkDpiDuplicate = async (dpi) => {
-    if (!sb || !dpi) return false;
-    const { data } = await sb.rpc('check_member_exists', { p_dpi: dpi.trim() });
-    return !!data?.dpi_exists;
+  // SEC.C.1: el teléfono ya no es legible por la API abierta — el
+  // chequeo de duplicados es un RPC que solo devuelve booleanos. UNA
+  // sola llamada con ambos datos (22-sep): la RPC tiene un límite de 10
+  // consultas por hora e IP; si se agotó responde `limited` y el
+  // registro sigue sin el aviso temprano (register_member valida los
+  // duplicados al final).
+  const checkDuplicates = async (phone, dpi) => {
+    if (!sb) return {};
+    const { data } = await sb.rpc('check_member_exists', {
+      p_phone: phone?.trim() || null, p_dpi: dpi?.trim() || null,
+    });
+    return data || {};
   };
 
   // Email, nit y dirección (cantón elegido) dan puntos opcionales
@@ -255,18 +255,15 @@ export default function GoogleProfile(ctx) {
       if (!/^\d{13}$/.test(regProfile.dpi.trim())) { setAuthError('El DPI debe tener exactamente 13 digitos'); return; }
       if (!regProfile.phone?.trim()) { setAuthError('El telefono es obligatorio'); return; }
       if (!/^\d{8}$/.test(regProfile.phone.trim())) { setAuthError('El telefono debe tener exactamente 8 digitos'); return; }
-      // Verificar si el telefono ya esta registrado
+      // Verificar si el telefono o el DPI ya estan registrados (una llamada)
       setCheckingPhone(true);
-      const phoneExists = await checkPhoneDuplicate(regProfile.phone.trim());
-      if (phoneExists) {
-        setCheckingPhone(false);
+      const dup = await checkDuplicates(regProfile.phone, regProfile.dpi);
+      setCheckingPhone(false);
+      if (dup.phone_exists) {
         setAuthError('Este numero de telefono ya esta registrado. Si ya tienes cuenta, inicia sesion.');
         return;
       }
-      // Verificar si el DPI ya esta registrado
-      const dpiExists = await checkDpiDuplicate(regProfile.dpi.trim());
-      setCheckingPhone(false);
-      if (dpiExists) {
+      if (dup.dpi_exists) {
         setAuthError('Este DPI ya esta registrado. Si ya tienes cuenta, inicia sesion.');
         return;
       }
