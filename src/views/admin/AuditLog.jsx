@@ -17,7 +17,8 @@ const PAGE_SIZE = 20;
 // Vocabulario controlado de acciones, agrupado por área del panel.
 const ACTION_GROUPS = [
   { label: 'Configuración', actions: [
-    'update_fuel_prices', 'update_loyalty_config', 'update_company_info',
+    'update_fuel_prices', 'update_fuel_prices_auto', 'set_fuel_prices_auto',
+    'update_loyalty_config', 'update_company_info',
     'update_support_phone', 'enable_degradation', 'disable_degradation',
   ]},
   { label: 'Administradores', actions: [

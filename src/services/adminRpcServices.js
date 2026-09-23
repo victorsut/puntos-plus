@@ -63,6 +63,19 @@ export async function updateStationFuelPrices(stationId, prices, audit = {}) {
     { sessionToken: getAdminToken()?.token ?? null });
 }
 
+// ── 23-sep: precios desde PROPER. Interruptor auditado (al ENCENDER el
+// servidor adopta de una vez los precios ya confirmados y devuelve
+// { enabled, adopted[], fuel_prices, stations[] }) y lectura de las
+// observaciones por estación × combustible para la tarjeta. ──
+export async function setFuelPricesAuto(enabled, audit = {}) {
+  return callRpc('set_fuel_prices_auto', { p_enabled: !!enabled, ...auditParams(audit) },
+    { sessionToken: getAdminToken()?.token ?? null });
+}
+
+export async function listFuelPriceObservations() {
+  return callRpc('list_fuel_price_observations', {}, { sessionToken: getAdminToken()?.token ?? null });
+}
+
 // ──────────────────────────────────────────────
 // 7. AUDITORÍA — log_admin_action (client-first)
 // ──────────────────────────────────────────────

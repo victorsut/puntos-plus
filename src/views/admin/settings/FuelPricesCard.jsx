@@ -13,6 +13,7 @@ import { useState } from 'react';
 import { sMono } from '../../../constants/styles';
 import { setFuelPricesMode } from '../../../services/adminRpcServices';
 import FuelPricesModal from './FuelPricesModal';
+import ProperPricesSwitch from './ProperPricesSwitch';
 
 export const FUELS = [
   { k: 'super', name: 'Súper', color: '#FF8F00' },
@@ -75,6 +76,12 @@ export default function FuelPricesCard({ cfg, setCfg, stations, setStations, log
         </button>
       </div>
       <div style={{ height: 1, background: border, margin: '0 0 8px' }} />
+
+      {/* ── 23-sep: adoptar precios de PROPER (nace apagado) ── */}
+      <ProperPricesSwitch
+        cfg={cfg} setCfg={setCfg} setStations={setStations} loggedAdmin={loggedAdmin}
+        fire={fire} cardHint={cardHint} border={border} fuels={FUELS}
+      />
 
       {/* ── Globales ── */}
       <div style={{ ...cardHint, marginBottom: 4 }}>{perStation ? 'Precios globales (respaldo)' : 'Precios vigentes'}</div>

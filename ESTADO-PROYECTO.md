@@ -255,7 +255,7 @@ se ejecutan a mano en el SQL Editor de Supabase (regla de CLAUDE.md §9).
 
 ### Admin (shell lateral, desktop-first)
 - Dashboard con KPIs reales (Q por combustible y por estación, puntos canjeados = suma de `points_spent`) y tops; Socios (ficha completa, ajustes de puntos auditados, reset de contraseña); Personal (operadores + admins); Catálogo de premios (localizaciones y tiendas asociadas); Promociones (cards con imagen) y Reglas de promoción (motor); Rifas; Estaciones (WiFi, horario, coordenadas, código PROPER); Días especiales.
-- Configuración: identidad de la empresa, puntos por nivel y eventos, precios de combustible (globales o por estación, D4), degradación (interruptor), soporte, alertas de servicio (umbrales D24), administradores, API externa (lista de llaves con estado y uso; generar y desactivar/reactivar con motivo auditado, 21-sep), términos.
+- Configuración: identidad de la empresa, puntos por nivel y eventos, precios de combustible (globales o por estación, D4; interruptor "Adoptar precios de PROPER" con los últimos precios recibidos por factura, 23-sep, nace apagado), degradación (interruptor), soporte, alertas de servicio (umbrales D24), administradores, API externa (lista de llaves con estado y uso; generar y desactivar/reactivar con motivo auditado, 21-sep), términos.
 - Análisis: clientes, operadores, promociones, integridad (cuentas de personal, repetidos, afinidad). Auditoría (`admin_audit_log`) con filtros.
 
 ---

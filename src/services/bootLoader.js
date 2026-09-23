@@ -122,6 +122,10 @@ export async function loadFromSupabase({
         const fpm = cfgMap.fuel_prices_mode
           ? (typeof cfgMap.fuel_prices_mode === 'string' ? JSON.parse(cfgMap.fuel_prices_mode) : cfgMap.fuel_prices_mode)
           : {};
+        // 23-sep: interruptor "adoptar precios de PROPER" (nace apagado)
+        const fpa = cfgMap.fuel_prices_auto
+          ? (typeof cfgMap.fuel_prices_auto === 'string' ? JSON.parse(cfgMap.fuel_prices_auto) : cfgMap.fuel_prices_auto)
+          : {};
         let fp;
         if (cfgMap.fuel_prices) {
           fp = typeof cfgMap.fuel_prices === 'string' ? JSON.parse(cfgMap.fuel_prices) : cfgMap.fuel_prices;
@@ -138,6 +142,7 @@ export async function loadFromSupabase({
           termsUse: tu, termsCanje: tc,
           fuelPrices: fp,
           fuelPricesPerStation: fpm.per_station === true,
+          fuelPricesAuto: fpa.enabled === true,
           degradEnabled: degEn.enabled === true,
           degradEnabledAt: degEn.enabled_at || null,
           supportPhone: sup.phone || '49741067',
