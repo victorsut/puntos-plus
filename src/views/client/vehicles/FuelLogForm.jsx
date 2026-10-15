@@ -8,22 +8,31 @@
 import { useState } from 'react';
 import { BRAND_ORANGE } from '../../../constants/styles';
 import { addMyFuelLog } from '../../../services/vehicleService';
+import { kmReadingProblem, TANK_STATES } from '../../../lib/fuelEconomy';
 import { fmtN } from './fuelFmt';
 
-const EMPTY = { gal: '', amt: '', km: '', full: null };
+const EMPTY = { gal: '', amt: '', km: '', state: null, gap: false };
 
-export default function FuelLogForm({ dark, ink, sub, cardBg, vehicle, vehName, lastKm, fire, onSaved, onCancel }) {
+// lastKm / lastAt: última lectura de km conocida del vehículo y su fecha
+// (E3h: una lectura menor o disparada se BLOQUEA; el servidor la
+// rechaza igual en assert_vehicle_km).
+export default function FuelLogForm({ dark, ink, sub, cardBg, vehicle, vehName, lastKm, lastAt = null, fire, onSaved, onCancel }) {
   const [rg, setRg] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
+
+  const kmIn = rg.km === '' ? null : parseInt(rg.km, 10);
+  const galIn = rg.gal === '' ? null : parseFloat(rg.gal);
+  const kmErr = kmReadingProblem(kmIn, lastKm, lastAt);
 
   const save = async () => {
     if (saving) return;
     const gal = parseFloat(rg.gal);
     if (!(gal > 0)) { fire('Ingresa los galones cargados', 'warn'); return; }
+    if (kmErr) { fire(kmErr, 'warn'); return; }
     const amt = rg.amt === '' ? null : parseFloat(rg.amt);
     const km = rg.km === '' ? null : parseInt(rg.km, 10);
     setSaving(true);
-    const { data, error } = await addMyFuelLog({ vehicleId: vehicle.id, gallons: gal, amount: amt, km, fullTank: rg.full });
+    const { data, error } = await addMyFuelLog({ vehicleId: vehicle.id, gallons: gal, amount: amt, km, tankState: rg.state, gapBefore: rg.gap || null });
     setSaving(false);
     if (error || !data?.ok) { fire('No se pudo registrar: ' + (error?.message || 'error'), 'error'); return; }
     setRg(EMPTY);
@@ -31,14 +40,11 @@ export default function FuelLogForm({ dark, ink, sub, cardBg, vehicle, vehName, 
     onSaved?.();
   };
 
-  const kmIn = rg.km === '' ? null : parseInt(rg.km, 10);
-  const galIn = rg.gal === '' ? null : parseFloat(rg.gal);
-  // E3d: guardas SUAVES de calidad de datos (no bloquean) — un dedazo
-  // en los km o los galones envenena la telemetría
+  // E3h: los km se BLOQUEAN (kmErr, arriba); los galones siguen como
+  // guarda SUAVE — un tanque mal capturado en la ficha no debe impedir
+  // registrar una carga real
   const warns = [];
-  if (kmIn != null && lastKm > 0 && kmIn < lastKm) {
-    warns.push(`Ojo: los km son menores que los últimos que reportaste (${fmtN(lastKm, 0)} km) — revísalos si es un error.`);
-  }
+  if (kmErr) warns.push(kmErr);
   if (galIn != null && vehicle.tank_gal > 0 && galIn > vehicle.tank_gal) {
     warns.push(`Ojo: los galones superan la capacidad de tu tanque (${fmtN(vehicle.tank_gal)} gal).`);
   }
@@ -84,18 +90,30 @@ export default function FuelLogForm({ dark, ink, sub, cardBg, vehicle, vehName, 
         ))}
       </div>
 
-      {/* E3f: ¿quedó el tanque lleno? */}
-      <div style={{ fontSize: 10, fontWeight: 700, color: sub, marginTop: 12, marginBottom: 4 }}>¿Llenaste el tanque?</div>
-      {/* Las dos opciones al mismo nivel, en una sola línea (dueño, 22-sep) */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-        {[{ v: true, t: 'Sí, quedó lleno' }, { v: false, t: 'No, fue parcial' }].map(o => (
-          <button key={String(o.v)} onClick={() => setRg(p => ({ ...p, full: p.full === o.v ? null : o.v }))}
-            style={{ ...chip(rg.full === o.v), padding: '10px 8px' }}>{o.t}</button>
+      {/* E3h: UNA pregunta, tres respuestas (dueño, 15-oct): lleno = nivel
+          conocido después de cargar; reserva = nivel conocido antes de
+          cargar (segunda referencia); parcial = ninguna de las dos */}
+      <div style={{ fontSize: 10, fontWeight: 700, color: sub, marginTop: 12, marginBottom: 4 }}>¿Cómo fue la carga?</div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
+        {TANK_STATES.map(o => (
+          <button key={o.v} onClick={() => setRg(p => ({ ...p, state: p.state === o.v ? null : o.v }))}
+            style={{ ...chip(rg.state === o.v), padding: '10px 4px', whiteSpace: 'normal', lineHeight: 1.2, fontSize: 11.5 }}>{o.t}</button>
         ))}
       </div>
+      {/* Carga sin registrar antes: reinicia la medición (no es otra
+          pregunta — es una marca opcional de bajo peso visual) */}
+      <button onClick={() => setRg(p => ({ ...p, gap: !p.gap }))} style={{
+        display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 8, padding: 0,
+        border: 'none', background: 'transparent', cursor: 'pointer',
+        fontFamily: "'DM Sans'", fontSize: 10.5, fontWeight: 700, color: rg.gap ? BRAND_ORANGE : sub,
+      }}>
+        <span style={{ width: 13, height: 13, borderRadius: 4, border: `1.5px solid ${rg.gap ? BRAND_ORANGE : sub}`, background: rg.gap ? BRAND_ORANGE : 'transparent', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 9 }}>{rg.gap ? '✓' : ''}</span>
+        Cargué en otro lado y no lo registré
+      </button>
       <div style={{ fontSize: 10.5, color: sub, fontWeight: 600, lineHeight: 1.5, marginTop: 8 }}>
-        El rendimiento se mide de un tanque lleno al siguiente: las cargas parciales
-        se suman a la siguiente vez que llenes. Los km recorridos son los que marca tu tablero.
+        Medimos de un tanque lleno al siguiente (o de una reserva a la siguiente): las cargas
+        parciales se suman a la siguiente referencia. Si llegaste en reserva <b>y</b> lo llenaste,
+        marca "Tanque lleno". Los km recorridos son los que marca tu tablero.
       </div>
       {warns.map(w => (
         <div key={w} style={{ fontSize: 10.5, color: '#E65100', fontWeight: 700, lineHeight: 1.5, marginTop: 6 }}>{w}</div>
@@ -107,9 +125,9 @@ export default function FuelLogForm({ dark, ink, sub, cardBg, vehicle, vehName, 
           background: dark ? 'rgba(255,255,255,.1)' : '#fff', color: ink,
           fontFamily: "'DM Sans'", fontSize: 12.5, fontWeight: 700,
         }}>Cancelar</button>
-        <button onClick={save} disabled={saving} style={{
+        <button onClick={save} disabled={saving || !!kmErr} style={{
           flex: 1.4, padding: 11, borderRadius: 12, border: 'none', cursor: 'pointer',
-          background: saving ? (dark ? '#3A3A3A' : '#BDBDBD') : BRAND_ORANGE, color: '#fff',
+          background: saving || kmErr ? (dark ? '#3A3A3A' : '#BDBDBD') : BRAND_ORANGE, color: '#fff',
           fontFamily: "'DM Sans'", fontSize: 12.5, fontWeight: 800,
         }}>{saving ? 'Guardando…' : 'Guardar consumo'}</button>
       </div>

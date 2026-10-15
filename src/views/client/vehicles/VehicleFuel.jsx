@@ -13,13 +13,13 @@
 // Vocabulario: "kilómetros recorridos", nunca "odómetro".
 //
 // Datos: list_my_fuel_history + assign_purchase_vehicle +
-// set_my_fuel_load_full. Si la migración no está ejecutada, la sección
-// no aparece (la app no rompe — precedente E2).
+// set_my_fuel_load_state / set_my_fuel_load_gap (E3h). Si la migración
+// no está ejecutada, la sección no aparece (la app no rompe — precedente E2).
 import { useEffect, useMemo, useState } from 'react';
 import { BRAND_ORANGE } from '../../../constants/styles';
 import { VEHICLE_TYPES } from '../../../components/ui/VehicleIcons';
-import { assignPurchaseVehicle, deleteMyFuelLog, listMyFuelHistory, listMyVehicleEvents, setMyFuelLoadFull } from '../../../services/vehicleService';
-import { fuelSummary, fuelWindows, isFullLoad, isInferredFull } from '../../../lib/fuelEconomy';
+import { assignPurchaseVehicle, deleteMyFuelLog, listMyFuelHistory, listMyVehicleEvents, setMyFuelLoadState, setMyFuelLoadGap } from '../../../services/vehicleService';
+import { fuelSummary, serverSummary, isFullLoad, isInferredFull, tankStateParams } from '../../../lib/fuelEconomy';
 import { MonthBars, TrendChart } from './VehicleCharts';
 import FuelLogForm from './FuelLogForm';
 import FuelHistoryRow from './FuelHistoryRow';
@@ -83,24 +83,30 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
       || (VEHICLE_TYPES.find(t => t.k === x.vtype)?.label ?? 'Vehículo');
   };
 
-  // E3f: ventanas de lleno a lleno de TODOS los vehículos (el historial
-  // general las necesita) — indexadas por la carga que cierra la ventana
-  const winByEnd = useMemo(() => {
-    const out = {};
-    if (!Array.isArray(loads)) return out;
+  // E3h: el SERVIDOR (list_my_vehicle_stats) es la única fuente de las
+  // ventanas y las anclas de TODOS los vehículos — recorre todas las
+  // cargas y aparta las implausibles; el cálculo local (mismo algoritmo
+  // sobre las últimas 40 cargas) queda solo de RESPALDO cuando la RPC
+  // aún no trae `windows` (migración pendiente / arnés sin backend).
+  const summaryOf = (vid, rows) => serverSummary(stats?.[vid]) ?? fuelSummary(rows, vehById[vid]?.tank_gal, vehById[vid]?.vtype);
+  const { winByEnd, anchorIds } = useMemo(() => {
+    const winByEnd = {}, anchorIds = new Set();
+    if (!Array.isArray(loads)) return { winByEnd, anchorIds };
     const byVeh = {};
     for (const l of loads) if (l.vehicle_id) (byVeh[l.vehicle_id] = byVeh[l.vehicle_id] || []).push(l);
     for (const [vid, rows] of Object.entries(byVeh)) {
-      for (const w of fuelWindows(rows, vehById[vid]?.tank_gal)) out[w.endId] = w;
+      const s = summaryOf(vid, rows);
+      for (const w of s.allWindows) winByEnd[w.endId] = w;
+      for (const id of s.anchors) anchorIds.add(id);
     }
-    return out;
-  }, [loads, vehById]);
+    return { winByEnd, anchorIds };
+  }, [loads, vehById, stats]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // filas del vehículo ACTIVO (resumen, consumo por mes, frecuencia)
   const mine = useMemo(
     () => (Array.isArray(loads) ? loads.filter(l => l.vehicle_id === vehicle?.id) : []),
     [loads, vehicle?.id]);
-  const summary = useMemo(() => fuelSummary(mine, vehicle?.tank_gal), [mine, vehicle?.tank_gal]);
+  const summary = useMemo(() => summaryOf(vehicle?.id, mine), [mine, vehicle?.id, stats]); // eslint-disable-line react-hooks/exhaustive-deps
   const months = useMemo(() => {
     const acc = new Map();
     for (const l of mine) {
@@ -121,9 +127,8 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
     () => summary.windows.map(w => ({ label: fmtDay(w.to), v: w.kmgal })),
     [summary]);
 
-  // Titular: el cálculo local (mismo algoritmo, últimas 40 cargas) manda
-  // sobre el del servidor para que la gráfica y el número coincidan; el
-  // servidor es el respaldo (y la fuente para el resto de la app).
+  // Titular: el del servidor (summary viene de stats cuando la RPC trae
+  // ventanas); el resto de la tarjeta sigue leyendo stats directo.
   const st = vehicle ? stats?.[vehicle.id] : null;
   const kmgal = summary.kmPerGal ?? st?.km_per_gal ?? null;
   const method = summary.method ?? st?.km_per_gal_method ?? null;
@@ -150,13 +155,16 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
   // (E3d: caída ≥10 % vs tu promedio = aviso; solo con ≥3 ventanas)
   const trendPct = summary.trendPct;
   const n = summary.windows.length;
+  // E3h: mediciones apartadas por implausibles (casi siempre una carga
+  // sin registrar) — se avisa en la nota del indicador
+  const excl = summary.excluded ? ` · ${summary.excluded} apartada${summary.excluded === 1 ? '' : 's'} (¿carga sin registrar?)` : '';
   // Estimado: se muestra desde la SEGUNDA carga con km (decisión del
   // dueño: el socio quiere ver movimiento aunque aún no sea exacto)
   const kmLoads = mine.filter(l => l.km_reading != null).length;
   const kmNote = trendPct != null
-    ? `${trendPct >= 0 ? '▲' : '▼'} ${Math.abs(trendPct)}% vs tu promedio${trendPct <= -10 ? ' — revisa servicio, llantas o presión' : ''}`
-    : method === 'full' ? `De lleno a lleno · ${n} medición${n === 1 ? '' : 'es'}`
-    : method === 'estimate' ? `Estimado con ${kmLoads} cargas · llena el tanque para afinarlo`
+    ? `${trendPct >= 0 ? '▲' : '▼'} ${Math.abs(trendPct)}% vs tu promedio${trendPct <= -10 ? ' — revisa servicio, llantas o presión' : ''}${excl}`
+    : method === 'full' ? `De referencia a referencia · ${n} medición${n === 1 ? '' : 'es'}${excl}`
+    : method === 'estimate' ? `Estimado con ${kmLoads} cargas · llena el tanque para afinarlo${excl}`
     : hasKm ? 'Con tu próxima carga con km verás un estimado'
     : 'Reporta tus km recorridos al calificar';
   // Sugerencia de LLENAR EL TANQUE (dueño, 21-sep): mientras no haya
@@ -185,7 +193,16 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
   ].sort((a, b) => b.at - a.at), [visible, visibleEvents]);
   useEffect(() => { setShowAll(false); }, [vehicle?.id]);
   const canEdit = (l) => (Date.now() - new Date(l.created_at)) / 86400000 <= editableDays;
-  const lastKm = Math.max(vehicle.km || 0, ...mine.filter(l => l.km_reading != null).map(l => l.km_reading));
+  // E3h: última lectura de km del vehículo (la mayor entre la ficha y
+  // sus cargas) y su fecha — base del bloqueo de lecturas en el registro
+  // manual (kmReadingProblem; el servidor repite la regla)
+  const { lastKm, lastAt } = (() => {
+    let lastKm = vehicle.km || 0, lastAt = vehicle.km_updated_at || null;
+    for (const l of mine) {
+      if (l.km_reading != null && l.km_reading >= lastKm) { lastKm = l.km_reading; lastAt = l.created_at; }
+    }
+    return { lastKm, lastAt };
+  })();
 
   // borrar un registro manual (doble tap — un manual equivocado
   // envenena la telemetría y debe poder corregirse)
@@ -216,23 +233,32 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
     onStatsDirty?.();
   };
 
-  // E3f: marcar/desmarcar tanque lleno desde el historial
-  const setFull = async (l, full) => {
+  // E3h: corregir desde el historial el estado del tanque (lleno /
+  // reserva / parcial / no sé) o la marca de cargas sin registrar.
+  // Optimista con reversión; al terminar se recarga la telemetría.
+  const patchLoad = async (l, patch, call, okMsg) => {
     if (busyId) return;
     setBusyId(l.id);
-    const prev = l.full_tank;
-    setLoads(ls => ls.map(x => (x.id === l.id ? { ...x, full_tank: full } : x))); // optimista
-    const { error } = await setMyFuelLoadFull({ loadId: l.id, source: l.source, full });
+    const prev = Object.fromEntries(Object.keys(patch).map(k => [k, l[k]]));
+    setLoads(ls => ls.map(x => (x.id === l.id ? { ...x, ...patch } : x)));
+    const { error } = await call();
     setBusyId(null);
     setFullOpenId(null);
     if (error) {
-      setLoads(ls => ls.map(x => (x.id === l.id ? { ...x, full_tank: prev } : x)));
+      setLoads(ls => ls.map(x => (x.id === l.id ? { ...x, ...prev } : x)));
       fire('No se pudo guardar: ' + (error.message || 'error'), 'error');
       return;
     }
-    fire(full === true ? 'Marcada como tanque lleno' : full === false ? 'Marcada como carga parcial' : 'Sin respuesta: se calcula por el tamaño de la carga', 'success');
+    fire(okMsg, 'success');
     onStatsDirty?.();
   };
+  const setState = (l, state) => patchLoad(l, tankStateParams(state),
+    () => setMyFuelLoadState({ loadId: l.id, source: l.source, state }),
+    state === 'full' ? 'Marcada como tanque lleno' : state === 'reserve' ? 'Marcada: llegaste en reserva'
+      : state === 'partial' ? 'Marcada como carga parcial' : 'Sin respuesta: se calcula por el tamaño de la carga');
+  const setGap = (l, gap) => patchLoad(l, { gap_before: gap },
+    () => setMyFuelLoadGap({ loadId: l.id, source: l.source, gap }),
+    gap ? 'Marcada: hubo cargas sin registrar — la medición reinicia aquí' : 'Quitada la marca de cargas sin registrar');
 
   return (
     <div style={{ marginTop: 22 }}>
@@ -259,8 +285,9 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
         <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', background: dark ? 'rgba(250,84,8,.12)' : 'rgba(250,84,8,.08)', borderRadius: 15, padding: '11px 13px', marginTop: 10 }}>
           <span style={{ width: 8, height: 8, borderRadius: 4, background: BRAND_ORANGE, flexShrink: 0, marginTop: 5 }} />
           <div style={{ fontSize: 11.5, color: ink, fontWeight: 600, lineHeight: 1.5 }}>
-            <b>Llena el tanque</b> la próxima vez y marca <b>"Sí, quedó lleno"</b> junto con tus km recorridos.
-            Con dos llenados completos medimos tu rendimiento exacto; mientras, ves un estimado.
+            <b>Llena el tanque</b> la próxima vez y marca <b>"Tanque lleno"</b> junto con tus km recorridos
+            (o marca <b>"Llegué en reserva"</b> cuando cargues con la aguja en reserva).
+            Con dos referencias iguales medimos tu rendimiento exacto; mientras, ves un estimado.
           </div>
         </div>
       )}
@@ -303,7 +330,7 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
         }}>+ Registrar consumo</button>
       ) : (
         <FuelLogForm dark={dark} ink={ink} sub={sub} cardBg={cardBg} vehicle={vehicle}
-          vehName={vehName(vehicle.id)} lastKm={lastKm} fire={fire}
+          vehName={vehName(vehicle.id)} lastKm={lastKm} lastAt={lastAt} fire={fire}
           onCancel={() => setReg(false)}
           onSaved={() => { setReg(false); fetchLoads(); onStatsDirty?.(); }} />
       )}
@@ -358,14 +385,15 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
             name={l.vehicle_id ? vehName(l.vehicle_id) : null} dot={veh?.color}
             fuelMismatch={l.source !== 'manual' && !!l.fuel_type && !!veh?.fuel_pref && l.fuel_type !== veh.fuel_pref}
             vehicles={vehicles} vehName={vehName}
-            win={winByEnd[l.id]} isFull={!!l.vehicle_id && isFullLoad(l, tank)} inferred={!!l.vehicle_id && isInferredFull(l, tank)}
+            win={winByEnd[l.id]} anchor={anchorIds.has(l.id)}
+            isFull={!!l.vehicle_id && isFullLoad(l, tank)} inferred={!!l.vehicle_id && isInferredFull(l, tank)}
             canReassign={l.source !== 'manual' && canEdit(l)}
             canMarkFull={l.source === 'manual' || canEdit(l)}
             editOpen={editingId === l.id} onToggleEdit={() => { setEditingId(editingId === l.id ? null : l.id); setFullOpenId(null); }}
             onReassign={(vid) => reassign(l, vid)} busy={busyId === l.id}
             delArmed={delLogArmed === l.id} onDel={() => delLog(l)}
             fullOpen={fullOpenId === l.id} onToggleFullOpen={() => { setFullOpenId(fullOpenId === l.id ? null : l.id); setEditingId(null); }}
-            onSetFull={(v) => setFull(l, v)} />
+            onSetState={(v) => setState(l, v)} onSetGap={(v) => setGap(l, v)} />
         );
       })}
 

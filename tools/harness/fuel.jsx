@@ -47,6 +47,10 @@ const stats = {
     total_amount: loads.reduce((a, l) => a + l.amount, 0),
     km_per_gal: s.kmPerGal, km_per_gal_method: s.method, km_per_gal_windows: s.windows.length,
     km_per_gal_last: s.last, km_per_day: 18.5,
+    // E3h: la RPC trae las ventanas graduadas, las anclas, la tendencia y
+    // las apartadas — el cliente ya no recalcula (serverSummary)
+    trend_pct: s.trendPct, excluded: s.excluded, anchors: [...s.anchors],
+    windows: s.allWindows.map(w => ({ start_id: w.startId, end_id: w.endId, km: w.km, gal: w.gal, kmgal: w.kmgal, from: w.from, to: w.to, kind: w.kind, grade: w.grade })),
   },
 };
 console.log('[fuel] ventanas de lleno a lleno:', s.windows, '→ titular', s.kmPerGal, 'km/gal (', s.method, ')');

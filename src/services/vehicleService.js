@@ -12,6 +12,7 @@
 import { sb } from '../lib/supabaseClient';
 import { callRpc } from './rpcCore';
 import { getMemberToken } from './sessionTokens';
+import { tankStateParams } from '../lib/fuelEconomy';
 
 // Ficha completa del socio. Devuelve { ok, vehicles } o { error }.
 export async function listMyVehicles() {
@@ -38,15 +39,19 @@ export async function deleteMyVehicle(vehicleId) {
 // ── F6 E2: combustible + telemetría ──────────────────────────
 // El cliente confirma/cambia el vehículo de una compra desde el
 // modal de calificación y opcionalmente reporta los km recorridos y
-// si el tanque quedó lleno (E3f; ventana de 30 días server-side;
-// todo validado como suyo). fullTank: true/false/null (sin respuesta).
-export async function assignPurchaseVehicle({ purchaseId, vehicleId, km = null, fullTank = null }) {
+// el estado del tanque (E3h: tankState 'full' | 'reserve' | 'partial' |
+// null = sin respuesta, una sola pregunta) y si hubo cargas sin
+// registrar antes (gapBefore). Ventana de 30 días server-side; todo
+// validado como suyo; el km se rechaza si no es coherente (assert_vehicle_km).
+export async function assignPurchaseVehicle({ purchaseId, vehicleId, km = null, tankState = null, gapBefore = null }) {
   if (!sb) return { data: null, error: { message: 'Sin conexión al servidor' } };
+  const st = tankStateParams(tankState);
   return callRpc('assign_purchase_vehicle', {
     p_purchase_id: purchaseId,
     p_vehicle_id: vehicleId,
     p_km: km,
-    ...(fullTank != null ? { p_full_tank: fullTank } : {}),
+    ...(tankState ? { p_full_tank: st.full_tank, p_at_reserve: st.at_reserve } : {}),
+    ...(gapBefore != null ? { p_gap_before: gapBefore } : {}),
   }, { sessionToken: getMemberToken()?.token ?? null });
 }
 
@@ -75,27 +80,40 @@ export async function listMyFuelHistory(limit = 40) {
 // ── F6 E3b: consumos MANUALES (cargas fuera de Turkaj) ───────
 // Completan la telemetría: con llenados parciales el rendimiento
 // solo es correcto si TODO el combustible entre llenados cuenta.
-// fullTank (E3f): ¿quedó el tanque lleno? true/false/null.
-export async function addMyFuelLog({ vehicleId, gallons, amount = null, km = null, fullTank = null }) {
+// tankState (E3h): 'full' | 'reserve' | 'partial' | null; gapBefore:
+// hubo cargas sin registrar antes de esta.
+export async function addMyFuelLog({ vehicleId, gallons, amount = null, km = null, tankState = null, gapBefore = null }) {
   if (!sb) return { data: null, error: { message: 'Sin conexión al servidor' } };
+  const st = tankStateParams(tankState);
   return callRpc('add_my_fuel_log', {
     p_vehicle_id: vehicleId,
     p_gallons: gallons,
     p_amount: amount,
     p_km: km,
-    ...(fullTank != null ? { p_full_tank: fullTank } : {}),
+    ...(tankState ? { p_full_tank: st.full_tank, p_at_reserve: st.at_reserve } : {}),
+    ...(gapBefore != null ? { p_gap_before: gapBefore } : {}),
   }, { sessionToken: getMemberToken()?.token ?? null });
 }
 
-// E3f: marcar/desmarcar "tanque lleno" en una carga del historial
-// (compras dentro de la ventana de 30 días; registros manuales sin
-// límite). source: 'turkaj' | 'manual'. full: true/false/null.
-export async function setMyFuelLoadFull({ loadId, source, full }) {
+// E3h: estado del tanque de una carga del historial (compras dentro de
+// la ventana de 30 días; registros manuales sin límite).
+// source: 'turkaj' | 'manual'. state: 'full' | 'reserve' | 'partial' | null.
+export async function setMyFuelLoadState({ loadId, source, state }) {
   if (!sb) return { data: null, error: { message: 'Sin conexión al servidor' } };
-  return callRpc('set_my_fuel_load_full', {
+  return callRpc('set_my_fuel_load_state', {
     p_load_id: loadId,
     p_source: source,
-    p_full: full,
+    p_state: state,
+  }, { sessionToken: getMemberToken()?.token ?? null });
+}
+
+// E3h: "hubo cargas sin registrar antes de esta" (reinicia la medición)
+export async function setMyFuelLoadGap({ loadId, source, gap }) {
+  if (!sb) return { data: null, error: { message: 'Sin conexión al servidor' } };
+  return callRpc('set_my_fuel_load_gap', {
+    p_load_id: loadId,
+    p_source: source,
+    p_gap: gap,
   }, { sessionToken: getMemberToken()?.token ?? null });
 }
 

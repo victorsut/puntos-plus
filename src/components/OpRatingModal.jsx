@@ -17,6 +17,7 @@ import LogoSpinner from './ui/LogoSpinner';
 import { firstName } from '../lib/text';
 import { rateOperatorSecure } from '../services/secureReads';
 import { listMyVehicles, assignPurchaseVehicle } from '../services/vehicleService';
+import { kmReadingProblem, TANK_STATES } from '../lib/fuelEconomy';
 import { VEHICLE_TYPES } from './ui/VehicleIcons';
 
 // Rótulo común de las tres preguntas del vehículo (carga asignada a,
@@ -42,7 +43,8 @@ export default function OpRatingModal({
   const [vehOpts, setVehOpts] = useState(null);   // null | vehículos del miembro
   const [vehSel, setVehSel] = useState(null);     // id elegido
   const [kmText, setKmText] = useState('');
-  const [fullSel, setFullSel] = useState(null);   // ¿tanque lleno? true/false/null
+  const [stateSel, setStateSel] = useState(null); // E3h: 'full' | 'reserve' | 'partial' | null
+  const [gapSel, setGapSel] = useState(false);    // E3h: hubo cargas sin registrar antes
   const vehInitial = useRef(null);                // id auto-asignado (principal)
   const vehSent = useRef(false);                  // la asignación ya se envió
   useEffect(() => {
@@ -60,14 +62,20 @@ export default function OpRatingModal({
   // Envía la asignación UNA vez si hay algo que decir: vehículo distinto
   // del auto-asignado, km recorridos o respuesta de tanque lleno.
   // Fire-and-forget (no bloquea el cierre); errores solo a consola.
+  // E3h: una lectura de km inválida (menor que la última del vehículo o
+  // disparada) NO se envía — el resto (vehículo, tanque) sí; el servidor
+  // la rechazaría igual (assert_vehicle_km) y acá el error iría a consola.
+  const kmIn = /^\d{1,7}$/.test(kmText.trim()) ? parseInt(kmText.trim(), 10) : null;
+  const vehSelected = (vehOpts || []).find(x => x.id === vehSel);
+  const kmErr = kmReadingProblem(kmIn, vehSelected?.km, vehSelected?.km_updated_at);
   const flushVehicle = useCallback(() => {
     if (vehSent.current || !vehSel || !data.purchaseId) return;
-    const km = /^\d{1,7}$/.test(kmText.trim()) ? parseInt(kmText.trim(), 10) : null;
-    if (vehSel === vehInitial.current && km == null && fullSel == null) return;
+    const km = kmErr ? null : kmIn;
+    if (vehSel === vehInitial.current && km == null && stateSel == null && !gapSel) return;
     vehSent.current = true;
-    assignPurchaseVehicle({ purchaseId: data.purchaseId, vehicleId: vehSel, km, fullTank: fullSel })
+    assignPurchaseVehicle({ purchaseId: data.purchaseId, vehicleId: vehSel, km, tankState: stateSel, gapBefore: gapSel || null })
       .then(({ error }) => { if (error) console.error('[Vehículo]', error); });
-  }, [vehSel, kmText, fullSel, data.purchaseId]);
+  }, [vehSel, kmIn, kmErr, stateSel, gapSel, data.purchaseId]);
 
   // D35: el modal cierra con la animación INVERSA a la apertura
   // (fadeUpOut) antes de desmontar — todos los caminos de salida
@@ -239,37 +247,42 @@ export default function OpRatingModal({
                     fontFamily: "'JetBrains Mono', monospace", fontSize: 13, fontWeight: 700,
                   }}
                 />
-                {/* E3d: guarda SUAVE — lectura menor que la conocida del
-                    vehículo elegido = probable dedazo (no bloquea) */}
-                {(() => {
-                  const sel = (vehOpts || []).find(x => x.id === vehSel);
-                  const kmIn = /^\d{1,7}$/.test(kmText.trim()) ? parseInt(kmText.trim(), 10) : null;
-                  if (kmIn == null || !(sel?.km > 0) || kmIn >= sel.km) return null;
-                  return (
-                    <div style={{ fontSize: 10.5, color: '#E65100', fontWeight: 700, marginTop: 5, lineHeight: 1.4 }}>
-                      Ojo: es menor que los últimos km de este vehículo ({sel.km.toLocaleString('en-US')} km) — revísalos si es un error.
-                    </div>
-                  );
-                })()}
-                {/* E3f: ¿quedó el tanque lleno? — ancla del rendimiento de
-                    lleno a lleno (las cargas parciales se suman a la
-                    siguiente). Sin respuesta = se infiere por el tanque. */}
-                <div style={{ ...qLabel, marginTop: 14 }}>¿Llenaste el tanque?</div>
-                {/* Las dos opciones al MISMO nivel, en una sola línea (dueño, 22-sep) */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  {[{ v: true, t: 'Sí, quedó lleno' }, { v: false, t: 'No, fue parcial' }].map(o => {
-                    const on = fullSel === o.v;
+                {/* E3h: lectura menor que la última del vehículo elegido o
+                    disparada = dedazo; NO se guarda hasta corregirla */}
+                {kmErr && (
+                  <div style={{ fontSize: 10.5, color: '#E65100', fontWeight: 700, marginTop: 5, lineHeight: 1.4 }}>
+                    {kmErr} No se guardará hasta corregirlo.
+                  </div>
+                )}
+                {/* E3h: UNA pregunta, tres respuestas (dueño, 15-oct) — lleno
+                    (nivel conocido después), llegué en reserva (nivel
+                    conocido antes, segunda referencia), parcial. Sin
+                    respuesta = lleno se infiere por el tanque. */}
+                <div style={{ ...qLabel, marginTop: 14 }}>¿Cómo fue la carga?</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
+                  {TANK_STATES.map(o => {
+                    const on = stateSel === o.v;
                     return (
-                      <button key={String(o.v)} onClick={() => { setFullSel(on ? null : o.v); vehSent.current = false; }} style={{
-                        padding: '10px 8px', borderRadius: 12, cursor: 'pointer', whiteSpace: 'nowrap',
+                      <button key={o.v} onClick={() => { setStateSel(on ? null : o.v); vehSent.current = false; }} style={{
+                        padding: '10px 4px', borderRadius: 12, cursor: 'pointer', lineHeight: 1.2,
                         border: on ? `1.5px solid ${BRAND_ORANGE}` : `1.5px solid ${dark ? 'rgba(255,255,255,.15)' : 'rgba(0,0,0,.12)'}`,
                         background: on ? (dark ? 'rgba(221,29,33,.16)' : '#FDECEA') : 'transparent',
                         color: on ? (dark ? '#FF8A80' : '#C62828') : (dark ? '#E0E0E0' : '#424242'),
-                        fontFamily: "'DM Sans'", fontSize: 12.5, fontWeight: 800,
+                        fontFamily: "'DM Sans'", fontSize: 11.5, fontWeight: 800,
                       }}>{o.t}</button>
                     );
                   })}
                 </div>
+                {/* Carga sin registrar antes (reinicia la medición) — marca
+                    opcional de bajo peso, no una pregunta más */}
+                <button onClick={() => { setGapSel(g => !g); vehSent.current = false; }} style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 8, padding: 0,
+                  border: 'none', background: 'transparent', cursor: 'pointer',
+                  fontFamily: "'DM Sans'", fontSize: 10.5, fontWeight: 700, color: gapSel ? BRAND_ORANGE : '#9E9E9E',
+                }}>
+                  <span style={{ width: 13, height: 13, borderRadius: 4, border: `1.5px solid ${gapSel ? BRAND_ORANGE : '#9E9E9E'}`, background: gapSel ? BRAND_ORANGE : 'transparent', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 9 }}>{gapSel ? '✓' : ''}</span>
+                  Cargué en otro lado y no lo registré
+                </button>
               </div>
             )}
 
