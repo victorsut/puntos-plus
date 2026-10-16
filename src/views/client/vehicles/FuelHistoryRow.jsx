@@ -44,10 +44,10 @@ export default function FuelHistoryRow({
   const state = tankStateOf(l);
   const isRef = isFull || state === 'reserve';
   const role = win
-    ? `${win.kmgal} km/gal${win.kind === 'reserve' ? ' (reserva)' : ''}${win.grade === 'implausible' ? ' · apartada, ¿carga sin registrar?' : win.grade === 'inferred' ? ' · sin respuesta' : ''}`
+    ? `${win.kmgal} km/gal${win.kind === 'reserve' ? ' (reserva)' : win.kind === 'approx' ? ' (aprox., tramo sin referencias)' : ''}${win.grade === 'implausible' ? ' · apartada, ¿carga sin registrar?' : win.grade === 'inferred' ? ' · sin respuesta' : ''}`
     : l.gap_before ? 'Reinicia la medición'
     : l.km_reading != null
-      ? (isRef ? (anchor ? 'Inicia la medición' : 'A pocos km → se suma a la siguiente') : 'Parcial → a la siguiente referencia')
+      ? (isRef ? (anchor ? 'Inicia la medición' : 'A pocos km → se suma a la siguiente') : 'Parcial → a la siguiente referencia o tramo')
     : null;
   const roleWarn = !!win && win.grade === 'implausible';
   const fullLabel = tankStateLabel(state, inferred);

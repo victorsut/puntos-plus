@@ -57,7 +57,7 @@ export async function assignPurchaseVehicle({ purchaseId, vehicleId, km = null, 
 
 // Telemetría por vehículo: { ok, stats: { <vehicleId>: { fuel_count,
 // total_gallons, total_amount, last_fuel_at, km_per_gal,
-// km_per_gal_method ('full' | 'estimate' | null), km_per_gal_windows,
+// km_per_gal_method ('full' | 'approx' | 'estimate' | null), km_per_gal_windows,
 // km_per_gal_last, km_per_day } } } — E3f: rendimiento de lleno a lleno
 // (ver src/lib/fuelEconomy.js, espejo del algoritmo server-side).
 export async function listMyVehicleStats() {

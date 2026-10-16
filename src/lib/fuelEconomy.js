@@ -20,12 +20,23 @@
 //     entran al titular ni a la tendencia.
 //   · Titular = Σkm/Σgal de las confiables. Tendencia = última vs
 //     promedio de la base (exactas si ≥3; si no confiables si ≥3).
+//   · E3i (16-oct-2026) — Cadena APROXIMADA, para quien nunca llena ni
+//     llega a reserva: tramo entre dos cargas con km sin nivel conocido.
+//     Cierra con ≥ APPROX_LOADS cargas con km después del ancla y (si se
+//     conoce el tanque) ≥ APPROX_TANKS tanques cargados — así el error de
+//     ± un tanque se diluye. El tramo se REINICIA en cada referencia
+//     (lleno/reserva con km) y con gap_before: nunca se solapa con una
+//     ventana exacta. grade='approx'; cuenta en el titular (method
+//     'approx' si no hay ninguna confiable, 'full' si las hay) y en la
+//     tendencia solo como "confiable" (nunca como base exacta).
 
 export const FULL_TANK_RATIO = 0.85; // inferencia: ≥85 % del tanque = lleno
 export const MIN_WINDOW_KM = 10;     // ventanas más cortas se arrastran
 export const KM_JUMP_BASE = 1500;    // tope por dedazo: última lectura + 1,500 km…
 export const KM_PER_DAY_MAX = 500;   // …+ 500 km por día transcurrido
 export const OUTLIER_HI = 1.5, OUTLIER_LO = 0.5, OUTLIER_MIN_WINDOWS = 3;
+export const APPROX_LOADS = 8;       // cargas con km que cierran un tramo aproximado…
+export const APPROX_TANKS = 4;       // …y, si se conoce el tanque, ≥4 tanques cargados
 export const KMGAL_CAP = { moto: 250, mototaxi: 150, liviano: 90, picop: 60, camion_ligero: 45, microbus: 45, camion: 25, otro: 250 };
 
 // ¿Quedó lleno? Respuesta del socio (true/false) o inferencia por tanque.
@@ -75,9 +86,11 @@ function walk(loads, tankGal, vtype) {
   const rows = [...(loads || [])].sort(byTime);
   const raw = [], anchors = new Set();
   let fA = null, fGal = 0, rA = null, rGal = 0;
+  let aA = null, aN = 0, aGal = 0; // tramo aproximado (E3i)
+  const tank = +tankGal > 0 ? +tankGal : null;
   for (const l of rows) {
     const g = +l.gallons || 0;
-    if (l.gap_before) { fA = null; fGal = 0; rA = null; rGal = 0; }
+    if (l.gap_before) { fA = null; fGal = 0; rA = null; rGal = 0; aA = null; aN = 0; aGal = 0; }
     const hasKm = l.km_reading != null;
     // RESERVA: cierra ANTES de sumar esta carga
     if (hasKm && l.at_reserve === true) {
@@ -97,6 +110,19 @@ function walk(loads, tankGal, vtype) {
         fA = l; fGal = 0; anchors.add(l.id);
       }
     }
+    // APROXIMADO (E3i): la carga del ancla no cuenta; la que cierra sí.
+    // Una referencia (lleno/reserva con km) reinicia el tramo.
+    if (hasKm) {
+      if (!aA || isFullLoad(l, tankGal) || l.at_reserve === true) { aA = l; aN = 0; aGal = 0; }
+      else {
+        aN++; aGal += g;
+        if (aN >= APPROX_LOADS && (!tank || aGal >= APPROX_TANKS * tank)
+            && l.km_reading - aA.km_reading >= MIN_WINDOW_KM && aGal > 0) {
+          raw.push(mkWin(aA, l, aGal, 'approx', 'approx'));
+          aA = l; aN = 0; aGal = 0;
+        }
+      }
+    } else if (aA) aGal += g;
   }
   // reserva solo donde no hay una ventana de lleno encima
   const fulls = raw.filter(w => w.kind === 'full');
@@ -136,8 +162,9 @@ export function fuelEstimate(loads) {
 function summarize(allWindows, anchors, estimate) {
   const windows = allWindows.filter(w => w.grade !== 'implausible');
   const excluded = allWindows.length - windows.length;
+  const nApprox = windows.filter(w => w.grade === 'approx').length;
   if (windows.length === 0) {
-    return { method: estimate ? 'estimate' : null, kmPerGal: estimate, windows, allWindows, excluded, last: null, trendPct: null, anchors };
+    return { method: estimate ? 'estimate' : null, kmPerGal: estimate, windows, allWindows, excluded, nApprox, last: null, trendPct: null, anchors };
   }
   const sum = (ws, k) => ws.reduce((s, w) => s + w[k], 0);
   const kmPerGal = +(sum(windows, 'km') / sum(windows, 'gal')).toFixed(1);
@@ -148,7 +175,9 @@ function summarize(allWindows, anchors, estimate) {
     const avg = sum(base, 'km') / sum(base, 'gal');
     trendPct = Math.round(((base[base.length - 1].kmgal - avg) / avg) * 100);
   }
-  return { method: 'full', kmPerGal, windows, allWindows, excluded, last: windows[windows.length - 1].kmgal, trendPct, anchors };
+  // 'full' en cuanto exista UNA ventana de referencia; solo tramos → 'approx'
+  const method = nApprox < windows.length ? 'full' : 'approx';
+  return { method, kmPerGal, windows, allWindows, excluded, nApprox, last: windows[windows.length - 1].kmgal, trendPct, anchors };
 }
 
 // Resumen LOCAL (arnés / respaldo): mismo resultado que el servidor.
@@ -172,6 +201,7 @@ export function serverSummary(st) {
     kmPerGal: st.km_per_gal ?? null,
     windows, allWindows,
     excluded: st.excluded ?? allWindows.length - windows.length,
+    nApprox: windows.filter(w => w.grade === 'approx').length,
     last: st.km_per_gal_last ?? null,
     trendPct: st.trend_pct ?? null,
     anchors: new Set(st.anchors || []),

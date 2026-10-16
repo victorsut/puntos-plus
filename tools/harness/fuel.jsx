@@ -4,6 +4,9 @@
 //   ?dark=1  ·  ?hist=1 (historial abierto)  ·  ?reg=1 (formulario manual)
 //   ?old=1   → simula el cálculo por tramo anterior (solo para comparar
 //              en consola: imprime los tramos viejos vs las ventanas nuevas)
+//   ?approx=1 → E3i: 12 cargas PARCIALES con km (nunca llena ni reserva)
+//               → tramos aproximados de 8+ cargas, method 'approx'
+//   ?approx=2 → E3i: 2 llenos y luego 12 parciales → 1 exacta + 1 tramo
 // Uso: npx vite --config tools/harness/vite.harness.config.js
 //      http://localhost:3100/tools/harness/fuel.html?hist=1
 import { useEffect } from 'react';
@@ -38,8 +41,26 @@ const loads = [
   L('l1', '08-19', 0.80, 30, null, { source: 'turkaj', station_name: 'Turkaj I', fuel_type: 'regular' }),
 ];
 
+// E3i: escenarios SIN referencias (sustituyen las cargas reales)
+const approx = q.get('approx');
+if (approx === '1' || approx === '2') {
+  loads.length = 0;
+  // 14 cargas cada 4 días, ~0.8 gal y ~95 km entre cargas (tanque 1.0 gal:
+  // con 8 cargas ya van 6.4 gal ≥ 4 tanques → el tramo cierra a la 9ª con km)
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(Date.UTC(2026, 7, 1 + i * 4, 20)).toISOString();
+    const gal = +(0.7 + (i % 3) * 0.1).toFixed(2), km = 18800 + i * 95 + (i % 2) * 7;
+    const ref = approx === '2' && i < 2;
+    loads.push({ id: `p${i + 1}`, source: i % 4 === 0 ? 'turkaj' : 'manual', created_at: d,
+      station_id: null, station_name: i % 4 === 0 ? 'Turkaj I' : null, fuel_type: i % 4 === 0 ? 'regular' : null,
+      gallons: gal, amount: Math.round(gal * 43), vehicle_id: navi.id, km_reading: km,
+      full_tank: ref ? true : false, at_reserve: ref ? null : false, gap_before: null });
+  }
+  loads.reverse();
+}
+
 // Estadísticas como las daría el servidor (mismo algoritmo)
-const s = fuelSummary(loads, navi.tank_gal);
+const s = fuelSummary(loads, navi.tank_gal, navi.vtype);
 const stats = {
   [navi.id]: {
     fuel_count: loads.length,

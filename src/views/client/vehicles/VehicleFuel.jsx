@@ -19,7 +19,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { BRAND_ORANGE } from '../../../constants/styles';
 import { VEHICLE_TYPES } from '../../../components/ui/VehicleIcons';
 import { assignPurchaseVehicle, deleteMyFuelLog, listMyFuelHistory, listMyVehicleEvents, setMyFuelLoadState, setMyFuelLoadGap } from '../../../services/vehicleService';
-import { fuelSummary, serverSummary, isFullLoad, isInferredFull, tankStateParams } from '../../../lib/fuelEconomy';
+import { fuelSummary, serverSummary, isFullLoad, isInferredFull, tankStateParams, APPROX_LOADS } from '../../../lib/fuelEconomy';
 import { MonthBars, TrendChart } from './VehicleCharts';
 import FuelLogForm from './FuelLogForm';
 import FuelHistoryRow from './FuelHistoryRow';
@@ -161,9 +161,13 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
   // Estimado: se muestra desde la SEGUNDA carga con km (decisión del
   // dueño: el socio quiere ver movimiento aunque aún no sea exacto)
   const kmLoads = mine.filter(l => l.km_reading != null).length;
+  // E3i: tramos aproximados (sin lleno ni reserva) — se nombran como tales
+  const nApprox = summary.nApprox || 0;
+  const aprox = nApprox ? ` · ${nApprox} aprox.` : '';
   const kmNote = trendPct != null
-    ? `${trendPct >= 0 ? '▲' : '▼'} ${Math.abs(trendPct)}% vs tu promedio${trendPct <= -10 ? ' — revisa servicio, llantas o presión' : ''}${excl}`
-    : method === 'full' ? `De referencia a referencia · ${n} medición${n === 1 ? '' : 'es'}${excl}`
+    ? `${method === 'approx' ? 'Aprox. · ' : ''}${trendPct >= 0 ? '▲' : '▼'} ${Math.abs(trendPct)}% vs tu promedio${trendPct <= -10 ? ' — revisa servicio, llantas o presión' : ''}${excl}`
+    : method === 'full' ? `De referencia a referencia · ${n} medición${n === 1 ? '' : 'es'}${aprox}${excl}`
+    : method === 'approx' ? `Aproximado · ${n} tramo${n === 1 ? '' : 's'} de ${APPROX_LOADS}+ cargas · llena el tanque para afinarlo${excl}`
     : method === 'estimate' ? `Estimado con ${kmLoads} cargas · llena el tanque para afinarlo${excl}`
     : hasKm ? 'Con tu próxima carga con km verás un estimado'
     : 'Reporta tus km recorridos al calificar';
@@ -287,7 +291,8 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
           <div style={{ fontSize: 11.5, color: ink, fontWeight: 600, lineHeight: 1.5 }}>
             <b>Llena el tanque</b> la próxima vez y marca <b>"Tanque lleno"</b> junto con tus km recorridos
             (o marca <b>"Llegué en reserva"</b> cuando cargues con la aguja en reserva).
-            Con dos referencias iguales medimos tu rendimiento exacto; mientras, ves un estimado.
+            Con dos referencias iguales medimos tu rendimiento exacto; mientras, ves un aproximado
+            (cada {APPROX_LOADS} cargas con km forman un tramo).
           </div>
         </div>
       )}
@@ -296,7 +301,7 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
           lleno a lleno, con el promedio ponderado punteado (≥2 ventanas) */}
       {trendPoints.length >= 2 && (
         <div style={{ background: cardBg, borderRadius: 17, padding: '12px 14px 8px', marginTop: 10 }}>
-          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', color: sub, marginBottom: 6 }}>Rendimiento por llenado</div>
+          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', color: sub, marginBottom: 6 }}>{method === 'approx' ? 'Rendimiento por tramo (aprox.)' : 'Rendimiento por llenado'}</div>
           <TrendChart points={trendPoints} avg={summary.kmPerGal}
             dark={dark} ink={ink} sub={sub} surface={dark ? '#2A2A30' : '#F5F5F7'} />
         </div>
