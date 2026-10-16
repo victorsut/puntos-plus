@@ -71,7 +71,10 @@ export default function MemberDetail(ctx) {
         setLocalActs(actRows.map(a => ({
           type: a.activity_type, desc: a.description,
           pts: a.points_change, amount: a.amount ? parseFloat(a.amount) : null,
-          date: a.created_at ? new Date(a.created_at).toLocaleDateString('es-GT') : '',
+          // 16-oct: fecha CRUDA (ISO) — antes iba formateada dd/mm/aaaa y
+          // el render la recortaba como ISO (salía el año en vez del día).
+          at: a.created_at || null,
+          date: a.created_at ? a.created_at.slice(0, 10) : '',
           station: a.station_id || '',
         })));
       }
@@ -414,8 +417,13 @@ export default function MemberDetail(ctx) {
               <div style={{ textAlign: 'center', padding: '14px 0 24px', color: '#777', fontSize: 13 }}>Sin actividad registrada</div>
             )}
             {acts.slice(0, 30).map((a, i, arr) => {
+              // Fecha y hora de Guatemala desde el ISO crudo (a.at); el
+              // respaldo (activityLog del mapa del admin) trae solo el día
+              // local yyyy-mm-dd en a.date.
               const dt = a.date || '';
-              const dd = dt.length >= 10 ? `${dt.substring(8, 10)}/${dt.substring(5, 7)}` : dt;
+              const dd = a.at
+                ? new Date(a.at).toLocaleString('es-GT', { timeZone: 'America/Guatemala', day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })
+                : (dt.length >= 10 ? `${dt.substring(8, 10)}/${dt.substring(5, 7)}/${dt.substring(2, 4)}` : dt);
               const pts = typeof a.pts === 'string' ? parseInt(a.pts, 10) : (a.pts || 0);
               const col = actColors[a.type] || '#FBBC04';
               return (
