@@ -19,6 +19,9 @@ const META = {
   // E1.23: referencias RENOVADAS por el dueño (estilo plano verde)
   mazda3: ['Mazda3Art', 'MAZDA3_TRACE', 'mazda3Trace', 'translate(26.3 21.6) scale(0.1225)'],
   yaris:  ['YarisArt', 'YARIS_TRACE', 'yarisTrace', 'translate(20.2 15.7) scale(0.129)'],
+  // TANDA 10 (16-oct-2026): motos nuevas en estilo plano de fondo de color
+  cruiser:   ['CruiserArt', 'CRUISER_TRACE', 'cruiserTrace', 'translate(26.6 10.4) scale(0.1204)'],
+  fantastic: ['FantasticArt', 'FANTASTIC_TRACE', 'fantasticTrace', 'translate(27 8.8) scale(0.121)'],
 };
 
 for (const [key, [comp, exp, trace, tf]] of Object.entries(META)) {

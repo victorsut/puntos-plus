@@ -11,7 +11,7 @@
 //      pero la regla de "bg-family suelto → hueco" sí tocaría).
 //  (c) sin regla "casi blanco → hueco" en modelos de fondo de color
 //      (el blanco ES carrocería).
-// Uso: node trace-mix.cjs <grace|h1|pregio|urvan|hiace|torito|ape|h100|k2700>
+// Uso: node trace-mix.cjs <grace|h1|pregio|urvan|hiace|torito|ape|h100|k2700|mazda3|yaris|cruiser|fantastic>
 const sharp = require('C:/proyectos/club-turkaj/node_modules/sharp');
 const potrace = require('potrace') // instalado en tools/artes (npm install en esa carpeta);
 const fs = require('fs');
@@ -423,6 +423,105 @@ Object.assign(MODELS, {
   },
 });
 
+// ── TANDA 10 (16-oct-2026): MOTOS nuevas del dueño en el estilo PLANO de
+// fondo de COLOR (amarillo/naranja) y cuerpo AZUL — MOVESA CRUISER y
+// OSBORNE FANTASTIC. Mismo mecanismo de los camiones: flood por familia
+// de tono (la sombra de piso es el mismo tono oscurecido y el flood la
+// consume), bandas azules planas (regla E1.19), cromados/grises FIJOS
+// con anclas de paso corto fusionadas a 4-5 tonos, blanco de pieza como
+// clase propia 'bright' (la clase 'white' solo clasifica dentro de
+// whiteBoxes — regla heredada del fondo blanco). keepBoxes protege las
+// direccionales ámbar del Cruiser (tono ≈ fondo: el flood no las toca
+// pero la regla "familia del fondo suelta → hueco" sí).
+Object.assign(MODELS, {
+  cruiser: {
+    file: 'MOTOS/MOVESA, CRUSIER.png', minPx: 300, lightKeep: true, passes: 1,
+    // cromados: dilatación 1 (la de 2 desbordaba sobre llantas y bordes =
+    // motas claras en la tarjeta oscura); el blanco de pieza sin dilatar
+    dilateClasses: { bright: 0, xlight: 1, light: 1, silver: 1 },
+    bg: [252, 186, 30],
+    bodyNames: ['blue', 'bA', 'bB', 'bE', 'bF'],
+    keepBoxes: [[110, 540, 138, 590], [1152, 372, 1180, 424]],
+    classes: [
+      { name: 'bB', rgb: [42, 131, 253] },
+      { name: 'bA', rgb: [28, 121, 253] },
+      { name: 'blue', rgb: [0, 84, 217] },
+      { name: 'bE', rgb: [1, 73, 180] },
+      { name: 'bF', rgb: [0, 68, 170] },
+      { name: 'deep', rgb: [22, 25, 27] },
+      { name: 'dark', rgb: [28, 30, 33] },
+      { name: 'dark2', rgb: [34, 36, 38] },
+      { name: 'dark3', rgb: [40, 42, 45] },
+      { name: 'char', rgb: [46, 49, 51] },
+      { name: 'char2', rgb: [52, 54, 57] },
+      { name: 'char3', rgb: [57, 59, 61] },
+      { name: 'mid', rgb: [73, 76, 80] },
+      { name: 'gray', rgb: [124, 124, 124] },
+      { name: 'gray2', rgb: [148, 148, 147] },
+      { name: 'silver', rgb: [176, 175, 175] },
+      { name: 'silver2', rgb: [188, 188, 188] },
+      { name: 'light', rgb: [198, 197, 197] },
+      { name: 'light2', rgb: [208, 207, 207] },
+      { name: 'light3', rgb: [214, 213, 213] },
+      { name: 'xlight', rgb: [221, 220, 220] },
+      { name: 'xlight2', rgb: [229, 229, 229] },
+      { name: 'xlight3', rgb: [237, 236, 236] },
+      { name: 'bright', rgb: [245, 244, 244] },
+      { name: 'tailred', rgb: [205, 27, 24] },
+      { name: 'amber', rgb: [247, 139, 16] },
+    ],
+    mergeInto: { bB: 'bA', dark: 'deep', dark3: 'dark2', char2: 'char', char3: 'char', gray2: 'gray', silver2: 'silver', light2: 'light', light3: 'light', xlight2: 'xlight', xlight3: 'bright' },
+    fixed: [],
+    whiteBoxes: [],
+    order: ['deep', 'dark2', 'char', 'mid', 'gray', 'silver', 'light', 'xlight', 'bF', 'bE', 'blue', 'bA', 'tailred', 'amber', 'bright'],
+    fills: { deep: '#16191B', dark2: '#222426', char: '#2E3133', mid: '#494C50', gray: '#7C7C7C', silver: '#B0AFAF', light: '#C6C5C5', xlight: '#DDDCDC', bright: '#F5F4F4', blue: '#0054D9', bA: '#1C79FD', bB: '#2A83FD', bE: '#0149B4', bF: '#0044AA', tailred: '#CD1B18', amber: '#F78B10' },
+  },
+  fantastic: {
+    file: 'MOTOS/OSBORNE, FANTASTIC.png', minPx: 300, lightKeep: true, dilateBody: 1, passes: 1,
+    // passes 1 (patrón Yaris): la 2ª pasada de mayoría se comía las líneas
+    // oscuras finas del estilo (anillo del eje, ranura del protector, marco
+    // del faro); minPx 300: en el estilo plano las piezas chicas son reales
+    dilateClasses: { bright: 0, xlight: 1, light: 1, silver: 1, lens: 0 },
+    bg: [252, 174, 31],
+    bodyNames: ['blue', 'bA', 'bD', 'bE'],
+    // lente CREMA del faro (244,220,172): su tono cae en la familia del
+    // fondo naranja → keepBox + clase propia por región, protegida
+    keepBoxes: [[1118, 288, 1166, 356]],
+    specialClasses: ['lens'],
+    classes: [
+      { name: 'lens', rgb: [244, 220, 172], boxes: [[1118, 288, 1166, 356]] },
+      { name: 'bA', rgb: [16, 98, 253] },
+      { name: 'blue', rgb: [1, 84, 249] },
+      { name: 'bD', rgb: [7, 83, 229] },
+      { name: 'bE', rgb: [1, 71, 211] },
+      { name: 'deep', rgb: [19, 20, 21] },
+      { name: 'dark', rgb: [27, 28, 29] },
+      { name: 'dark2', rgb: [34, 34, 36] },
+      { name: 'dark3', rgb: [38, 38, 41] },
+      { name: 'char', rgb: [43, 43, 45] },
+      { name: 'char2', rgb: [51, 52, 53] },
+      { name: 'char3', rgb: [58, 59, 60] },
+      { name: 'mid', rgb: [66, 66, 68] },
+      { name: 'mid2', rgb: [75, 76, 81] },
+      { name: 'gray', rgb: [140, 139, 141] },
+      { name: 'gray2', rgb: [155, 154, 157] },
+      { name: 'silver', rgb: [180, 179, 181] },
+      { name: 'silver2', rgb: [195, 195, 196] },
+      { name: 'light', rgb: [210, 210, 212] },
+      { name: 'light2', rgb: [222, 222, 224] },
+      { name: 'xlight', rgb: [229, 229, 231] },
+      { name: 'xlight2', rgb: [239, 239, 241] },
+      { name: 'bright', rgb: [250, 250, 250] },
+      { name: 'tailred', rgb: [205, 23, 20] },
+    ],
+    mergeInto: { dark: 'deep', dark3: 'dark2', char2: 'char', char3: 'mid', mid2: 'mid', gray2: 'gray', silver2: 'silver', light2: 'light', xlight2: 'xlight' },
+    fixed: [],
+    whiteBoxes: [],
+    order: ['deep', 'dark2', 'char', 'mid', 'gray', 'silver', 'light', 'xlight', 'bE', 'bD', 'blue', 'bA', 'tailred', 'lens', 'bright'],
+    fills: { deep: '#131415', dark2: '#222224', char: '#2B2B2D', mid: '#424244', gray: '#8C8B8D', silver: '#B4B3B5', light: '#D2D2D4', xlight: '#E5E5E7', bright: '#FAFAFA', blue: '#0154F9', bA: '#1062FD', bD: '#0753E5', bE: '#0147D3', tailred: '#CD1714', lens: '#F4DCAC' },
+  },
+});
+
 // LAMP: cajas de faro → clases claras neutras se aplanan a 'lamp'
 // (mecánica E1.18: fixed por región; el blanco real ≥235 queda white
 // en modelos de fondo blanco vía whiteBoxes th 235)
@@ -582,8 +681,10 @@ if (!M) { console.error('modelo desconocido:', key, '— usa:', Object.keys(MODE
   // despeckle por componentes entre clases NEUTRAS (la principal del
   // cuerpo y la más oscura son especiales, como red/darkred en autos)
   {
+    // TANDA 10: specialClasses = clases extra que el despeckle nunca absorbe
+    // (lente crema del faro de la Fantastic)
     const SPECIAL = new Set(['amber', 'white', 'tailred', 'redlamp', 'lamp', 'glass', 'glass2', 'rim',
-      M.bodyNames[0], M.bodyNames[M.bodyNames.length - 1]]);
+      M.bodyNames[0], M.bodyNames[M.bodyNames.length - 1], ...(M.specialClasses || [])]);
     const GRAY = CLASSES.map((c, i) => (!SPECIAL.has(c.name) && c.rgb ? i : -1)).filter(i => i >= 0);
     const MIN_PX = M.minPx || 150;
     const MT = CLASSES.map((c, i) => (M.mergeInto && M.mergeInto[c.name] !== undefined ? idxOf(M.mergeInto[c.name]) : i));
@@ -612,6 +713,12 @@ if (!M) { console.error('modelo desconocido:', key, '— usa:', Object.keys(MODE
       const votes = new Map();
       let bgTouch = 0, borderN = 0;
       const srcDark = Math.max(...CLASSES[ci].rgb) < 110;
+      // TANDA 10 (lightKeep): en las motos de estilo plano las piezas CLARAS
+      // chicas en mar oscuro (cono del direccional, tapa del amortiguador,
+      // tramos de rin/tubo partidos en 3-4 bandas de cromo) son piezas
+      // reales — una isla clara solo puede fundirse a OTRA clase clara,
+      // nunca al oscuro que la rodea (espejo del guard srcDark de E1.20).
+      const srcLight = !!M.lightKeep && Math.min(...CLASSES[ci].rgb) >= 143;
       // el vidrio azul claro también cuenta como "claro": el marco oscuro
       // de la ventana del H100 (hilos finos char/dark) se fundía al glass
       const lightNeutral = (k) => CLASSES[k].name === 'lamp' || CLASSES[k].name === 'white' || CLASSES[k].name.startsWith('glass') || (CLASSES[k].rgb && Math.min(...CLASSES[k].rgb) >= 143);
@@ -624,6 +731,7 @@ if (!M) { console.error('modelo desconocido:', key, '— usa:', Object.keys(MODE
           borderN++;
           if (c < 0) { bgTouch++; continue; }
           if (srcDark && lightNeutral(c)) continue;
+          if (srcLight && !lightNeutral(c)) continue;
           votes.set(c, (votes.get(c) || 0) + 1);
         }
       }

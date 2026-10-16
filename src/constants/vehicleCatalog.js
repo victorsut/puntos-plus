@@ -144,6 +144,13 @@ export const VEHICLE_BRANDS = [
   { brand: 'TVS', models: [
     { name: 'King', t: ['mototaxi'] },
   ] },
+  // TANDA 10 (16-oct-2026): marcas de las referencias nuevas del dueño
+  { brand: 'Movesa', models: [
+    { name: 'Cruiser', t: ['moto'] },
+  ] },
+  { brand: 'Osborne', models: [
+    { name: 'Fantastic', t: ['moto'] },
+  ] },
 ];
 
 export const OIL_TYPES = [
@@ -202,7 +209,9 @@ const MODEL_SPECIFIC = {
   // E1.15 (24-ago) — AUTOS LIVIANOS + SUV. Guardas anti-colisión ANTES
   // de su arte: 'corolla cross' es SUV genérico (no el sedán calcado) y
   // 'mazda 32x' (323/326) no debe caer en el arte del Mazda 3.
-  suv: ['corolla cross'],
+  // 16-oct: 'land cruiser'/'fj cruiser' son SUV — sin esta guarda caerían
+  // en el arte de la moto Movesa Cruiser (subcadena 'cruiser').
+  suv: ['corolla cross', 'land cruiser', 'fj cruiser'],
   sedan: ['mazda 32'],
   m_corolla: ['corolla'],
   m_yaris: ['yaris'],
@@ -240,6 +249,11 @@ const MODEL_SPECIFIC = {
   m_h100: ['h100', 'h 100'],
   m_h1: ['hyundai h1', 'h1'],
   m_k2700: ['k2700', 'k 2700', '2700'],
+  // TANDA 10 (16-oct) — MOTOS Movesa Cruiser y Osborne Fantastic. 'crusier'
+  // cubre la grafía de la referencia del dueño; sin patrón de marca sola
+  // (Movesa/Osborne tendrán más modelos sin arte propio).
+  m_cruiser: ['cruiser', 'crusier'],
+  m_fantastic: ['fantastic'],
 };
 // Capa 2 — estilo de CARROCERÍA genérico por palabra clave:
 const MODEL_BODY = {

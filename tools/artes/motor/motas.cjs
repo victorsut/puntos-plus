@@ -18,6 +18,9 @@ const O = __dirname;
   const A = art.data, CH = art.info.channels;
   const ref = await sharp(DIR + M.file).flatten({ background: '#fff' }).removeAlpha().raw().toBuffer();
   const W = 1536, H = 1024;
+  const hueOf = (r, g, b) => { const mx = Math.max(r, g, b), mn = Math.min(r, g, b); if (mx - mn < 20) return -1; if (mx === r) return ((g - b) / (mx - mn) + 6) % 6; if (mx === g) return (b - r) / (mx - mn) + 2; return (r - g) / (mx - mn) + 4; };
+  const h0 = M.bg ? hueOf(...M.bg) : -1;
+  const isBgFam = (r, g, b) => { const h = hueOf(r, g, b); if (h < 0) return false; let d = Math.abs(h - h0); if (d > 3) d = 6 - d; return d <= 0.5; };
   const mask = new Uint8Array(W * H);
   for (let i = 0; i < W * H; i++) {
     const a = CH === 4 ? A[i * 4 + 3] : 255;
@@ -25,7 +28,8 @@ const O = __dirname;
     const av = Math.min(A[i * CH], A[i * CH + 1], A[i * CH + 2]);
     if (av < 200) continue; // solo tinta CLARA del arte
     const r = ref[i * 3], g = ref[i * 3 + 1], b = ref[i * 3 + 2];
-    const refBg = r >= 244 && g >= 244 && b >= 244;
+    // TANDA 10: con fondo de COLOR, 'fondo' = familia de tono del fondo (como el flood del trazador)
+    const refBg = M.bg ? isBgFam(r, g, b) : (r >= 244 && g >= 244 && b >= 244);
     const refDark = Math.max(r, g, b) < 150;
     if (refBg || refDark) mask[i] = 1;
   }

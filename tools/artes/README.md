@@ -19,7 +19,7 @@ Los scripts usan rutas absolutas `C:/proyectos/club-turkaj/...` (referencias, sa
 
 | Script | Modelos | Uso |
 |---|---|---|
-| `trace-mix.cjs` | Tanda 9 (microbuses, moto taxis, camiones ligeros) + Mazda 3 y Yaris recalcados (E1.23) | `node trace-mix.cjs <key>` |
+| `trace-mix.cjs` | Tanda 9 (microbuses, moto taxis, camiones ligeros) + Mazda 3 y Yaris recalcados (E1.23) + **Tanda 10 (16-oct-2026): motos Movesa Cruiser y Osborne Fantastic** (fondo de color + cuerpo azul; flags nuevos `lightKeep` —una isla clara nunca se funde al oscuro—, `specialClasses` y `passes: 1` para las líneas finas del estilo plano) | `node trace-mix.cjs <key>` |
 | `trace-motos.cjs` | 19 motos (estado E1.22, 2-sep) | `node trace-motos.cjs <key>` |
 | `trace-autos.js` | Autos livianos, SUV y picops (estado E1.20b, 28-ago) | `node trace-autos.js <key>` |
 | `gen-arts-mix.cjs` / `gen-arts-auto.js` | Generan los `*Art.jsx` desde `MODELS` del trazador correspondiente | `node gen-arts-mix.cjs` |

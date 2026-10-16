@@ -86,6 +86,9 @@ const LAZY_MODEL_ART = {
   m_ape:    lazyArt(() => import('./ApeArt.jsx')),
   m_h100:   lazyArt(() => import('./H100Art.jsx')),
   m_k2700:  lazyArt(() => import('./K2700Art.jsx')),
+  // TANDA 10 (16-oct-2026) — MOTOS nuevas (estilo plano, fondo de color)
+  m_cruiser:   lazyArt(() => import('./CruiserArt.jsx')),
+  m_fantastic: lazyArt(() => import('./FantasticArt.jsx')),
 };
 
 export const VEHICLE_COLORS = [
