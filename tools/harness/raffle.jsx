@@ -3,9 +3,15 @@
 // con y sin imagen, ganadores y participantes. Sin Supabase.
 // Uso: npx vite --config tools/harness/vite.harness.config.js
 //      http://localhost:3100/tools/harness/raffle.html?month=7&dark=1
+//   ?nav=1 → monta la BottomNav real del cliente (misma jerarquía que
+//            App.jsx: pantalla y barra hermanas) · ?buy=1 → abre el sheet
+//            "Confirmar compra" (+1) — caso "compra en rifa.jpeg" de
+//            POR CORREGIR (16-oct-2026): el sheet debe cubrir la barra.
 import { createRoot } from 'react-dom/client';
 import '../../src/styles/global.css';
 import ClientRaffle from '../../src/views/client/ClientRaffle';
+import BottomNav from '../../src/components/ui/BottomNav';
+import { House, Gift, TicketStar, Car } from '../../src/components/ui/Icons';
 
 const q = new URLSearchParams(location.search);
 const dark = q.get('dark') === '1';
@@ -31,10 +37,23 @@ const ctx = {
 
 // ?month=N → arranca en ese mes (el arnés no puede arrastrar)
 const start = q.get('month');
+const navItems = [
+  { id: 'home', label: 'Inicio', icon: <House /> },
+  { id: 'cat', label: 'Canjes', icon: <Gift /> },
+  { id: 'qr', label: '', icon: null, isQR: true },
+  { id: 'raf', label: 'Rifa', icon: <TicketStar /> },
+  { id: 'veh', label: 'Vehículos', icon: <Car /> },
+];
 const Wrapped = () => {
   const c = { ...ctx, curMonth };
-  return <ClientRaffle {...c} />;
+  return (
+    <>
+      <ClientRaffle {...c} />
+      {q.get('nav') === '1' && <BottomNav items={navItems} current="raf" onSelect={() => {}} view="client" tierName={ctx.cTier.name} dark={dark} />}
+    </>
+  );
 };
+if (q.get('buy') === '1') setTimeout(() => { [...document.querySelectorAll('button')].find(b => b.textContent.trim() === '+1')?.click(); }, 700);
 document.body.style.background = dark ? '#0B0B0D' : '#F7F7F9';
 if (q.get('scroll')) setTimeout(() => { const el = document.querySelector('#root > div > div'); if (el) el.scrollTop = +q.get('scroll'); }, 600);
 createRoot(document.getElementById('root')).render(<div style={{ width: 390 }}><Wrapped /></div>);

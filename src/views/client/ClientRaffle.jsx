@@ -11,6 +11,7 @@
 // El sorteo es automático al cierre del mes (draw_due_raffles, ponderado
 // por boletos); acá solo se muestra el resultado.
 import { useState, useMemo, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { bento, BRAND_ORANGE, clientMainBg } from '../../constants/styles';
 import { Back, Chev, TicketStar } from '../../components/ui/Icons';
 import useBackLayer from '../../hooks/useBackLayer';
@@ -242,8 +243,14 @@ export default function ClientRaffle(ctx) {
         )}
       </div>
 
-      {/* ── Confirmar compra de boletos (bottom sheet) ── */}
-      {buyConfirm && (
+      {/* ── Confirmar compra de boletos (bottom sheet) ──
+          Va en un PORTAL al body (16-oct-2026, "compra en rifa.jpeg" de
+          POR CORREGIR): esta pantalla es un contenedor position:fixed con
+          bottom:55 y, como todo fixed, crea su propio contexto de
+          apilamiento — un hijo con zIndex 400 seguía quedando DEBAJO de
+          la barra inferior (zIndex 100, hermana de la pantalla) y los
+          botones Cancelar/Comprar quedaban tapados por la barra. */}
+      {buyConfirm && createPortal(
         <div onClick={closeBuy} style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)',
           zIndex: 400, display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
@@ -252,7 +259,10 @@ export default function ClientRaffle(ctx) {
           <div onClick={e => e.stopPropagation()} style={{
             background: dark ? '#101018' : '#fff',
             borderRadius: '24px 24px 0 0',
-            width: '100%', maxWidth: 480, padding: '12px 24px 40px',
+            width: '100%', maxWidth: 480, boxSizing: 'border-box',
+            // el sheet ahora cubre la barra: respeta la zona segura del celular
+            padding: '12px 24px calc(28px + env(safe-area-inset-bottom, 0px))',
+            maxHeight: '92vh', overflowY: 'auto', overscrollBehavior: 'contain',
             animation: buyClosing ? 'slideDownOut .22s ease-in forwards' : 'slideUp .3s cubic-bezier(.32,1.2,.64,1)',
           }}>
             <div style={{ width: 40, height: 4, borderRadius: 4, background: dark ? 'rgba(255,255,255,.2)' : '#E0E0E0', margin: '0 auto 20px' }} />
@@ -313,7 +323,8 @@ export default function ClientRaffle(ctx) {
               }}>Comprar boletos</button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
