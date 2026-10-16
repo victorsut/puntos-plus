@@ -36,7 +36,8 @@ export default function ClientHome(ctx) {
     pendingOpRating, setPendingOpRating, sbConnected,
     activityLog, redeemedList,
     setCScr, setNavOrigin, dark, chosenDark, setVehicleFocus,
-    myNotifs, markNotifsRead, clearNotifs, rewardQrCloseSignal } = ctx;
+    myNotifs, markNotifsRead, clearNotifs, rewardQrCloseSignal,
+    features } = ctx; // beta de secciones (16-oct): cuadro Vehículo PRÓXIMAMENTE si no está habilitada
 
   // FIX (11-ago): el guard va ANTES de todos los hooks (Rules of Hooks).
   // Antes vivía en medio (línea ~76), tras 2 hooks y antes de otros 13:
@@ -146,7 +147,7 @@ export default function ClientHome(ctx) {
         {/* 2 · Vehículo (F6 en producción, 4-sep): arte del principal
             si el socio tiene vehículos; carrito si no. home/VehicleBentoTile */}
         <VehicleBentoTile
-          me={me} htp={htp}
+          me={me} htp={htp} enabled={features ? features.vehicles : null}
           onOpen={(e) => { if (setNavOrigin) setNavOrigin(originFromEvent(e)); setCScr('veh'); }}
         />
 

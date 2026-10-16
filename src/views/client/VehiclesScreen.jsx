@@ -1,13 +1,16 @@
 // src/views/client/VehiclesScreen.jsx
-// Pestaña VEHÍCULOS — entrada de la ventana real para TODOS los socios
-// (rollout de F6, 4-sep-2026, decisión del dueño). Sustituye a
-// VehiclesSoon: ya no hay compuerta de beta — list_my_vehicles devuelve
-// la ficha directamente y VehiclesHome se monta con ella. Este archivo
-// solo carga la lista (con spinner y reintento) y descarga el chunk.
+// Pestaña VEHÍCULOS — entrada de la ventana real. Rollout a todos el
+// 4-sep-2026; desde el 16-oct vuelve la BETA CONTROLADA (decisión del
+// dueño): la compuerta la decide el server (ctx.features, hook
+// useMemberFeatures) — sin la sección habilitada se ve VehiclesSoon
+// (PRÓXIMAMENTE). Con ella, este archivo carga la lista (con spinner y
+// reintento) y descarga el chunk de VehiclesHome.
 import { useEffect, useState, lazy, Suspense } from 'react';
 import { BRAND_ORANGE } from '../../constants/styles';
 import { listMyVehicles } from '../../services/vehicleService';
 import LogoSpinner from '../../components/ui/LogoSpinner';
+import FeatureGate from '../../components/ui/FeatureGate';
+import VehiclesSoon from './VehiclesSoon';
 
 // LAZY (code splitting, 14-ago): la ventana —con el arte de los
 // vehículos y los formularios— baja solo al entrar a la pestaña.
@@ -18,7 +21,7 @@ const VehiclesHome = lazy(() => import('./vehicles/VehiclesHome').catch(() =>
   new Promise(r => setTimeout(r, 800)).then(() => import('./vehicles/VehiclesHome'))
 ));
 
-export default function VehiclesScreen(ctx) {
+function VehiclesReal(ctx) {
   const { me, dark } = ctx;
   const [vehicles, setVehicles] = useState(null); // null = cargando
   const [error, setError] = useState(false);
@@ -59,5 +62,14 @@ export default function VehiclesScreen(ctx) {
     <Suspense fallback={spinner}>
       <VehiclesHome ctx={ctx} vehicles={vehicles} setVehicles={setVehicles} />
     </Suspense>
+  );
+}
+
+export default function VehiclesScreen(ctx) {
+  const { features, dark, cTier, me } = ctx;
+  return (
+    <FeatureGate features={features} feature="vehicles" dark={dark} soon={<VehiclesSoon cTier={cTier} me={me} dark={dark} />}>
+      <VehiclesReal {...ctx} />
+    </FeatureGate>
   );
 }

@@ -51,7 +51,9 @@ export default function OpRatingModal({
     if (!sbConnected || !data.purchaseId) return;
     let alive = true;
     listMyVehicles().then(({ data: res }) => {
-      if (!alive || !res?.ok || !(res.vehicles || []).length) return;
+      // 16-oct: solo con la sección Vehículos habilitada para el socio
+      // (beta controlada — res.beta la decide el server)
+      if (!alive || !res?.ok || !res.beta || !(res.vehicles || []).length) return;
       setVehOpts(res.vehicles);
       vehInitial.current = res.vehicles[0].id; // orden del server: principal primero
       setVehSel(res.vehicles[0].id);

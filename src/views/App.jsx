@@ -20,6 +20,7 @@ import useBackLayer from '../hooks/useBackLayer';
 import useStaffData from '../hooks/useStaffData';
 import useAuthBoot from '../hooks/useAuthBoot';
 import useMemberRealtime from '../hooks/useMemberRealtime';
+import useMemberFeatures from '../hooks/useMemberFeatures';
 import useNotificationsInbox from '../hooks/useNotificationsInbox';
 import useSessionGuard from '../hooks/useSessionGuard';
 import useBusinessActions from '../hooks/useBusinessActions';
@@ -233,6 +234,11 @@ export default function App() {
   const TH = clientTheme(cTier.name, dark);
   const isLoggedIn = (isC && authScreen === 'logged') || (isO && authOp === 'logged') || (isA && authAdmin === 'logged');
 
+  // Beta de secciones (16-oct): qué pestañas del cliente están
+  // habilitadas para este socio según el SERVER — { vehicles, raffle }
+  // o null mientras se consulta (hooks/useMemberFeatures).
+  const features = useMemberFeatures({ meId: me?.id, loggedIn: isC && authScreen === 'logged' });
+
   // ===== ACCIONES DE NEGOCIO (división etapa 4, 12-ago-2026) =====
   // Todas delegan en RPCs atómicas; acá solo optimismo de UI. Viven en
   // hooks/useBusinessActions.js — logActivity/addPurchase/redeem/
@@ -399,6 +405,7 @@ export default function App() {
     view, setView, scr, setScr, cScr, setCScr, oScr, setOScr,
     setNavOrigin, vehicleFocus, setVehicleFocus,
     isA, isO, isC,
+    features, // beta de secciones (Vehículos / Rifa) — decisión del server
   };
 
   // ===== NAV =====

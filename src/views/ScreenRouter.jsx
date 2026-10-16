@@ -26,6 +26,8 @@ import Rules from './shared/Rules';
 import ClientMenu from './client/ClientMenu';
 import ClientPromos from './client/ClientPromos';
 import VehiclesScreen from './client/VehiclesScreen';
+import RaffleSoon from './client/RaffleSoon';
+import FeatureGate from '../components/ui/FeatureGate';
 
 // ── Code splitting por ROL (14-ago) ─────────────────────────
 // Las vistas de OPERADOR y ADMIN se cargan bajo demanda (React.lazy):
@@ -131,7 +133,16 @@ export default function ScreenRouter({ ctx, companyPicked, setCompanyPicked, nav
     if (!companyPicked) return <CompanySelect dark={dark} cfg={cfg} onPick={() => setCompanyPicked(true)} />;
     if (cScr === 'cat') return <Catalog {...ctx} client={true} />;
     if (cScr === 'promos') return <ClientPromos {...ctx} />;
-    if (cScr === 'raf') return <ClientRaffle {...ctx} />;
+    // Beta de secciones (16-oct): la Rifa solo para socios habilitados
+    // por el admin (ctx.features, decisión del server); el resto ve
+    // PRÓXIMAMENTE. Vehículos lleva la misma compuerta dentro de VehiclesScreen.
+    if (cScr === 'raf') {
+      return (
+        <FeatureGate features={ctx.features} feature="raffle" dark={dark} soon={<RaffleSoon dark={dark} />}>
+          <ClientRaffle {...ctx} />
+        </FeatureGate>
+      );
+    }
     if (cScr === 'menu') return <ClientMenu {...ctx} />;
     if (cScr === 'veh') return <VehiclesScreen {...ctx} />;
     return <ClientHome {...ctx} />;

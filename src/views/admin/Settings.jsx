@@ -20,6 +20,8 @@ import ReasonModal from '../../components/ui/ReasonModal';
 // desactivar/reactivar con motivo) vive completa en ApiClientsCard.
 import ApiClientsCard from './settings/ApiClientsCard';
 import FuelPricesCard from './settings/FuelPricesCard';
+// 16-oct: pestañas del cliente en BETA controlada (Vehículos / Rifa)
+import FeatureBetaCard from './settings/FeatureBetaCard';
 
 export default function Settings(ctx) {
   const { cfg, setCfg, fire, loggedAdmin, custs, stations, setStations } = ctx;
@@ -401,6 +403,13 @@ export default function Settings(ctx) {
         <ApiClientsCard
           fire={fire} loggedAdmin={loggedAdmin}
           card={card} cardTitle={cardTitle} cardHint={cardHint} ghostCardBtn={ghostCardBtn}
+        />
+
+        {/* 16-oct: secciones en beta — probadores por pestaña e
+            interruptor "para todos" (FeatureBetaCard) */}
+        <FeatureBetaCard
+          custs={custs} loggedAdmin={loggedAdmin} fire={fire}
+          card={card} cardTitle={cardTitle} cardHint={cardHint}
         />
 
         {/* D24: umbrales de las alertas push de servicio de vehículos */}

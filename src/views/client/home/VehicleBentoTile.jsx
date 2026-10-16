@@ -25,12 +25,15 @@ const writeCache = (id, v) => {
   } catch { /* sin storage (privado/bloqueado): solo se pierde el pintado instantáneo */ }
 };
 
-export default function VehicleBentoTile({ me, htp, onOpen }) {
-  const ready = !!me?.id && !String(me.id).startsWith('temp-');
+// `enabled` (16-oct, beta de secciones): true = sección habilitada para
+// el socio (arte del principal); false = PRÓXIMAMENTE (carrito con
+// insignia, sin consultar la ficha); null = aún no se sabe (carrito).
+export default function VehicleBentoTile({ me, htp, onOpen, enabled = true }) {
+  const ready = !!me?.id && !String(me.id).startsWith('temp-') && enabled === true;
   const [main, setMain] = useState(() => (ready ? readCache(me.id) : null));
 
   useEffect(() => {
-    if (!ready) return;
+    if (!ready) { setMain(null); return; }
     let alive = true;
     listMyVehicles().then(({ data }) => {
       if (!alive || !data?.ok) return;
@@ -83,6 +86,9 @@ export default function VehicleBentoTile({ me, htp, onOpen }) {
     tourId: 'tile-vehicle', // ancla del tutorial
   };
 
+  if (enabled === false) {
+    return <BentoTile {...common} sub="Muy pronto" badge="PRÓXIMAMENTE" icon={<CarIcon color={htp.vehicleInk} />} />;
+  }
   if (!main) {
     return <BentoTile {...common} icon={<CarIcon color={htp.vehicleInk} />} />;
   }
