@@ -3,13 +3,25 @@
 // su descripción, dónde es válido — D17 — y el saldo antes/después).
 // Vive a nivel raíz para escapar del overflow:hidden del lienzo.
 // Extraído de App.jsx (división etapa 1, 12-ago-2026) sin cambios.
+import { useEffect, useRef } from 'react';
 import RewardIcon from './ui/RewardIcon';
 import { bento, BRAND_ORANGE, CAT_COLORS, CAT_LABELS } from '../constants/styles';
 import { rewardLocationNames } from '../lib/rewardLocations';
 
-export default function RedeemConfirmSheet({ data, me, dark, closing, stations, stores, onClose, onConfirm }) {
+export default function RedeemConfirmSheet({ data, me, dark, closing, stations, stores, onClose, onConfirm, busy = false }) {
+  // UX-03: mientras `busy` la hoja no se cierra ni acepta otro toque. El
+  // ref cubre los toques que llegan en el MISMO tick, antes de que React
+  // vuelva a pintar con busy=true (el estado del padre llega tarde).
+  const firedRef = useRef(false);
+  useEffect(() => { if (!busy) firedRef.current = false; }, [busy, data]);
+  const guardedClose = () => { if (!busy && !firedRef.current) onClose(); };
+  const confirm = () => {
+    if (busy || firedRef.current) return;
+    firedRef.current = true;
+    onConfirm(data.reward);
+  };
   return (
-    <div onClick={onClose} style={{
+    <div onClick={guardedClose} style={{
       position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)',
       zIndex: 400, display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
       animation: closing ? 'ppFadeOut .22s ease forwards' : 'ppFade .2s ease',
@@ -104,17 +116,17 @@ export default function RedeemConfirmSheet({ data, me, dark, closing, stations, 
         </div>
 
         <div style={{ display: 'flex', gap: 12 }}>
-          <button onClick={onClose} style={{
+          <button onClick={guardedClose} disabled={busy} style={{
             flex: 1, padding: 16, borderRadius: 14, border: 'none',
             background: dark ? 'rgba(255,255,255,.08)' : '#F5F5F7',
-            color: dark ? '#ccc' : '#424242',
-            fontFamily: "'DM Sans'", fontSize: 14, fontWeight: 700, cursor: 'pointer',
+            color: dark ? '#ccc' : '#424242', opacity: busy ? .5 : 1,
+            fontFamily: "'DM Sans'", fontSize: 14, fontWeight: 700, cursor: busy ? 'default' : 'pointer',
           }}>Cancelar</button>
-          <button onClick={() => onConfirm(data.reward)} style={{
+          <button onClick={confirm} disabled={busy} aria-busy={busy} style={{
             flex: 2, padding: 16, borderRadius: 14, border: 'none',
-            background: BRAND_ORANGE, color: '#fff',
-            fontFamily: "'DM Sans'", fontSize: 15, fontWeight: 800, cursor: 'pointer',
-          }}>Confirmar Canje</button>
+            background: BRAND_ORANGE, color: '#fff', opacity: busy ? .75 : 1,
+            fontFamily: "'DM Sans'", fontSize: 15, fontWeight: 800, cursor: busy ? 'default' : 'pointer',
+          }}>{busy ? 'Procesando…' : 'Confirmar Canje'}</button>
         </div>
       </div>
     </div>

@@ -16,6 +16,13 @@ import Wordmark from '../../components/ui/Wordmark';
 import LegalFooter from '../../components/ui/LegalFooter';
 import ModeToggle from '../../components/ui/ModeToggle';
 import SupportSheet from '../../components/ui/SupportSheet';
+import { isInAppBrowser, inAppBrowserName, isAndroid, openInChrome, copyLink } from '../../lib/inAppBrowser';
+
+// UX-01 (7-nov-2026): dentro de WhatsApp/Instagram/Facebook (WebView)
+// Google rechaza el OAuth con "403 disallowed_useragent". Se evalúa una
+// sola vez: el user agent no cambia durante la sesión.
+const IN_APP = isInAppBrowser();
+const IN_APP_NAME = IN_APP ? inAppBrowserName() : null;
 
 export default function ClientLogin(ctx) {
   const { loginPhone, setLoginPhone, loginPass, setLoginPass, authError, setAuthError,
@@ -81,8 +88,19 @@ export default function ClientLogin(ctx) {
   };
 
   const doGoogle = () => {
+    if (IN_APP) return; // el botón no se muestra en WebViews (UX-01)
     if (sb) sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
-    else setAuthError('Supabase no disponible');
+    else setAuthError('No se pudo conectar con el servidor. Intentá de nuevo.');
+  };
+
+  // UX-01: salir del WebView. Android → intent:// a Chrome (si no está,
+  // el navegador por defecto); iOS → copiar el enlace y abrirlo en Safari.
+  const [linkCopied, setLinkCopied] = useState(false);
+  const leaveInApp = async () => {
+    if (isAndroid() && openInChrome()) return;
+    const ok = await copyLink();
+    setLinkCopied(ok);
+    fire(ok ? 'Enlace copiado: pegalo en Chrome o Safari' : 'No se pudo copiar. Tocá los tres puntos y elegí "Abrir en el navegador".', ok ? 'success' : 'warn');
   };
 
   // ── Biometría (passkeys): el botón solo aparece si el navegador
@@ -190,16 +208,42 @@ export default function ClientLogin(ctx) {
         <div style={{ flex: 1, height: 1, background: dark ? 'rgba(255,255,255,.12)' : '#F0F0F0' }} />
       </div>
 
-      {/* OAuth */}
-      <button onClick={doGoogle} style={{
-        ...btnStyle,
-        background: dark ? 'rgba(255,255,255,.08)' : '#fff',
-        border: dark ? '1.5px solid rgba(255,255,255,.14)' : '1.5px solid #ECECEE',
-        color: dark ? '#fff' : '#333',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 24,
-      }}>
-        <GoogleLogo /> Continuar con Google
-      </button>
+      {/* OAuth — en un WebView (WhatsApp/Instagram/Facebook) Google no
+          funciona: en su lugar se explica cómo abrir la app en el
+          navegador (UX-01). Teléfono + contraseña siguen disponibles. */}
+      {IN_APP ? (
+        <div style={{
+          background: dark ? 'rgba(255,255,255,.06)' : '#FFF4EC',
+          border: `1.5px solid ${dark ? 'rgba(255,255,255,.12)' : '#FFD8BF'}`,
+          borderRadius: 16, padding: '14px 16px', marginBottom: 24, textAlign: 'left',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, color: ink, fontSize: 13.5, fontWeight: 800 }}>
+            <GoogleLogo /> Entrar con Google
+          </div>
+          <div style={{ fontSize: 13, lineHeight: 1.5, color: dark ? 'rgba(255,255,255,.75)' : '#48484A', marginBottom: 12 }}>
+            {IN_APP_NAME ? `Estás dentro de ${IN_APP_NAME} y ` : 'Este navegador '}
+            no permite iniciar sesión con Google. Abrí Puntos Plus en Chrome
+            {isAndroid() ? '' : ' o Safari'} para usar tu cuenta de Google, o entrá arriba con tu teléfono y contraseña.
+          </div>
+          <button onClick={leaveInApp} style={{
+            ...btnStyle, background: dark ? 'rgba(255,255,255,.1)' : '#fff',
+            border: dark ? '1.5px solid rgba(255,255,255,.14)' : '1.5px solid #ECECEE',
+            color: ink, minHeight: 44,
+          }}>
+            {isAndroid() ? 'Abrir en Chrome' : (linkCopied ? 'Enlace copiado ✓' : 'Copiar enlace de la app')}
+          </button>
+        </div>
+      ) : (
+        <button onClick={doGoogle} style={{
+          ...btnStyle,
+          background: dark ? 'rgba(255,255,255,.08)' : '#fff',
+          border: dark ? '1.5px solid rgba(255,255,255,.14)' : '1.5px solid #ECECEE',
+          color: dark ? '#fff' : '#333',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 24,
+        }}>
+          <GoogleLogo /> Continuar con Google
+        </button>
+      )}
 
       {/* Biometría (passkey): huella / rostro / patrón del celular */}
       {bioAvail && (

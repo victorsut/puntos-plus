@@ -246,7 +246,7 @@ export default function App() {
   // checkSpecialDayBonus los consumen los efectos de más abajo.
   const {
     logActivity, loadTodaySurveys, checkSpecialDayBonus,
-    addPurchase, redeem, buyTickets, doSurvey,
+    addPurchase, redeem, buyTickets, doSurvey, actionBusy,
   } = useBusinessActions({
     me, curMonth, fire, sbConnected, loggedOp,
     setMe, setCusts, setActivityLog, setMySurveyCount,
@@ -401,6 +401,7 @@ export default function App() {
     logActivity,
     // Actions
     addPurchase, redeem, buyTickets, doSurvey, logout,
+    actionBusy, // UX-03: 'redeem' | 'buy' | null mientras una RPC viaja
     // Navigation
     view, setView, scr, setScr, cScr, setCScr, oScr, setOScr,
     setNavOrigin, vehicleFocus, setVehicleFocus,

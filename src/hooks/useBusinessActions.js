@@ -7,19 +7,34 @@
 // (complete_survey), checkSpecialDayBonus (grant_special_day_bonus),
 // loadTodaySurveys (count_my_surveys_today) y logActivity (solo estado
 // local — el rastro persistente lo escriben los RPCs, SEC.C.3).
-import { useCallback } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { sb } from '../lib/supabaseClient';
 import { registerPurchase, redeemReward, buyRaffleTickets, completeSurvey, grantSpecialDayBonus, countMySurveysToday } from '../services';
 import { getMemberToken } from '../services/sessionTokens';
 import { localDate } from '../lib/dates';
 import { sendPushToMember } from '../lib/pushNotifications';
 import { firstName } from '../lib/text'; // regla 29-jul: al cliente solo el primer nombre del personal
+import { friendlyError } from '../lib/netError';
 
 export default function useBusinessActions({
   me, curMonth, fire, sbConnected, loggedOp,
   setMe, setCusts, setActivityLog, setMySurveyCount,
   setRedeemedList, setRafData, setSpecialBonusModal, setAmt,
 }) {
+  // UX-03 (7-nov-2026): candado "en curso" para canje y compra de boletos.
+  // Sin él, un segundo toque mientras la RPC viajaba (segundos en 3G)
+  // generaba un SEGUNDO canje/compra que el servidor aceptaba si
+  // alcanzaba el saldo. El ref bloquea reentradas aunque el closure sea
+  // viejo; el estado `actionBusy` ('redeem' | 'buy' | null) lo usan las
+  // hojas de confirmación para deshabilitar botones y mostrar "Procesando…".
+  const busyRef = useRef(null);
+  const [actionBusy, setActionBusy] = useState(null);
+  const lock = (kind) => {
+    if (busyRef.current) return false;
+    busyRef.current = kind; setActionBusy(kind);
+    return true;
+  };
+  const unlock = () => { busyRef.current = null; setActionBusy(null); };
   // ===== SUPABASE WRITE HELPERS =====
   const logActivity = useCallback((memberId, type, desc, ptsChange, amount) => {
     // SEC.C.3: el INSERT directo de activity_log quedó revocado — este
@@ -230,38 +245,45 @@ export default function useBusinessActions({
   // operador escanea → update confirm_status='pending' → cliente confirma.
   //
   // r.id debe ser el UUID del reward en Supabase (no el campo "id" local).
+  // Devuelve true si el canje se completó (las hojas cierran al terminar).
   const redeem = useCallback(async (r) => {
-    if (!me?.id) return;
-    if (!sb || !sbConnected) { fire('Sin conexión'); return; }
-    if (!r.id) { fire('Premio sin ID válido'); return; }
+    if (!me?.id) return false;
+    if (!sb || !sbConnected) { fire('Sin conexión'); return false; }
+    if (!r.id) { fire('Premio sin ID válido'); return false; }
+    if (!lock('redeem')) return false; // UX-03: ya hay un canje en curso
 
-    const { data, error } = await redeemReward({
-      memberId: me.id,
-      rewardId: r.id,
-      operatorId: null, // canje desde cliente, sin operador asociado aún
-    });
+    try {
+      const { data, error } = await redeemReward({
+        memberId: me.id,
+        rewardId: r.id,
+        operatorId: null, // canje desde cliente, sin operador asociado aún
+      });
 
-    if (error) {
-      fire('❌ ' + (error.message || 'Error al canjear'));
-      return;
+      if (error) {
+        fire('❌ ' + friendlyError(error, 'No se pudo canjear. Intentá de nuevo.'));
+        return false;
+      }
+
+      const { redemption_id, code, cost, reward_name, reward_icon } = data;
+      const today = localDate();
+      const newEntry = {
+        id: redemption_id,
+        memberId: me.id,
+        reward: { name: reward_name, icon: reward_icon, cat: r.cat },
+        cost, date: today, code, collected: false,
+      };
+
+      // Update local state con valores REALES del server
+      setMe(p => ({ ...p, points: p.points - cost, redeemed: (p.redeemed || 0) + 1 }));
+      setCusts(p => p.map(c => c.id === me.id
+        ? { ...c, points: c.points - cost, redeemed: (c.redeemed || 0) + 1 }
+        : c));
+      setRedeemedList(p => [newEntry, ...p]);
+      fire(`🎉 ¡Canjeaste ${reward_name} por ${cost} pts!`);
+      return true;
+    } finally {
+      unlock();
     }
-
-    const { redemption_id, code, cost, reward_name, reward_icon } = data;
-    const today = localDate();
-    const newEntry = {
-      id: redemption_id,
-      memberId: me.id,
-      reward: { name: reward_name, icon: reward_icon, cat: r.cat },
-      cost, date: today, code, collected: false,
-    };
-
-    // Update local state con valores REALES del server
-    setMe(p => ({ ...p, points: p.points - cost, redeemed: (p.redeemed || 0) + 1 }));
-    setCusts(p => p.map(c => c.id === me.id
-      ? { ...c, points: c.points - cost, redeemed: (c.redeemed || 0) + 1 }
-      : c));
-    setRedeemedList(p => [newEntry, ...p]);
-    fire(`🎉 ¡Canjeaste ${reward_name} por ${cost} pts!`);
   }, [me, fire, sbConnected]);
 
   // ──────────────────────────────────────────────
@@ -269,55 +291,62 @@ export default function useBusinessActions({
   // ──────────────────────────────────────────────
   // La RPC valida puntos, descuenta, inserta en raffle_tickets
   // (no raffle_entries — esa tabla está deprecada) y registra activity.
+  // Devuelve true si la compra se completó (la hoja cierra al terminar).
   const buyTickets = useCallback(async (n) => {
-    if (!me?.id) return;
-    if (!n || n < 1) { fire('Cantidad inválida'); return; }
-    if (!sb || !sbConnected) { fire('Sin conexión'); return; }
+    if (!me?.id) return false;
+    if (!n || n < 1) { fire('Cantidad inválida'); return false; }
+    if (!sb || !sbConnected) { fire('Sin conexión'); return false; }
+    if (!lock('buy')) return false; // UX-03: ya hay una compra en curso
 
-    // Obtener ID de la rifa del mes actual (curMonth es 0-indexed)
-    const { data: rafRow, error: rafErr } = await sb
-      .from('raffle_calendar')
-      .select('id')
-      .eq('month', curMonth + 1)
-      .eq('year', new Date().getFullYear())
-      .maybeSingle();
+    try {
+      // Obtener ID de la rifa del mes actual (curMonth es 0-indexed)
+      const { data: rafRow, error: rafErr } = await sb
+        .from('raffle_calendar')
+        .select('id')
+        .eq('month', curMonth + 1)
+        .eq('year', new Date().getFullYear())
+        .maybeSingle();
 
-    if (rafErr || !rafRow?.id) {
-      fire('Rifa no disponible para este mes');
-      return;
+      if (rafErr || !rafRow?.id) {
+        fire(rafErr ? friendlyError(rafErr, 'Rifa no disponible para este mes') : 'Rifa no disponible para este mes');
+        return false;
+      }
+
+      // SEC.C.1: la compra exige la sesión de miembro (el vector sin token
+      // quedó cerrado server-side).
+      const { data, error } = await buyRaffleTickets({
+        memberId: me.id,
+        raffleId: rafRow.id,
+        quantity: n,
+        sessionToken: getMemberToken()?.token ?? null,
+        sessionRole: 'member',
+      });
+
+      if (error) {
+        fire('❌ ' + friendlyError(error, 'No se pudieron comprar los boletos. Intentá de nuevo.'));
+        return false;
+      }
+
+      const { tickets, cost, remaining_points, new_ticket_total } = data;
+
+      setMe(p => ({ ...p, points: remaining_points, tickets: new_ticket_total }));
+      setCusts(p => p.map(c => c.id === me.id
+        ? { ...c, points: remaining_points, tickets: new_ticket_total }
+        : c));
+      setRafData(p => p.map((rd, i) => {
+        if (i !== curMonth) return rd;
+        const ps = [...rd.participants];
+        const ex = ps.findIndex(p2 => p2.cid === me.id);
+        if (ex >= 0) ps[ex] = { ...ps[ex], tickets: ps[ex].tickets + tickets };
+        else ps.push({ cid: me.id, name: me.nickname || (me.name || '').split(' ')[0], avatar: me.avatar || '', tickets });
+        return { ...rd, participants: ps };
+      }));
+
+      fire(`🎟️ ${tickets} boleto${tickets > 1 ? 's' : ''} · -${cost} pts`);
+      return true;
+    } finally {
+      unlock();
     }
-
-    // SEC.C.1: la compra exige la sesión de miembro (el vector sin token
-    // quedó cerrado server-side).
-    const { data, error } = await buyRaffleTickets({
-      memberId: me.id,
-      raffleId: rafRow.id,
-      quantity: n,
-      sessionToken: getMemberToken()?.token ?? null,
-      sessionRole: 'member',
-    });
-
-    if (error) {
-      fire('❌ ' + (error.message || 'Error al comprar boletos'));
-      return;
-    }
-
-    const { tickets, cost, remaining_points, new_ticket_total } = data;
-
-    setMe(p => ({ ...p, points: remaining_points, tickets: new_ticket_total }));
-    setCusts(p => p.map(c => c.id === me.id
-      ? { ...c, points: remaining_points, tickets: new_ticket_total }
-      : c));
-    setRafData(p => p.map((rd, i) => {
-      if (i !== curMonth) return rd;
-      const ps = [...rd.participants];
-      const ex = ps.findIndex(p2 => p2.cid === me.id);
-      if (ex >= 0) ps[ex] = { ...ps[ex], tickets: ps[ex].tickets + tickets };
-      else ps.push({ cid: me.id, name: me.nickname || (me.name || '').split(' ')[0], avatar: me.avatar || '', tickets });
-      return { ...rd, participants: ps };
-    }));
-
-    fire(`🎟️ ${tickets} boleto${tickets > 1 ? 's' : ''} · -${cost} pts`);
   }, [me, fire, curMonth, sbConnected]);
 
   // ──────────────────────────────────────────────
@@ -367,5 +396,5 @@ export default function useBusinessActions({
     return { ok: true, pts, count, limit, bonusTicket: !!bonus_ticket };
   }, [me, fire, sbConnected, curMonth]);
 
-  return { logActivity, loadTodaySurveys, checkSpecialDayBonus, addPurchase, redeem, buyTickets, doSurvey };
+  return { logActivity, loadTodaySurveys, checkSpecialDayBonus, addPurchase, redeem, buyTickets, doSurvey, actionBusy };
 }

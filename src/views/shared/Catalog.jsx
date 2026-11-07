@@ -160,6 +160,7 @@ export default function Catalog(ctx) {
             )}
             <div className="pp-tile" data-tour={i === 0 ? "cat-reward" : undefined} onClick={() => {
               if (!client || !canAfford) return;
+              if (ctx.actionBusy) return; // UX-03: hay un canje/compra en curso
               if (setRedeemConfirm) setRedeemConfirm({ reward: r, cost });
               else redeem(r);
             }} style={{

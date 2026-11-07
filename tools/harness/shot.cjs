@@ -68,13 +68,31 @@ async function main() {
   const { targetId } = await send('Target.createTarget', { url: 'about:blank' });
   const { sessionId } = await send('Target.attachToTarget', { targetId, flatten: true });
   await send('Page.enable', {}, sessionId);
+  // La consola de la página se imprime con prefijo [page] (sirve para los
+  // arneses que verifican comportamiento, p. ej. redeem.html?clicks=1).
+  await send('Runtime.enable', {}, sessionId);
+  const origOnMessage = ws.onmessage;
+  ws.onmessage = (ev) => {
+    const msg = JSON.parse(ev.data);
+    if (msg.method === 'Runtime.consoleAPICalled') {
+      const text = (msg.params.args || []).map((a) => a.value ?? a.description ?? '').join(' ');
+      if (!/^\[vite\]|%c/.test(text)) console.log(`  [page:${msg.params.type}] ${text}`);
+      return;
+    }
+    origOnMessage(ev);
+  };
   await send('Emulation.setDeviceMetricsOverride', {
     width: opt.w, height: opt.h, deviceScaleFactor: opt.dpr, mobile: true, screenWidth: opt.w, screenHeight: opt.h,
   }, sessionId);
   await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 }, sessionId);
-  await send('Emulation.setUserAgentOverride', {
-    userAgent: 'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36',
-  }, sessionId);
+  // --ua=chrome (defecto) | whatsapp | instagram | ios-safari | <cadena completa>
+  const UAS = {
+    chrome:      'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36',
+    whatsapp:    'Mozilla/5.0 (Linux; Android 13; Pixel 7 Build/TQ3A; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/130.0 Mobile Safari/537.36',
+    instagram:   'Mozilla/5.0 (Linux; Android 13; Pixel 7 Build/TQ3A; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/130.0 Mobile Safari/537.36 Instagram 300.0.0.0 Android',
+    'ios-safari': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
+  };
+  await send('Emulation.setUserAgentOverride', { userAgent: UAS[opt.ua] || opt.ua || UAS.chrome }, sessionId);
 
   for (const p of pages) {
     const url = /^https?:/.test(p.url) ? p.url : BASE + p.url.replace(/^\//, '');

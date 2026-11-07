@@ -17,6 +17,7 @@ import { isAddressComplete, packAddress } from '../../constants/geoGt';
 import { phoneMask, dpiMask, plateMask, capWords } from '../../lib/inputMasks';
 import { setMemberToken } from '../../services/sessionTokens';
 import { mapMember } from '../../lib/mapMember';
+import { friendlyError, OFFLINE_MSG } from '../../lib/netError';
 
 const VEHICLE_PTS = 2;
 
@@ -26,7 +27,7 @@ const btnPrimary = { ...btnStyle, background: BRAND_ORANGE, color: '#fff' };
 export default function GoogleProfile(ctx) {
   const { me, setMe, setCusts, cfg, googleStep, setGoogleStep,
     regProfile, setRegProfile, authError, setAuthError, clearAuthErr,
-    setAuthScreen, fire, sbConnected, logActivity, dark } = ctx;
+    setAuthScreen, fire, logActivity, dark } = ctx;
 
   // Paleta por modo claro/oscuro (elección hecha en el login, persiste)
   const ink     = dark ? '#fff' : '#0D0D0D';
@@ -90,7 +91,9 @@ export default function GoogleProfile(ctx) {
     if (!password.trim() || password.length < 6) { setAuthError('La contrasena debe tener al menos 6 caracteres'); return; }
     if (password !== passConfirm) { setAuthError('Las contrasenas no coinciden'); return; }
     if (!termsOk) { setAuthError('Para continuar debes aceptar los Términos y Condiciones'); return; }
-    if (!phoneVerified && sbConnected && /^\d{8}$/.test((regProfile.phone || '').trim())) {
+    // UX-02: ya no depende de sbConnected (que solo se enciende al final
+    // del boot) — el código se pide siempre que haya cliente de Supabase.
+    if (!phoneVerified && sb && /^\d{8}$/.test((regProfile.phone || '').trim())) {
       setSaving(true);
       try {
         const res = await fetch('/api/verify-phone', {
@@ -120,11 +123,6 @@ export default function GoogleProfile(ctx) {
     setSaving(true);
     try {
       const firstPlate = vehicles[0]?.plate || '';
-      // SEC.C.3: physical_cards quedó cerrada al cliente — la tarjeta
-      // real la asigna register_member y llega en reg.member. El estado
-      // optimista va VACÍO (antes 'CTOD-00001', que colisionaba con una
-      // tarjeta real del stock seed): la UI muestra '—' unos instantes.
-      const fallbackCard = '';
 
       // Fecha COMPLETA YYYY-MM-DD (antes se recortaba a MM-DD; desde
       // jul-2026 se conserva el año — el RPC del bonus acepta ambos)
@@ -140,7 +138,16 @@ export default function GoogleProfile(ctx) {
       // "dentro" con id temporal, sin cuenta real, y el error no se veía
       // (GoogleProfile ya estaba desmontado). Ahora el RPC va PRIMERO y
       // solo en éxito se entra.
-      if (sb && sbConnected) {
+      // UX-02 (7-nov): se eliminó el "alta optimista en memoria" que corría
+      // cuando sbConnected aún era false (boot lento o caído): daba la
+      // bienvenida SIN crear la cuenta y al reabrir la app no existía. El
+      // RPC se intenta siempre que haya cliente; si no hay red, el error
+      // se muestra y el formulario se conserva para reintentar.
+      if (!sb) {
+        setAuthError(OFFLINE_MSG);
+        setSaving(false); return;
+      }
+      {
         const provider   = me?.authProvider || 'manual';
         const providerId = me?.id?.startsWith('temp-') ? null : me?.id;
         // SEC.C.1: el alta completa vive en el RPC register_member — hash
@@ -170,7 +177,7 @@ export default function GoogleProfile(ctx) {
         });
         if (regErr) {
           console.error('[Reg] RPC error:', regErr.message);
-          setAuthError('Error al guardar. Intenta de nuevo.');
+          setAuthError(friendlyError(regErr, 'No se pudo guardar tu registro. Intentá de nuevo.'));
           setSaving(false); return;
         }
         if (reg?.error === 'phone_exists') {
@@ -210,20 +217,10 @@ export default function GoogleProfile(ctx) {
         setGoogleStep('welcome');
         fire('Bienvenido a Puntos Plus! +' + (reg.points ?? totalPts) + ' pts de registro', 'success');
         console.log('[Reg] Registro completado, ID:', reg.member_id, 'tarjeta:', reg.card_code);
-      } else {
-        // Sin conexión: alta optimista solo en memoria (se persiste al
-        // reconectar/reloguear). No hay RPC que pueda fallar acá.
-        console.warn('[Reg] Sin conexion a Supabase — registro solo en memoria');
-        const updated = { ...me, name: regProfile.name, nickname: regProfile.nickname?.trim() || '', phone: regProfile.phone || '', dpi: regProfile.dpi || '', plate: firstPlate, email: regProfile.email || me?.email || '', bday: bdayStored, nit: regProfile.nit || '', address: addressStored, points: totalPts, cardId: fallbackCard };
-        setMe(updated);
-        setCusts(p => [...p, updated]);
-        setAuthScreen('logged');
-        setGoogleStep('welcome');
-        fire('Bienvenido a Puntos Plus! +' + totalPts + ' pts de registro', 'success');
       }
     } catch (err) {
       console.error('[Reg] Error inesperado:', err.message);
-      setAuthError('Error al guardar. Intenta de nuevo.');
+      setAuthError(friendlyError(err, 'No se pudo guardar tu registro. Intentá de nuevo.'));
     }
     setSaving(false);
   };

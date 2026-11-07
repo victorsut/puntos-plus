@@ -55,8 +55,21 @@ export default function ClientRaffle(ctx) {
   // mismo patrón del sheet de canjes).
   const [buyConfirm, setBuyConfirm] = useState(null); // { n, cost } | null
   const [buyClosing, setBuyClosing] = useState(false);
+  // UX-03 (7-nov): la hoja queda abierta con los botones deshabilitados
+  // mientras la compra viaja al servidor; cierra al terminar. Antes
+  // cerraba al instante y un segundo toque compraba dos veces.
+  const buying = ctx.actionBusy === 'buy';
+  // El ref cubre los toques del MISMO tick (antes de que llegue actionBusy).
+  const confirmingRef = useRef(false);
   const closeBuy = () => {
-    if (buyClosing) return;
+    if (buyClosing || buying || confirmingRef.current) return;
+    setBuyClosing(true);
+    setTimeout(() => { setBuyConfirm(null); setBuyClosing(false); }, 220);
+  };
+  const confirmBuy = async () => {
+    if (buying || confirmingRef.current || !buyConfirm) return;
+    confirmingRef.current = true;
+    try { await buyTickets(buyConfirm.n); } finally { confirmingRef.current = false; }
     setBuyClosing(true);
     setTimeout(() => { setBuyConfirm(null); setBuyClosing(false); }, 220);
   };
@@ -306,21 +319,17 @@ export default function ClientRaffle(ctx) {
             </div>
 
             <div style={{ display: 'flex', gap: 12 }}>
-              <button onClick={closeBuy} style={{
+              <button onClick={closeBuy} disabled={buying} style={{
                 flex: 1, padding: 16, borderRadius: 14, border: 'none',
                 background: dark ? 'rgba(255,255,255,.08)' : '#F5F5F7',
-                color: dark ? '#ccc' : '#424242',
-                fontFamily: "'DM Sans'", fontSize: 14, fontWeight: 700, cursor: 'pointer',
+                color: dark ? '#ccc' : '#424242', opacity: buying ? .5 : 1,
+                fontFamily: "'DM Sans'", fontSize: 14, fontWeight: 700, cursor: buying ? 'default' : 'pointer',
               }}>Cancelar</button>
-              <button onClick={() => {
-                const { n } = buyConfirm;
-                setBuyConfirm(null);
-                buyTickets(n);
-              }} style={{
+              <button onClick={confirmBuy} disabled={buying} aria-busy={buying} style={{
                 flex: 2, padding: 16, borderRadius: 14, border: 'none',
-                background: BRAND_ORANGE, color: '#fff',
-                fontFamily: "'DM Sans'", fontSize: 15, fontWeight: 800, cursor: 'pointer',
-              }}>Comprar boletos</button>
+                background: BRAND_ORANGE, color: '#fff', opacity: buying ? .75 : 1,
+                fontFamily: "'DM Sans'", fontSize: 15, fontWeight: 800, cursor: buying ? 'default' : 'pointer',
+              }}>{buying ? 'Procesando…' : 'Comprar boletos'}</button>
             </div>
           </div>
         </div>,

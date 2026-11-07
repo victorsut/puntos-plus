@@ -92,8 +92,12 @@ export default function AppModals({
           closing={rcClosing}
           stations={stations}
           stores={stores}
+          busy={ctx.actionBusy === 'redeem'}
           onClose={closeRedeemConfirm}
-          onConfirm={(reward) => { setRedeemConfirm(null); redeem(reward); }}
+          // UX-03: la hoja queda ABIERTA (botones deshabilitados) mientras
+          // la RPC viaja y cierra al terminar — antes cerraba al instante y
+          // el catálogo seguía tocable durante el canje.
+          onConfirm={async (reward) => { await redeem(reward); closeRedeemConfirm(); }}
         />
       )}
 
