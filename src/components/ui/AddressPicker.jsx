@@ -22,7 +22,7 @@ function PickerSheet({ title, options, value, onSelect, onClose, dark }) {
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', zIndex: 500, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
       <div onClick={e => e.stopPropagation()} style={{ background: dark ? '#16161A' : '#fff', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: 480, padding: '0 0 24px', display: 'flex', flexDirection: 'column', maxHeight: '72vh' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: `1px solid ${dark ? 'rgba(255,255,255,.08)' : '#f0f0f0'}`, flexShrink: 0 }}>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700, color: '#9E9E9E', fontFamily: "'DM Sans'" }}>Cancelar</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700, color: '#6E6E73', fontFamily: "'DM Sans'", minHeight: 44, padding: '0 10px', marginLeft: -10 }}>Cancelar</button>
           <div style={{ fontSize: 15, fontWeight: 800, color: ink }}>{title}</div>
           <div style={{ width: 56 }} />
         </div>
@@ -66,11 +66,13 @@ function PickerSheet({ title, options, value, onSelect, onClose, dark }) {
 function PickRow({ label, valueTxt, placeholder, icon, onOpen, disabled, chip, dark, fieldBg }) {
   const ink = dark ? '#fff' : '#0D0D0D';
   return (
-    <div onClick={disabled ? undefined : onOpen} style={{
+    // UX-41 (7-nov-2026): botón real (accesible y alcanzable con el teclado)
+    <button type="button" onClick={onOpen} disabled={disabled} aria-haspopup="dialog" style={{
       ...inputFlat, height: 'auto', padding: '9px 14px 9px 44px',
       background: fieldBg, display: 'flex', alignItems: 'center',
       cursor: disabled ? 'default' : 'pointer', position: 'relative',
       userSelect: 'none', opacity: disabled ? .5 : 1,
+      width: '100%', textAlign: 'left', fontFamily: "'DM Sans'", color: ink,
     }}>
       <div style={{ position: 'absolute', left: 16, color: '#9E9E9E', display: 'flex' }}>{icon}</div>
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -81,7 +83,7 @@ function PickRow({ label, valueTxt, placeholder, icon, onOpen, disabled, chip, d
       </div>
       {chip}
       <span style={{ color: dark ? 'rgba(255,255,255,.4)' : '#BDBDBD', display: 'flex', marginLeft: 8 }}><Chev /></span>
-    </div>
+    </button>
   );
 }
 

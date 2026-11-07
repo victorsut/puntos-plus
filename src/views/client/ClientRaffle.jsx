@@ -178,7 +178,7 @@ export default function ClientRaffle(ctx) {
             })}
           </div>
           <div style={{ fontSize: 10.5, fontWeight: 600, color: subTxt, textAlign: 'center', marginTop: 8 }}>
-            Tocá para comprar boletos · más boletos, más posibilidades
+            Toca para comprar boletos · más boletos, más posibilidades
           </div>
         </div>
   );
@@ -328,7 +328,7 @@ export default function ClientRaffle(ctx) {
               </div>
               <div style={{ fontSize: 18, fontWeight: 800, color: headerTxt }}>Confirmar compra</div>
               <div style={{ fontSize: 13, fontWeight: 600, color: subTxt, marginTop: 2 }}>
-                Participás en el sorteo de {rm.m}
+                Participas en el sorteo de {rm.m}
               </div>
             </div>
 

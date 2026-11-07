@@ -11,6 +11,7 @@ body {
   display: flex;
   justify-content: center;
   min-height: 100vh;
+  min-height: 100dvh; /* UX-40: barra del navegador móvil */
 }
 
 #root { width: 100%; max-width: 480px; }
@@ -28,6 +29,7 @@ input[type='password']::-ms-clear { display: none; }
   align-items: center;
   justify-content: center;
   height: 100vh;
+  height: 100dvh;
   flex-direction: column;
   gap: 16px;
   font-family: 'DM Sans', sans-serif;
@@ -185,7 +187,7 @@ body.pp-adm-wide #root { max-width: none; }
    colapsada a SOLO ICONOS en tableta (768–1079px) y oculta en móvil
    (<768px, donde una topbar con hamburguesa abre el drawer). La
    BottomNav ya no existe en el admin. */
-.pp-ash { display: flex; min-height: 100vh; }
+.pp-ash { display: flex; min-height: 100vh; min-height: 100dvh; }
 .pp-ash-side { display: none; }
 .pp-ash-main { flex: 1; min-width: 0; }
 /* Los cuadros ocupan TODO el ancho disponible del monitor (pedido del
@@ -230,7 +232,7 @@ body.pp-adm-wide #root { max-width: none; }
    Panel de marca a la izquierda + formulario centrado a la derecha;
    en móvil (<768px) el panel de marca se oculta y queda la columna
    única de siempre. */
-.pp-alog { display: flex; min-height: 100vh; }
+.pp-alog { display: flex; min-height: 100vh; min-height: 100dvh; }
 .pp-alog-brand { display: none; }
 .pp-alog-form {
   flex: 1; display: flex; flex-direction: column;
@@ -340,3 +342,7 @@ body.pp-adm-wide #root { max-width: none; }
 /* ===== Scrollbar ===== */
 ::-webkit-scrollbar       { width: 3px; }
 ::-webkit-scrollbar-thumb { background: #E0E0E0; border-radius: 2px; }
+
+/* UX-40 (7-nov-2026): alto de pantalla real en móvil (la barra del
+   navegador cambia el 100vh); las vistas lo usan en vez de minHeight 100vh */
+.pp-dvh { min-height: 100vh; min-height: 100dvh; }

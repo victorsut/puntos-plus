@@ -59,7 +59,7 @@ export default function TierDetailModal({
           ))}
           {cTier.next && (
             <div style={{ marginTop: 12, fontSize: 11, fontWeight: 700, color: dark ? 'rgba(255,255,255,.45)' : '#9E9E9E', textAlign: 'center' }}>
-              Faltan {cTier.rem} galones para {cTier.next}
+              Faltan {Number(cTier.rem).toLocaleString('es-GT')} galones para {cTier.next}
             </div>
           )}
         </div>

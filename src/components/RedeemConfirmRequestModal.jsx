@@ -14,6 +14,7 @@ import useBackLayer from '../hooks/useBackLayer';
 export default function RedeemConfirmRequestModal({ pending, dark, fire, onClose, onConfirmed }) {
   // Una sola respuesta por solicitud (doble toque / volver + toque)
   const [busy, setBusy] = useState(false);
+  const subTxt = dark ? 'rgba(255,255,255,.5)' : '#6E6E73'; // UX-33
   const respond = async (ok) => {
     if (busy) return;
     setBusy(true);
@@ -57,7 +58,7 @@ export default function RedeemConfirmRequestModal({ pending, dark, fire, onClose
           <div style={{ fontSize: 20, fontWeight: 800, color: dark ? '#fff' : '#0D0D0D', lineHeight: 1.2 }}>
             ¿Confirmás este canje?
           </div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#9E9E9E', marginTop: 6 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: subTxt, marginTop: 6 }}>
             El operador está listo para entregarte este premio
           </div>
         </div>
@@ -69,12 +70,12 @@ export default function RedeemConfirmRequestModal({ pending, dark, fire, onClose
             paddingBottom: 12, marginBottom: 12,
             borderBottom: `1px solid ${dark ? 'rgba(255,255,255,.06)' : '#ECECEE'}`,
           }}>
-            <span style={{ fontSize: 13, color: '#9E9E9E', fontWeight: 600 }}>Premio</span>
-            <span style={{ fontSize: 13, fontWeight: 800, color: dark ? '#fff' : '#0D0D0D' }}>{pending.rewardName}</span>
+            <span style={{ fontSize: 13, color: subTxt, fontWeight: 600, flexShrink: 0 }}>Premio</span>
+            <span style={{ fontSize: 13, fontWeight: 800, color: dark ? '#fff' : '#0D0D0D', flex: 1, minWidth: 0, textAlign: 'right', marginLeft: 12, overflowWrap: 'anywhere' }}>{pending.rewardName}</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 13, color: '#9E9E9E', fontWeight: 600 }}>Puntos a descontar</span>
-            <span style={{ fontSize: 16, fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: dark ? '#FF8A80' : bento.red }}>-{pending.cost} pts</span>
+            <span style={{ fontSize: 13, color: subTxt, fontWeight: 600 }}>Puntos a descontar</span>
+            <span style={{ fontSize: 16, fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: dark ? '#FF8A80' : bento.red }}>-{Number(pending.cost).toLocaleString('es-GT')} pts</span>
           </div>
         </div>
 

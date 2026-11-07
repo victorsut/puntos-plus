@@ -23,10 +23,11 @@ import { listMyVehicles, assignPurchaseVehicle } from '../services/vehicleServic
 import { kmReadingProblem, TANK_STATES } from '../lib/fuelEconomy';
 import { VEHICLE_TYPES } from './ui/VehicleIcons';
 
+import { openExternal } from '../lib/openExternal';
 // Rótulo común de las tres preguntas del vehículo (carga asignada a,
 // kilómetros recorridos, ¿llenaste el tanque?) — misma tipografía y
 // énfasis para que se lean como preguntas por contestar (dueño, 22-sep)
-const qLabel = { fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', color: '#9E9E9E', marginBottom: 8 };
+const qLabel = { fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', color: '#7A7A80', marginBottom: 8 };
 
 export default function OpRatingModal({
   data, onClose, dark, memberId, sbConnected, fire,
@@ -126,7 +127,7 @@ export default function OpRatingModal({
   const startSurvey = () => {
     if (!surveyTarget || surveyPending) return;
     launchedRef.current = true;
-    window.open(surveyTarget.url, '_blank');
+    openExternal(surveyTarget.url);
     setSurveyPending({ openedAt: Date.now(), stationName: surveyTarget.name });
   };
 
@@ -182,7 +183,7 @@ export default function OpRatingModal({
               <div style={{ fontSize: 16, fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: dark ? '#7CD98F' : bento.green, marginBottom: data.promo ? 8 : 6 }}>
                 +{data.points} pts
                 {data.amount != null && (
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#9E9E9E' }}> · Q{+data.amount}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: subTxt }}> · Q{+data.amount}</span>
                 )}
               </div>
             )}
@@ -209,7 +210,7 @@ export default function OpRatingModal({
               </div>
             )}
 
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#9E9E9E', marginBottom: 2 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: subTxt, marginBottom: 2 }}>
               Fuiste atendido por
             </div>
             <div style={{
@@ -219,14 +220,14 @@ export default function OpRatingModal({
               {firstName(data.operatorName) || 'Operador'}
             </div>
             {data.stationName && (
-              <div style={{ fontSize: 12, fontWeight: 600, color: '#9E9E9E', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: subTxt, marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
                 <Pin /> {data.stationName}
               </div>
             )}
 
             {/* Stars — sin vehículos: tocar envía; con vehículos: selecciona */}
             <div style={{ fontSize: 13.5, fontWeight: 700, color: dark ? '#E0E0E0' : '#424242', marginBottom: 12 }}>
-              Calificá la atención
+              Califica la atención
             </div>
             <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 18 }}>
               {[1, 2, 3, 4, 5].map(s => (
@@ -249,7 +250,7 @@ export default function OpRatingModal({
             {vehOpts && (
               <div style={{ textAlign: 'left', marginBottom: 16, paddingTop: 14, borderTop: `1px solid ${dark ? 'rgba(255,255,255,.08)' : '#EEEEF0'}` }}>
                 <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: BRAND_ORANGE, marginBottom: 10 }}>
-                  Datos de la carga <span style={{ color: '#9E9E9E', letterSpacing: 0, textTransform: 'none', fontWeight: 600 }}>· opcional</span>
+                  Datos de la carga <span style={{ color: subTxt, letterSpacing: 0, textTransform: 'none', fontWeight: 600 }}>· opcional</span>
                 </div>
                 {/* Tres preguntas con el MISMO rótulo (dueño, 22-sep): que el
                     socio entienda que son cosas por contestar */}
@@ -335,7 +336,7 @@ export default function OpRatingModal({
                 background: BRAND_ORANGE, color: '#fff', opacity: !stars || kmErr ? .45 : 1,
                 fontFamily: "'DM Sans'", fontSize: 15, fontWeight: 800, cursor: !stars || kmErr ? 'default' : 'pointer',
               }}>
-                {stars ? 'Enviar' : 'Elegí las estrellas'}
+                {stars ? 'Enviar' : 'Elige las estrellas'}
               </button>
             )}
 
@@ -344,7 +345,7 @@ export default function OpRatingModal({
               width: '100%', marginTop: vehOpts ? 6 : 0, padding: 12, borderRadius: 14,
               background: 'none', border: 'none',
               fontFamily: "'DM Sans'", fontSize: 13, fontWeight: 600,
-              color: '#9E9E9E', cursor: 'pointer',
+              color: subTxt, cursor: 'pointer',
             }}>
               Omitir
             </button>
@@ -391,10 +392,10 @@ export default function OpRatingModal({
                     color: dark ? '#FFD54F' : '#B58000',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                   }}>
-                    <Clock /> Completá la encuesta de {surveyPending.stationName}
+                    <Clock /> Completa la encuesta de {surveyPending.stationName}
                   </div>
                   <div style={{ fontSize: 11, fontWeight: 600, color: subTxt, marginTop: 4 }}>
-                    Respondé todas las preguntas en la página de Shell · Tus puntos se asignan al terminar
+                    Responde todas las preguntas en la página de Shell · Tus puntos se asignan al terminar
                   </div>
                 </div>
                 <button onClick={() => { setSurveyPending(null); close(); }} style={{

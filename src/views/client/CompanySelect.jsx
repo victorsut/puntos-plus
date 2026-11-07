@@ -17,7 +17,7 @@ export default function CompanySelect({ dark, cfg, onPick }) {
     : 'none';
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', padding: '48px 24px 40px' }}>
+    <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', padding: '48px 24px 40px' }}>
       {/* Header tipográfico del formato general (patrón del login) */}
       <div>
         <img src="/logo.png" alt="Puntos Plus" style={{ width: 64, height: 64, borderRadius: 16, display: 'block', marginBottom: 20 }} />

@@ -81,14 +81,14 @@ export default function WifiModal({
             <div style={{ display: 'flex', justifyContent: 'center' }}>
               <LogoSpinner size={30} dark={dark} />
             </div>
-            <div style={{ fontSize: 13, color: '#9E9E9E', marginTop: 12 }}>Detectando tu estación...</div>
+            <div style={{ fontSize: 13, color: dark ? 'rgba(255,255,255,.5)' : '#6E6E73', marginTop: 12 }}>Detectando tu estación...</div>
           </div>
         )}
 
         {wifiLoc?.station && (
           <>
-            <div style={{ fontSize: 13, color: '#9E9E9E', lineHeight: 1.6, margin: '14px 0' }}>
-              Estás en <strong style={{ color: dark ? '#fff' : '#0D0D0D' }}>{wifiLoc.station.name}</strong>. Conectate a esta red:
+            <div style={{ fontSize: 13, color: dark ? 'rgba(255,255,255,.55)' : '#6E6E73', lineHeight: 1.6, margin: '14px 0' }}>
+              Estás en <strong style={{ color: dark ? '#fff' : '#0D0D0D' }}>{wifiLoc.station.name}</strong>. Conéctate a esta red:
             </div>
             <div style={{ background: wifiBoxBg, borderRadius: 14, padding: '14px 16px', textAlign: 'left' }}>
               <div style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', color: wifiSubFg }}>Red</div>
@@ -111,8 +111,8 @@ export default function WifiModal({
 
         {wifiLoc === 'far' && (
           <>
-            <div style={{ fontSize: 13, color: '#9E9E9E', lineHeight: 1.6, margin: '14px 0' }}>
-              No pudimos confirmar que estés en una estación. Mostrá esta pantalla al operador para recibir la clave WiFi.
+            <div style={{ fontSize: 13, color: dark ? 'rgba(255,255,255,.55)' : '#6E6E73', lineHeight: 1.6, margin: '14px 0' }}>
+              No pudimos confirmar que estés en una estación. Muestra esta pantalla al operador para recibir la clave WiFi.
             </div>
             <div style={{
               ...sMono, fontSize: 18, fontWeight: 800, letterSpacing: 2,

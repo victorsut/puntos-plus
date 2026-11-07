@@ -32,7 +32,7 @@ export default function useSessionGuard({
   // se queda en la rama isC de logout, intacta.
   const expireSession = useCallback((role, { reason } = {}) => {
     const msg = reason === 'expirada'
-      ? '⏱️ Tu sesión expiró, iniciá sesión de nuevo'
+      ? '⏱️ Tu sesión expiró, inicia sesión de nuevo'
       : '👋 Sesión cerrada';
     if (role === 'operator') {
       logoutOperator(); setAuthOp('login'); setLoggedOp(null); setOScr('ohome');

@@ -177,7 +177,7 @@ export default function HistorySheet({ type, origin, tint, accent, accentInk, on
     surface: dark ? 'rgba(255,255,255,.05)' : '#fff',
     header: dark ? '#fff' : '#0D0D0D',
     txt: dark ? '#E0E0E0' : '#424242',
-    sub: dark ? 'rgba(255,255,255,.5)' : '#9E9E9E',
+    sub: dark ? 'rgba(255,255,255,.5)' : '#6E6E73', // UX-33
     border: dark ? 'rgba(255,255,255,.08)' : '#EDEDED',
     chipOn: accent || (isCompras ? bento.orange : bento.teal),
     chipInk: accentInk || '#fff',
@@ -289,7 +289,7 @@ export default function HistorySheet({ type, origin, tint, accent, accentInk, on
           )}
           <div style={{ fontSize: 13, fontWeight: 700 }}>
             {pendingOnly
-              ? 'No tenés canjes pendientes de usar'
+              ? 'No tienes canjes pendientes de usar'
               : (isCompras ? (typeLabel ? `Sin ${typeLabel.toLowerCase()} en este período` : 'Sin movimientos de puntos en este período') : 'Sin canjes en este período')}
           </div>
         </div>

@@ -47,7 +47,7 @@ export default function DeleteAccountSection({ ctx, TH }) {
     'Tus premios pendientes de recoger quedarán inválidos',
     'Tu historial y tu tarjeta digital dejarán de funcionar',
     'Tus datos personales se borran de forma permanente',
-    'NADIE puede recuperar la cuenta — ni vos ni la empresa',
+    'NADIE puede recuperar la cuenta: ni tú ni la empresa',
   ];
 
   return (
@@ -63,7 +63,7 @@ export default function DeleteAccountSection({ ctx, TH }) {
         </div>
         <div style={{ fontSize: 12, fontWeight: 600, lineHeight: 1.55, color: TH.sub, marginBottom: 12 }}>
           Eliminar tu cuenta borra tus datos personales de forma permanente e
-          irreversible. Perdés tus puntos, tu nivel y tus premios pendientes.
+          irreversible. Pierdes tus puntos, tu nivel y tus premios pendientes.
         </div>
         <button onClick={() => setOpen(true)} style={{
           width: '100%', padding: 13, borderRadius: 12, cursor: 'pointer',
@@ -118,7 +118,7 @@ export default function DeleteAccountSection({ ctx, TH }) {
             </div>
 
             <div style={{ fontSize: 12, fontWeight: 700, color: TH.sub, marginBottom: 8 }}>
-              Para confirmar, escribí <span style={{ color: DANGER, fontWeight: 800, letterSpacing: 1 }}>ELIMINAR</span>
+              Para confirmar, escribe <span style={{ color: DANGER, fontWeight: 800, letterSpacing: 1 }}>ELIMINAR</span>
             </div>
             <input
               value={confirmTxt}

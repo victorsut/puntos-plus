@@ -13,6 +13,8 @@ export default function RedeemConfirmSheet({ data, me, dark, closing, stations, 
   // ref cubre los toques que llegan en el MISMO tick, antes de que React
   // vuelva a pintar con busy=true (el estado del padre llega tarde).
   const firedRef = useRef(false);
+  // UX-33: gris legible en modo claro (#9E9E9E daba 2.7:1)
+  const subTxt = dark ? 'rgba(255,255,255,.5)' : '#6E6E73';
   useEffect(() => { if (!busy) firedRef.current = false; }, [busy, data]);
   const guardedClose = () => { if (!busy && !firedRef.current) onClose(); };
   const confirm = () => {
@@ -48,7 +50,7 @@ export default function RedeemConfirmSheet({ data, me, dark, closing, stations, 
           <div style={{ fontSize: 18, fontWeight: 800, color: dark ? '#fff' : '#0D0D0D', marginBottom: 4 }}>
             Confirmar Canje
           </div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#9E9E9E' }}>Revisá los detalles antes de confirmar</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: subTxt }}>Revisa los detalles antes de confirmar</div>
         </div>
 
         {/* Detalle largo del premio (rewards.description — qué
@@ -58,7 +60,7 @@ export default function RedeemConfirmSheet({ data, me, dark, closing, stations, 
             background: dark ? 'rgba(255,255,255,.05)' : '#F5F5F7',
             borderRadius: 16, padding: '14px 16px', marginBottom: 12, textAlign: 'left',
           }}>
-            <div style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, color: '#9E9E9E', marginBottom: 6 }}>
+            <div style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, color: subTxt, marginBottom: 6 }}>
               Detalle del premio
             </div>
             <div style={{
@@ -80,7 +82,7 @@ export default function RedeemConfirmSheet({ data, me, dark, closing, stations, 
               background: dark ? 'rgba(255,255,255,.05)' : '#F5F5F7',
               borderRadius: 16, padding: '14px 16px', marginBottom: 12, textAlign: 'left',
             }}>
-              <div style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, color: '#9E9E9E', marginBottom: 6 }}>
+              <div style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, color: subTxt, marginBottom: 6 }}>
                 Válido únicamente en
               </div>
               <div style={{ fontSize: 12.5, fontWeight: 700, lineHeight: 1.6, color: dark ? '#CFCFCF' : '#48484A' }}>
@@ -94,9 +96,9 @@ export default function RedeemConfirmSheet({ data, me, dark, closing, stations, 
           {[
             { l: 'Premio',          v: data.reward.name, bold: true },
             { l: 'Categoría',       v: CAT_LABELS[data.reward.cat] || data.reward.cat || '—' },
-            { l: 'Costo',           v: `${data.cost} pts`, large: true, red: true },
-            { l: 'Saldo actual',    v: `${me.points} pts` },
-            { l: 'Saldo tras canje',v: `${me.points - data.cost} pts`, green: true },
+            { l: 'Costo',           v: `${data.cost.toLocaleString('es-GT')} pts`, large: true, red: true },
+            { l: 'Saldo actual',    v: `${me.points.toLocaleString('es-GT')} pts` },
+            { l: 'Saldo tras canje',v: `${(me.points - data.cost).toLocaleString('es-GT')} pts`, green: true },
           ].map((row, i, arr) => (
             <div key={row.l} style={{
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -104,11 +106,13 @@ export default function RedeemConfirmSheet({ data, me, dark, closing, stations, 
               borderBottom: i < arr.length - 1 ? `1px solid ${dark ? 'rgba(255,255,255,.06)' : '#ECECEE'}` : 'none',
               marginBottom: i < arr.length - 1 ? 12 : 0,
             }}>
-              <span style={{ fontSize: 13, color: '#9E9E9E', fontWeight: 600 }}>{row.l}</span>
+              <span style={{ fontSize: 13, color: subTxt, fontWeight: 600, flexShrink: 0 }}>{row.l}</span>
+              {/* UX-44: nombres largos se parten a la derecha sin romper la fila */}
               <span style={{
                 fontSize: row.large ? 18 : 13,
                 fontWeight: row.bold || row.large ? 800 : 700,
                 fontVariantNumeric: 'tabular-nums',
+                flex: 1, minWidth: 0, textAlign: 'right', marginLeft: 12, overflowWrap: 'anywhere',
                 color: row.red ? bento.red : row.green ? bento.green : (dark ? '#fff' : '#0D0D0D'),
               }}>{row.v}</span>
             </div>

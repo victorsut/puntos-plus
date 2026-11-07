@@ -38,7 +38,7 @@ export default function ClientPromos(ctx) {
     : activePromos.filter(p => p.category === chip);
 
   return (
-    <div style={{ minHeight: '100vh', background: (dark || isBlack) ? 'transparent' : bento.pageBg, paddingBottom: 100 }}>
+    <div style={{ minHeight: '100dvh', background: (dark || isBlack) ? 'transparent' : bento.pageBg, paddingBottom: 100 }}>
       {/* Header: flecha suelta + título centrado (FORMATO GENERAL) */}
       <div style={{ display: 'flex', alignItems: 'center', padding: '18px 16px 10px' }}>
         <button onClick={() => setCScr('home')} aria-label="Volver" style={{
@@ -91,7 +91,7 @@ export default function ClientPromos(ctx) {
             <GiftIcon size={44} color={subTxt} />
           </div>
           <div style={{ fontSize: 14, fontWeight: 700 }}>
-            {chip === 'todas' ? 'Pronto habrá promociones para vos' : 'Sin promociones en esta categoría por ahora'}
+            {chip === 'todas' ? 'Pronto habrá promociones para ti' : 'Sin promociones en esta categoría por ahora'}
           </div>
         </div>
       )}

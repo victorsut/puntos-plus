@@ -96,7 +96,7 @@ export default function RewardQrSheet({ item, closing, onClose, dark, TH, dateLa
           {item.code}
         </div>
         <div style={{ fontSize: 12, fontWeight: 600, color: th.sub, lineHeight: 1.6, marginTop: 12, padding: '0 8px' }}>
-          Mostrá este código al operador para recibir tu premio. Después de que lo escanee, confirmás la entrega en este dispositivo.
+          Muestra este código al operador para recibir tu premio. Después de que lo escanee, confirmas la entrega en este dispositivo.
           {fresh && (
             <>
               <br />

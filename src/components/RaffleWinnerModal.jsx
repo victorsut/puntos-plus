@@ -99,7 +99,7 @@ export default function RaffleWinnerModal({ cal, name, stations = [], isBlack = 
             fontSize: 12.5, fontWeight: 600, lineHeight: 1.55,
             color: isBlack ? '#CFCFCF' : '#48484A',
           }}>
-            Tu premio ya está en tus canjes pendientes. Presentá el código
+            Tu premio ya está en tus canjes pendientes. Presenta el código
             {claimStation ? ` en ${claimStation}` : ' en la estación'} para recibirlo.
           </div>
         )}

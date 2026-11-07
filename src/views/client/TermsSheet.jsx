@@ -10,6 +10,7 @@ import { BRAND_ORANGE } from '../../constants/styles';
 import { XMark, Check } from '../../components/ui/Icons';
 import { TERMS_SECS } from './menu/MenuTerms';
 
+import { TERMS_UPDATED } from '../../constants/config';
 // Casilla de aceptación (paso 3 del wizard). No se deshabilita el
 // botón Finalizar: el wizard valida al clic con error explícito
 // (regla del ReasonModal, 8-ago).
@@ -71,7 +72,7 @@ export default function TermsSheet({ dark, onClose, onAccept }) {
           </div>
         ))}
         <div style={{ fontSize: 11, color: sub, textAlign: 'center', lineHeight: 1.6, marginTop: 8 }}>
-          Última actualización: Julio 2026
+          Última actualización: {TERMS_UPDATED}
         </div>
       </div>
 

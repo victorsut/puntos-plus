@@ -8,6 +8,7 @@
 import { BRAND_ORANGE } from '../../../constants/styles';
 import { SectionHeader } from './menuUi';
 
+import { TERMS_UPDATED } from '../../../constants/config';
 // Exportados (11-ago): el visor de términos del REGISTRO (TermsSheet)
 // usa estos mismos textos — una sola fuente, sin copias.
 export const TERMS_SECS = [
@@ -90,7 +91,7 @@ export default function MenuTerms({ TH, onBack }) {
       <div style={{ marginTop: 24, padding: '14px 16px', borderRadius: 16, background: TH.surface }}>
         <div style={{ fontSize: 11, color: TH.sub, textAlign: 'center', lineHeight: 1.6 }}>
           Al utilizar Puntos Plus aceptás estos términos y condiciones.<br />
-          Última actualización: Septiembre 2026
+          Última actualización: {TERMS_UPDATED}
         </div>
       </div>
     </>

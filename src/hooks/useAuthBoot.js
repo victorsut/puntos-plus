@@ -111,7 +111,7 @@ export default function useAuthBoot({
         let cached = false;
         try { cached = !!localStorage.getItem('ct_me'); } catch { /* noop */ }
         if (!cached) {
-          setAuthError(friendlyError({ message: res.error }, 'No se pudo completar el ingreso con Google. Intentá de nuevo.'));
+          setAuthError(friendlyError({ message: res.error }, 'No se pudo completar el ingreso con Google. Intenta de nuevo.'));
         }
       });
     }

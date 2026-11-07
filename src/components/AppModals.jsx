@@ -14,6 +14,7 @@ import { sb } from '../lib/supabaseClient';
 import { markRaffleWinnerSeen } from '../services';
 import SpecialDayBonusModal from './SpecialDayBonusModal';
 import UpdateAvailable from './UpdateAvailable';
+import OfflineChip from './ui/OfflineChip';
 import Toast from './ui/Toast';
 import RaffleWinnerModal from './RaffleWinnerModal';
 import RedeemConfirmRequestModal from './RedeemConfirmRequestModal';
@@ -253,6 +254,7 @@ export default function AppModals({
 
       {/* Aviso de nueva version disponible (Service Worker) */}
       <UpdateAvailable />
+      {isC && <OfflineChip />}
     </>
   );
 }

@@ -9,6 +9,7 @@ import { bento } from '../../../constants/styles';
 import { SHELL_SURVEYS } from '../../../constants/config';
 import { Fuel, Pin, Clock, Chev } from '../../../components/ui/Icons';
 
+import { openExternal } from '../../../lib/openExternal';
 export default function SurveyStationsModal({
   onClose, origin, tint, dark, hp, cfg, mySurveyCount,
   myActs, meStation, stations, surveyPending, setSurveyPending,
@@ -35,7 +36,7 @@ export default function SurveyStationsModal({
 
         <div style={{ padding: '14px 20px 20px' }}>
         <div style={{ fontSize: 12, fontWeight: 600, color: dark ? 'rgba(255,255,255,.5)' : '#6E6E73', textAlign: 'center', marginBottom: 12 }}>
-          Seleccioná la estación donde cargaste combustible
+          Selecciona la estación donde cargaste combustible
         </div>
 
         {(() => {
@@ -56,7 +57,7 @@ export default function SurveyStationsModal({
             <div key={s.name}
               onClick={() => {
                 if (surveyPending) return; // already waiting
-                window.open(s.url, '_blank');
+                openExternal(s.url);
                 setSurveyPending({ openedAt: Date.now(), stationName: s.name });
               }}
               style={{
@@ -123,12 +124,12 @@ export default function SurveyStationsModal({
             }}>
               <Clock /> {surveyPending.due
                 ? `Registrando tu encuesta de ${surveyPending.stationName}…`
-                : `Completá la encuesta de ${surveyPending.stationName}`}
+                : `Completa la encuesta de ${surveyPending.stationName}`}
             </div>
             <div style={{ fontSize: 11, fontWeight: 600, color: dark ? 'rgba(255,255,255,.5)' : '#6E6E73', marginTop: 4 }}>
               {surveyPending.due
                 ? 'Sin conexión por ahora · Tus puntos se acreditan solos al volver la señal'
-                : 'Respondé todas las preguntas en la página de Shell · Tus puntos se asignan al terminar'}
+                : 'Responde todas las preguntas en la página de Shell · Tus puntos se asignan al terminar'}
             </div>
           </div>
         )}

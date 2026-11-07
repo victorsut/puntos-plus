@@ -93,12 +93,16 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Para la app principal (navegacion): Network First con fallback offline
+  // Para la app principal (navegacion): Network First con fallback offline.
+  // UX-27 (7-nov-2026): con red lenta ("Lie-Fi") la red no responde ni
+  // falla — a los 4 s se sirve el shell cacheado en vez de esperar el
+  // timeout del navegador (la app luego carga sus datos por API).
   if (event.request.mode === 'navigate') {
+    const fromCache = () => caches.match('/index.html').then(cached => cached || caches.match('/'));
+    const timeout = new Promise(resolve => setTimeout(() => resolve(null), 4000));
     event.respondWith(
-      fetch(event.request).catch(() =>
-        caches.match('/index.html').then(cached => cached || caches.match('/'))
-      )
+      Promise.race([fetch(event.request).catch(() => null), timeout])
+        .then(res => res || fromCache().then(c => c || fetch(event.request)))
     );
     return;
   }
@@ -125,7 +129,7 @@ function askClient(win, timeoutMs) {
 }
 
 self.addEventListener('push', (event) => {
-  let data = { title: 'Puntos Plus', body: 'Tenes una notificacion', icon: '/logo.png' };
+  let data = { title: 'Puntos Plus', body: 'Tienes una notificación', icon: '/logo.png' };
   try {
     if (event.data) data = { ...data, ...event.data.json() };
   } catch (e) {

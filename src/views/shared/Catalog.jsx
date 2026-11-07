@@ -80,7 +80,7 @@ export default function Catalog(ctx) {
   const stickyBg = (dark || (client && isBlack)) ? clientMainBg(cTier?.name, true) : bento.pageBg;
   return (
     <div style={{
-      paddingBottom: 100, minHeight: '100vh',
+      paddingBottom: 100, minHeight: '100dvh',
       background: (dark || (client && isBlack)) ? 'transparent' : bento.pageBg,
       // cliente: FIJO al viewport como HistorySheet (bottom 55 = BottomNav):
       // el documento ya no se desplaza y solo los premios se mueven adentro
@@ -99,7 +99,7 @@ export default function Catalog(ctx) {
         </div>
         {client && me && (
           <div data-tour="cat-points" style={{ fontSize: 11, fontWeight: 600, color: subTxt, marginTop: 1 }}>
-            Tenés <span style={{ fontWeight: 800, color: good, fontVariantNumeric: 'tabular-nums' }}>{me.points} pts</span> para canjear
+            Tienes <span style={{ fontWeight: 800, color: good, fontVariantNumeric: 'tabular-nums' }}>{me.points.toLocaleString('es-GT')} pts</span> para canjear
           </div>
         )}
         {client && me && (

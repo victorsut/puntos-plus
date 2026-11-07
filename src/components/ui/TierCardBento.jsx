@@ -67,8 +67,8 @@ export default function TierCardBento({ me, cTier, onOpenDetail, onPointsTap }) 
           </div>
           <div style={{ fontSize: 12.5, fontWeight: 700, opacity: 0.9, marginTop: shortScr ? 6 : 8 }}>
             {(cTier.next || me.gallons < cTier.target)
-              ? `${me.gallons.toFixed(0)} / ${cTier.target} gal`
-              : `${me.gallons.toFixed(0)} gal acumulados`}
+              ? `${Math.floor(me.gallons).toLocaleString('es-GT')} / ${cTier.target.toLocaleString('es-GT')} gal`
+              : `${Math.floor(me.gallons).toLocaleString('es-GT')} gal acumulados`}
           </div>
         </div>
 
@@ -77,7 +77,7 @@ export default function TierCardBento({ me, cTier, onOpenDetail, onPointsTap }) 
           onClick={(e) => { e.stopPropagation(); onPointsTap(e); }}
           style={{ textAlign: 'center', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', paddingLeft: 12 }}
         >
-          <div style={{ fontSize: shortScr ? 38 : 44, fontWeight: 800, letterSpacing: -1, lineHeight: 1, color: isBlack ? gold : 'inherit' }}>{points}</div>
+          <div style={{ fontSize: shortScr ? 38 : 44, fontWeight: 800, letterSpacing: -1, lineHeight: 1, color: isBlack ? gold : 'inherit' }}>{Number(points).toLocaleString('es-GT')}</div>
           <div style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1.5, marginTop: 2, color: isBlack ? gold : 'inherit' }}>Puntos</div>
         </div>
       </div>

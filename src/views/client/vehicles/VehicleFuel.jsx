@@ -304,7 +304,7 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
           <div style={{ background: cardBg, borderRadius: 15, padding: '12px 14px', marginTop: 8, fontSize: 11.5, color: ink, fontWeight: 600, lineHeight: 1.6 }}>
             <b>Medido de lleno a lleno:</b> entre dos cargas con "Tanque lleno" y km recorridos, dividimos los
             km entre todo el combustible que cargaste en medio. Lo mismo entre dos "Llegué en reserva".<br />
-            <b>Cálculo aproximado:</b> si nunca llenás ni llegás a reserva, cada {APPROX_LOADS} cargas con km
+            <b>Cálculo aproximado:</b> si nunca llenas ni llegas a reserva, cada {APPROX_LOADS} cargas con km
             dan un tramo aproximado.<br />
             <b>No contada:</b> una medición muy fuera de lo normal se aparta — casi siempre faltó registrar una carga.<br />
             <b>Lleno deducido:</b> si no respondiste y cargaste casi todo el tanque, lo tomamos como lleno.

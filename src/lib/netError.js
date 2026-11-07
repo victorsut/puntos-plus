@@ -5,7 +5,7 @@
 // eso debe llegar a la pantalla: se traduce a un mensaje claro y el resto
 // (mensajes de NEGOCIO que ya vienen en español desde las RPCs) pasa igual.
 
-export const OFFLINE_MSG = 'Sin conexión. Revisá tu internet e intentá de nuevo.';
+export const OFFLINE_MSG = 'Sin conexión. Revisa tu internet e intenta de nuevo.';
 
 const NET_RE = /failed to fetch|load failed|networkerror|network request failed|fetch failed|timeout|timed out|ECONNRESET|ENOTFOUND|net::ERR_|aborted|AbortError/i;
 
@@ -22,7 +22,7 @@ export function isNetworkError(err) {
  * Mensaje para mostrar al socio: el de negocio tal cual, el de red traducido,
  * y el fallback cuando no hay mensaje útil.
  */
-export function friendlyError(err, fallback = 'Algo salió mal. Intentá de nuevo.') {
+export function friendlyError(err, fallback = 'Algo salió mal. Intenta de nuevo.') {
   if (isNetworkError(err)) return OFFLINE_MSG;
   const msg = typeof err === 'string' ? err : err?.message;
   if (!msg) return fallback;

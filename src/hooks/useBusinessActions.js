@@ -246,7 +246,7 @@ export default function useBusinessActions({
         sendPushToMember(cid, {
           type: 'reward',
           title: '¡Ganaste un premio!',
-          body: `${promo.name ? promo.name + ': ' : ''}${promo.reward_name} gratis por tu compra. Abrí la notificación para ver el QR y mostralo al operador cuando quieras reclamarlo.`,
+          body: `${promo.name ? promo.name + ': ' : ''}${promo.reward_name} gratis por tu compra. Abre la notificación para ver el QR y muéstralo al operador cuando quieras reclamarlo.`,
           url: '/?goto=pendientes',
           data: { rewardName: promo.reward_name, code: promo.redemption_code || null },
         });
@@ -286,7 +286,7 @@ export default function useBusinessActions({
       });
 
       if (error) {
-        fire('❌ ' + friendlyError(error, 'No se pudo canjear. Intentá de nuevo.'));
+        fire('❌ ' + friendlyError(error, 'No se pudo canjear. Intenta de nuevo.'));
         if (error.network) reconcile(true); // UX-09: ¿se canjeó sin respuesta?
         return false;
       }
@@ -355,7 +355,7 @@ export default function useBusinessActions({
       });
 
       if (error) {
-        fire('❌ ' + friendlyError(error, 'No se pudieron comprar los boletos. Intentá de nuevo.'));
+        fire('❌ ' + friendlyError(error, 'No se pudieron comprar los boletos. Intenta de nuevo.'));
         if (error.network) reconcile(false); // UX-09: ¿se cobró sin respuesta?
         return false;
       }

@@ -27,7 +27,8 @@ export default function BottomNav({ items, current, onSelect, view, tierName, da
       background: barBg,
       borderTop: `1px solid ${borderColor}`,
       display: 'flex', justifyContent: 'space-around', alignItems: 'flex-end',
-      padding: '6px 0 8px',
+      // UX-32: con viewport-fit=cover la barra respeta la zona segura inferior
+      padding: '6px 0 calc(8px + env(safe-area-inset-bottom, 0px))',
       zIndex: 100,
       overflow: 'visible', // permite que el botón QR sobresalga
     }}>

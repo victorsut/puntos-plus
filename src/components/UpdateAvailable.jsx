@@ -24,7 +24,8 @@ export default function UpdateAvailable() {
   return (
     <div style={{
       position: 'fixed',
-      bottom: 16,
+      // UX-26 (7-nov-2026): encima de la BottomNav (antes tapaba el botón QR)
+      bottom: 'calc(76px + env(safe-area-inset-bottom, 0px))',
       left: '50%',
       transform: 'translateX(-50%)',
       zIndex: 10000,
@@ -48,7 +49,12 @@ export default function UpdateAvailable() {
       }}>
         <Refresh />
       </div>
-      <span>Nueva versión disponible</span>
+      <span style={{ flex: 1 }}>Nueva versión disponible</span>
+      {/* UX-26: posponer (p. ej. a mitad del registro — recargar lo borraría) */}
+      <button onClick={() => setVisible(false)} aria-label="Actualizar después" style={{
+        background: 'none', color: 'rgba(255,255,255,.75)', border: 'none', padding: '8px 6px',
+        fontFamily: "'DM Sans'", fontWeight: 700, cursor: 'pointer', fontSize: 13, flexShrink: 0,
+      }}>Después</button>
       <button
         onClick={applyUpdate}
         style={{

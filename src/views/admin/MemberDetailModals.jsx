@@ -38,11 +38,11 @@ export const validateField = (field, value) => {
       return null;
     case 'phone':
       if (!v) return null;
-      if (!/^\d{8}$/.test(v)) return 'Telefono debe tener exactamente 8 digitos';
+      if (!/^\d{8}$/.test(v)) return 'Teléfono debe tener exactamente 8 dígitos';
       return null;
     case 'dpi':
       if (!v) return null;
-      if (!/^\d{13}$/.test(v)) return 'DPI debe tener exactamente 13 digitos';
+      if (!/^\d{13}$/.test(v)) return 'DPI debe tener exactamente 13 dígitos';
       return null;
     case 'email':
       if (!v) return null;
@@ -62,7 +62,7 @@ export const validateField = (field, value) => {
     case 'gallons': {
       if (v === '') return null;
       const g = Number(v);
-      if (isNaN(g) || g < 0) return 'Debe ser numero >= 0';
+      if (isNaN(g) || g < 0) return 'Debe ser número >= 0';
       return null;
     }
     default:

@@ -116,7 +116,7 @@ export default function ReasonModal({ open, onClose, onConfirm, actionLabel, loa
             fontSize: 12, color: '#EF9A9A', fontWeight: 700, lineHeight: 1.5,
           }}>
             {tooShort
-              ? `Para confirmar, el motivo debe tener al menos 8 caracteres — llevás ${trimmedLen}.`
+              ? `Para confirmar, el motivo debe tener al menos 8 caracteres: llevas ${trimmedLen}.`
               : 'El motivo supera los 500 caracteres — recortalo para confirmar.'}
           </div>
         )}

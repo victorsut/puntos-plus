@@ -95,7 +95,7 @@ export default function MenuAccount({ ctx, TH, onBack }) {
         : { password: bioPass });
       try { localStorage.setItem(`pp_bio_${me.id}`, '1'); } catch { /* sin storage */ }
       setBioDone(true); setBioPass(''); setShowBioSec(false);
-      fire('Huella activada — ya podés usarla al iniciar sesión', 'success');
+      fire('Huella activada: ya puedes usarla al iniciar sesión', 'success');
     } catch (err) {
       if (!isUserCancel(err)) fire(err.message || 'No se pudo activar la biometría', 'error');
     } finally {
@@ -138,7 +138,7 @@ export default function MenuAccount({ ctx, TH, onBack }) {
       const errMsg = error?.message || data?.error;
       if (errMsg) {
         fire(errMsg === 'invalid_session'
-          ? 'Tu sesión expiró — cerrá sesión y volvé a entrar'
+          ? 'Tu sesión expiró: cierra sesión y vuelve a entrar'
           : 'Error al guardar: ' + errMsg, 'error');
         setSaving(false); return;
       }
@@ -313,7 +313,7 @@ export default function MenuAccount({ ctx, TH, onBack }) {
             <div style={{ fontSize: 11, color: TH.sub, marginTop: 5 }}>
               {form.bday
                 ? 'Toca "Guardar cambios" para confirmar — luego queda bloqueada.'
-                : 'Tu registro solo guarda día y mes. Completá tu fecha una única vez.'}
+                : 'Tu registro solo guarda día y mes. Completa tu fecha una única vez.'}
             </div>
           </>
         )}
@@ -337,7 +337,7 @@ export default function MenuAccount({ ctx, TH, onBack }) {
         <div style={{ background: TH.surface, borderRadius: 20, padding: 16 }}>
           {oauthPassMode && (
             <div style={{ fontSize: 12, color: TH.sub, lineHeight: 1.55, marginBottom: 12 }}>
-              Tu sesión de Google confirma tu identidad — solo elegí tu contraseña nueva.
+              Tu sesión de Google confirma tu identidad: solo elige tu contraseña nueva.
             </div>
           )}
           {[
@@ -366,7 +366,7 @@ export default function MenuAccount({ ctx, TH, onBack }) {
           {googleAuth && (
             <button onClick={() => { setOauthPassMode(p => !p); setPassForm({ current: '', newPass: '', confirm: '' }); }}
               style={{ width: '100%', marginTop: 10, padding: 6, background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'DM Sans'", fontSize: 12, fontWeight: 700, color: BRAND_ORANGE }}>
-              {oauthPassMode ? 'Prefiero usar mi contraseña actual' : '¿No sabés tu contraseña? Establecela con tu cuenta de Google'}
+              {oauthPassMode ? 'Prefiero usar mi contraseña actual' : '¿No sabes tu contraseña? Establécela con tu cuenta de Google'}
             </button>
           )}
         </div>
@@ -395,7 +395,7 @@ export default function MenuAccount({ ctx, TH, onBack }) {
                 Tu celular usará su propio desbloqueo (huella, rostro, PIN o patrón).
                 Tu información biométrica nunca sale del dispositivo.
                 {googleAuth ? ' Tu sesión de Google confirma tu identidad.' : ''}
-                {bioDone ? ' Podés volver a configurarla cuando quieras.' : ''}
+                {bioDone ? ' Puedes volver a configurarla cuando quieras.' : ''}
               </div>
               {/* Cuentas de teléfono: la contraseña actual confirma la
                   identidad; Google con sesión activa no la necesita. */}

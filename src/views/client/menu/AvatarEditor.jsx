@@ -139,7 +139,7 @@ export default function AvatarEditor({ ctx, TH }) {
       const errMsg = error?.message || data?.error;
       if (errMsg) {
         throw new Error(errMsg === 'invalid_session'
-          ? 'Tu sesión expiró — cerrá sesión y volvé a entrar' : errMsg);
+          ? 'Tu sesión expiró: cierra sesión y vuelve a entrar' : errMsg);
       }
       setMe(p => ({ ...p, avatar: outR.url }));
       fire('Foto de perfil actualizada', 'success');

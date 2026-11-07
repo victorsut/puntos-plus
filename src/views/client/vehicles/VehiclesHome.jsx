@@ -187,12 +187,12 @@ export default function VehiclesHome({ ctx, vehicles, setVehicles }) {
         : '—',
       note: st
         ? `Q${(+st.total_amount).toLocaleString('en-US')} en total${st.km_per_gal ? ` · ${st.km_per_gal} km/gal` : ''}`
-        : statsErr ? 'No se pudo actualizar · tocá Reintentar' : 'Tus cargas se asignan al calificar la compra',
+        : statsErr ? 'No se pudo actualizar · toca Reintentar' : 'Tus cargas se asignan al calificar la compra',
     },
   ] : [];
 
   return (
-    <div style={{ minHeight: '100vh', padding: '18px 18px 120px', boxSizing: 'border-box' }}>
+    <div style={{ minHeight: '100dvh', padding: '18px 18px 120px', boxSizing: 'border-box' }}>
       {/* Encabezado */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
         <div>

@@ -42,7 +42,7 @@ export default function ClientMenu(ctx) {
   // Canal de asistencia (4-ago) — overlay, no sección
   const [supportOpen, setSupportOpen] = useState(false);
 
-  const shell = { minHeight: '100vh', background: TH.bg, padding: '20px 20px 110px' };
+  const shell = { minHeight: '100dvh', background: TH.bg, padding: '20px 20px 110px' };
 
   if (section === 'cuenta')      return <div style={shell}><MenuAccount ctx={ctx} TH={TH} onBack={closeSection} /></div>;
   if (section === 'niveles')     return <div style={shell}><MenuLevels cfg={cfg} cTier={cTier} me={me} TH={TH} onBack={closeSection} rewards={ctx.rewards} /></div>;

@@ -88,8 +88,8 @@ export default function GoogleProfile(ctx) {
   const [phoneVerified, setPhoneVerified] = useState(false);
 
   const doFinish = async () => {
-    if (!password.trim() || password.length < 6) { setAuthError('La contrasena debe tener al menos 6 caracteres'); return; }
-    if (password !== passConfirm) { setAuthError('Las contrasenas no coinciden'); return; }
+    if (!password.trim() || password.length < 6) { setAuthError('La contraseña debe tener al menos 6 caracteres'); return; }
+    if (password !== passConfirm) { setAuthError('Las contraseñas no coinciden'); return; }
     if (!termsOk) { setAuthError('Para continuar debes aceptar los Términos y Condiciones'); return; }
     // UX-02: ya no depende de sbConnected (que solo se enciende al final
     // del boot) — el código se pide siempre que haya cliente de Supabase.
@@ -177,17 +177,17 @@ export default function GoogleProfile(ctx) {
         });
         if (regErr) {
           console.error('[Reg] RPC error:', regErr.message);
-          setAuthError(friendlyError(regErr, 'No se pudo guardar tu registro. Intentá de nuevo.'));
+          setAuthError(friendlyError(regErr, 'No se pudo guardar tu registro. Intenta de nuevo.'));
           setSaving(false); return;
         }
         if (reg?.error === 'phone_exists') {
           setAuthScreen('login'); setGoogleStep('welcome');
-          fire('Este numero ya esta registrado. Inicia sesion.', 'warn');
+          fire('Este número ya está registrado. Inicia sesión.', 'warn');
           setSaving(false); return;
         }
         if (reg?.error === 'dpi_exists') {
           setAuthScreen('login'); setGoogleStep('welcome');
-          fire('Este DPI ya esta registrado. Inicia sesion.', 'warn');
+          fire('Este DPI ya está registrado. Inicia sesión.', 'warn');
           setSaving(false); return;
         }
         if (reg?.error === 'phone_not_verified') {
@@ -195,7 +195,7 @@ export default function GoogleProfile(ctx) {
           // aprobación (p. ej. expiró) — reintentar la verificación.
           setAuthScreen('googleProfile'); setGoogleStep('step3');
           setPhoneVerified(false);
-          setAuthError('Falta verificar tu número — tocá Finalizar de nuevo para recibir otro código.');
+          setAuthError('Falta verificar tu número: toca Finalizar de nuevo para recibir otro código.');
           setSaving(false); return;
         }
         if (reg?.error) { setAuthError(reg.error); setSaving(false); return; }
@@ -220,7 +220,7 @@ export default function GoogleProfile(ctx) {
       }
     } catch (err) {
       console.error('[Reg] Error inesperado:', err.message);
-      setAuthError(friendlyError(err, 'No se pudo guardar tu registro. Intentá de nuevo.'));
+      setAuthError(friendlyError(err, 'No se pudo guardar tu registro. Intenta de nuevo.'));
     }
     setSaving(false);
   };
@@ -249,15 +249,15 @@ export default function GoogleProfile(ctx) {
       if (regProfile.nickname && regProfile.nickname.trim().length > 20) { setAuthError('El apodo no puede superar 20 caracteres'); return; }
       if (!regProfile.bday?.trim())  { setAuthError('La fecha de nacimiento es obligatoria'); return; }
       if (!regProfile.dpi?.trim())   { setAuthError('El DPI es obligatorio'); return; }
-      if (!/^\d{13}$/.test(regProfile.dpi.trim())) { setAuthError('El DPI debe tener exactamente 13 digitos'); return; }
-      if (!regProfile.phone?.trim()) { setAuthError('El telefono es obligatorio'); return; }
-      if (!/^\d{8}$/.test(regProfile.phone.trim())) { setAuthError('El telefono debe tener exactamente 8 digitos'); return; }
+      if (!/^\d{13}$/.test(regProfile.dpi.trim())) { setAuthError('El DPI debe tener exactamente 13 dígitos'); return; }
+      if (!regProfile.phone?.trim()) { setAuthError('El teléfono es obligatorio'); return; }
+      if (!/^\d{8}$/.test(regProfile.phone.trim())) { setAuthError('El teléfono debe tener exactamente 8 dígitos'); return; }
       // Verificar si el telefono o el DPI ya estan registrados (una llamada)
       setCheckingPhone(true);
       const dup = await checkDuplicates(regProfile.phone, regProfile.dpi);
       setCheckingPhone(false);
       if (dup.phone_exists) {
-        setAuthError('Este numero de telefono ya esta registrado. Si ya tienes cuenta, inicia sesion.');
+        setAuthError('Este número de teléfono ya está registrado. Si ya tienes cuenta, inicia sesión.');
         return;
       }
       if (dup.dpi_exists) {
@@ -426,7 +426,7 @@ export default function GoogleProfile(ctx) {
         )}
 
         {vehicles.length === 0 && !addingVehicle && (
-          <div style={{ textAlign: 'center', fontSize: 12, color: '#9E9E9E', marginBottom: 16 }}>Podés registrar tus vehículos más adelante si preferís.</div>
+          <div style={{ textAlign: 'center', fontSize: 12, color: '#9E9E9E', marginBottom: 16 }}>Puedes registrar tus vehículos más adelante si prefieres.</div>
         )}
 
         <PtsCard total={totalPts} base={cfg.regBase || 15} optional={optFields * regOptional} vehicles={vehiclePts} dark={dark} />
@@ -460,7 +460,7 @@ export default function GoogleProfile(ctx) {
           {/* Confirmar contraseña */}
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#9E9E9E', marginBottom: 6, textTransform: 'uppercase', letterSpacing: .5 }}>Confirmar contraseña</div>
-            <PasswordInput placeholder="Repetí tu contraseña" value={passConfirm}
+            <PasswordInput placeholder="Repite tu contraseña" value={passConfirm}
               onChange={e => { setPassConfirm(e.target.value); clearAuthErr(); }}
               style={{ ...fieldFlat, paddingRight: 50,
                 borderColor: passConfirm && passConfirm !== password ? '#EF5350' : passConfirm && passConfirm === password ? BRAND_ORANGE : 'transparent' }} />

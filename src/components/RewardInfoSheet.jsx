@@ -54,9 +54,9 @@ export default function RewardInfoSheet({ data, me, cfg, dark, stations = [], st
             <div style={{ fontSize: 12.5, fontWeight: 600, lineHeight: 1.5, marginTop: 4, opacity: .9 }}>
               {locked
                 ? (minGal != null
-                  ? `${r.minTier} se alcanza con ${fmt(minGal)} galones acumulados. Llevás ${fmt(me.gallons, 1)}${missingGal > 0 ? `: te faltan ${fmt(missingGal)}` : ''}.`
+                  ? `${r.minTier} se alcanza con ${fmt(minGal)} galones acumulados. Llevas ${fmt(me.gallons, 1)}${missingGal > 0 ? `: te faltan ${fmt(missingGal)}` : ''}.`
                   : `Este premio es para socios de nivel ${r.minTier} en adelante.`)
-                : `Tenés ${fmt(me.points)} pts y cuesta ${fmt(cost)}. Cada carga en Turkaj suma puntos.`}
+                : `Tienes ${fmt(me.points)} pts y cuesta ${fmt(cost)}. Cada carga en Turkaj suma puntos.`}
             </div>
           </div>
 

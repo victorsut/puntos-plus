@@ -99,7 +99,7 @@ export default function useMemberRealtime({
     clearMemberToken();
     try { localStorage.removeItem('ct_me'); } catch { /* noop */ }
     setMe(null); setAuthScreen('login');
-    if (fire) fire('⏱️ Tu sesión expiró, iniciá sesión de nuevo');
+    if (fire) fire('⏱️ Tu sesión expiró, inicia sesión de nuevo');
   }, [fire]);
 
   // Perfil fresco por RPC con la sesión; decide también si la sesión

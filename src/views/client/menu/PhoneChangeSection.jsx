@@ -10,6 +10,7 @@ import { inputFlat, BRAND_ORANGE } from '../../../constants/styles';
 import { Phone, Lock, Whatsapp } from '../../../components/ui/Icons';
 import { phoneMask } from '../../../lib/inputMasks';
 
+import { openExternal } from '../../../lib/openExternal';
 export default function PhoneChangeSection({ ctx, TH }) {
   const { me, cfg } = ctx;
 
@@ -22,7 +23,7 @@ export default function PhoneChangeSection({ ctx, TH }) {
     const support = (cfg?.supportPhone || '49741067').replace(/\D/g, '');
     const current = me?.phone ? phoneMask.format(me.phone) : '—';
     const msg = `Hola, soy ${me?.name || ''} y quiero cambiar el número de teléfono de mi cuenta Puntos Plus. Mi número actual es ${current}. Mi número nuevo es: `;
-    window.open(`https://wa.me/502${support}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener');
+    openExternal(`https://wa.me/502${support}?text=${encodeURIComponent(msg)}`);
   };
 
   return (
@@ -43,7 +44,7 @@ export default function PhoneChangeSection({ ctx, TH }) {
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 13, fontWeight: 800, color: TH.header }}>Solicitar cambio de número</div>
           <div style={{ fontSize: 11, color: TH.sub, marginTop: 2 }}>
-            Escribinos por WhatsApp — verificamos tu identidad y lo cambiamos por vos
+            Escríbenos por WhatsApp: verificamos tu identidad y lo cambiamos por ti
           </div>
         </div>
         <span style={{ color: BRAND_ORANGE, fontSize: 12, fontWeight: 800, flexShrink: 0 }}>Abrir chat</span>

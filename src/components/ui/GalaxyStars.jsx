@@ -57,7 +57,7 @@ export default function GalaxyStars({ n = 60, light = false }) {
   return (
     <div aria-hidden style={{
       position: 'fixed', top: 0, left: '50%', transform: 'translateX(-50%)',
-      width: '100%', maxWidth: 480, height: '100vh',
+      width: '100%', maxWidth: 480, height: '100dvh',
       pointerEvents: 'none', zIndex: 0, overflow: 'hidden',
     }}>
       {/* Nebulosas fijas — oscuras y desaturadas / cálidas muy suaves */}

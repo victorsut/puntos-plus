@@ -93,7 +93,7 @@ export default function SpecialDayBonusModal({
               {isBirthday ? `¡Feliz cumpleaños, ${firstName}!` : `¡Sorpresa, ${firstName}!`}
             </div>
             <div style={{ fontSize: 13, fontWeight: 700, marginTop: 4, opacity: .9 }}>
-              Tenés puntos de regalo
+              Tienes puntos de regalo
             </div>
           </div>
         </div>

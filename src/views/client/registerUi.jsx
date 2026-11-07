@@ -114,10 +114,12 @@ export function DateField({ value, onOpen, dark }) {
   };
   const display = formatDisplay(value);
   return (
-    <div onClick={onOpen} style={{ ...inputFlat, background: flatBg(dark), paddingLeft: 44, display: 'flex', alignItems: 'center', cursor: 'pointer', position: 'relative', color: display ? (dark ? '#fff' : '#0D0D0D') : '#9E9E9E', userSelect: 'none' }}>
+    // UX-41 (7-nov-2026): botón real — TalkBack lo anuncia y el teclado
+    // "Siguiente" lo alcanza (antes era un div con onClick)
+    <button type="button" onClick={onOpen} aria-haspopup="dialog" style={{ ...inputFlat, background: flatBg(dark), paddingLeft: 44, display: 'flex', alignItems: 'center', cursor: 'pointer', position: 'relative', color: display ? (dark ? '#fff' : '#0D0D0D') : '#6E6E73', userSelect: 'none', width: '100%', textAlign: 'left', fontFamily: "'DM Sans'", fontSize: 14.5, fontWeight: display ? 700 : 500 }}>
       <div style={{ position: 'absolute', left: 16, color: '#9E9E9E', display: 'flex' }}><Cake /></div>
       <span style={{ flex: 1 }}>{display || 'Fecha de nacimiento *'}</span>
       <span style={{ color: dark ? 'rgba(255,255,255,.4)' : '#BDBDBD', display: 'flex' }}><Chev /></span>
-    </div>
+    </button>
   );
 }

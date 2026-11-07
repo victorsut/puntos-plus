@@ -64,7 +64,7 @@ export async function sendPushToMember(memberId, { title, body, type = 'general'
       body: JSON.stringify({
         member_id: memberId,
         title: title || 'Puntos Plus',
-        body: body || 'Tenés una notificación',
+        body: body || 'Tienes una notificación',
         type,
         url,
         data: data || {},

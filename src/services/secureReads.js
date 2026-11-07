@@ -126,7 +126,7 @@ export async function setRedemptionConfirm(redemptionId, status) {
 // Miembro: confirmar (true) o cancelar (false) la solicitud activa.
 export async function respondRedemptionConfirm(redemptionId, accept) {
   const tok = getMemberToken();
-  if (!tok?.token) return { error: 'Sesión expirada — volvé a iniciar sesión' };
+  if (!tok?.token) return { error: 'Sesión expirada: vuelve a iniciar sesión' };
   const { data, error } = await sb.rpc('respond_redemption_confirm', {
     p_session_token: tok.token, p_redemption_id: redemptionId, p_accept: accept,
   });

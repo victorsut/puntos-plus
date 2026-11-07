@@ -162,3 +162,7 @@ export const ALL_CARD_PREFIXES = ['CTOD', 'CTPD', 'CTBD'];
 // Aliases (compatibilidad con vistas)
 // ──────────────────────────────────────────────
 export { DEFAULT_CONFIG as CFG_INIT };
+
+// UX-43 (7-nov-2026): fecha única de "Última actualización" de los Términos
+// (TermsSheet y Menú → Términos la mostraban distinta).
+export const TERMS_UPDATED = 'Septiembre 2026';

@@ -42,6 +42,15 @@ export function registerServiceWorker() {
       .then(registration => {
         console.log('[SW Registration] Registered:', registration.scope);
 
+        // UX-27 (7-nov-2026): si ya había un SW nuevo ESPERANDO desde una
+        // visita anterior (el socio no pulsó Recargar), avisar de una vez —
+        // antes solo se detectaba el 'updatefound' de esta sesión.
+        if (registration.waiting && navigator.serviceWorker.controller) {
+          console.log('[SW Registration] Update already waiting');
+          waitingWorker = registration.waiting;
+          if (updateAvailableCallback) updateAvailableCallback();
+        }
+
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing;
           if (!newWorker) return;

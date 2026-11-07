@@ -79,7 +79,7 @@ export default function QRScanner({ onScan, onClose, acceptRedemptions = false }
               onScanRef.current?.(decodedText);
             } else {
               invalidLockRef.current = true;
-              setInvalidMsg('QR no válido — seguí escaneando');
+              setInvalidMsg('QR no válido: sigue escaneando');
               invalidTimeoutRef.current = setTimeout(() => {
                 invalidLockRef.current = false;
                 invalidTimeoutRef.current = null;
@@ -100,9 +100,9 @@ export default function QRScanner({ onScan, onClose, acceptRedemptions = false }
         if (!mountedRef.current) return;
         console.error('[QRScanner]', err);
         if (err.toString().includes('NotAllowedError')) {
-          setError('Permiso de cámara denegado. Habilitá el acceso en la configuración del navegador o usá "Ingresar manual".');
+          setError('Permiso de cámara denegado. Habilita el acceso en la configuración del navegador o usa "Ingresar manual".');
         } else if (err.toString().includes('NotFoundError')) {
-          setError('No se encontró cámara en este dispositivo. Usá "Ingresar manual".');
+          setError('No se encontró cámara en este dispositivo. Usa "Ingresar manual".');
         } else {
           setError('Error al iniciar la cámara: ' + (err.message || err));
         }
@@ -211,7 +211,7 @@ export default function QRScanner({ onScan, onClose, acceptRedemptions = false }
                 textAlign: 'center', color: 'rgba(255,255,255,.7)',
                 fontSize: 13, fontWeight: 600, fontFamily: "'DM Sans'",
               }}>
-                {acceptRedemptions ? 'Apuntá la cámara al QR del miembro o del premio' : 'Apuntá la cámara al código QR del miembro'}
+                {acceptRedemptions ? 'Apunta la cámara al QR del miembro o del premio' : 'Apunta la cámara al código QR del miembro'}
               </div>
             )}
 
@@ -253,7 +253,7 @@ export default function QRScanner({ onScan, onClose, acceptRedemptions = false }
               color: '#fff', fontSize: 16, fontWeight: 800,
               fontFamily: "'DM Sans'", textAlign: 'center', marginBottom: 4,
             }}>
-              {acceptRedemptions ? 'Ingresá el código de la tarjeta o del canje' : 'Ingresá el código de la tarjeta'}
+              {acceptRedemptions ? 'Ingresa el código de la tarjeta o del canje' : 'Ingresa el código de la tarjeta'}
             </div>
             <input
               value={manualInput}

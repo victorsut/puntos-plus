@@ -80,7 +80,7 @@ export default function ClientQrSheet({ me, tierName, dark, closing, onClose }) 
         </div>
 
         <div style={{ textAlign: 'center', marginTop: 14, fontSize: 12.5, color: dark ? 'rgba(255,255,255,.5)' : '#6E6E73', fontWeight: 600 }}>
-          Mostrá este código en cada carga de combustible
+          Muestra este código en cada carga de combustible
         </div>
       </div>
     </div>

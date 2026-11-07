@@ -18,6 +18,7 @@ import ModeToggle from '../../components/ui/ModeToggle';
 import SupportSheet from '../../components/ui/SupportSheet';
 import { isInAppBrowser, inAppBrowserName, isAndroid, openInChrome, copyLink } from '../../lib/inAppBrowser';
 
+import { openExternal } from '../../lib/openExternal';
 // UX-01 (7-nov-2026): dentro de WhatsApp/Instagram/Facebook (WebView)
 // Google rechaza el OAuth con "403 disallowed_useragent". Se evalúa una
 // sola vez: el user agent no cambia durante la sesión.
@@ -62,7 +63,7 @@ export default function ClientLogin(ctx) {
     const support = (cfg?.supportPhone || '49741067').replace(/\D/g, '');
     const phone = (loginPhone || '').replace(/\D/g, '');
     const msg = `Hola, olvidé mi contraseña de Puntos Plus y quiero restablecerla. Mi número registrado es ${phoneMask.format(phone)}.`;
-    window.open(`https://wa.me/502${support}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener');
+    openExternal(`https://wa.me/502${support}?text=${encodeURIComponent(msg)}`);
   };
 
   // SEC-lite (25-jul): la contraseña se verifica en el SERVIDOR
@@ -80,7 +81,7 @@ export default function ClientLogin(ctx) {
       // SEC.C.1: el perfil viene del servidor con la sesión; custs queda
       // como fallback transitorio (RPC vieja sin member).
       const found = res.member ? mapMember(res.member) : custs.find(c => c.id === res.memberId);
-      if (!found) { setAuthError('No se pudo cargar tu perfil. Recargá la app e intentá de nuevo.'); return; }
+      if (!found) { setAuthError('No se pudo cargar tu perfil. Recarga la app e intenta de nuevo.'); return; }
       setMe(found); setAuthScreen('logged'); fire('Bienvenido ' + found.name, 'success');
     } finally {
       setLoggingIn(false);
@@ -100,7 +101,7 @@ export default function ClientLogin(ctx) {
     if (!m && !/error=/.test(OAUTH_RETURN_HASH)) return;
     let desc = '';
     try { desc = decodeURIComponent(m?.[1] || '').replace(/\+/g, ' '); } catch { /* noop */ }
-    setAuthError(/denied|cancel/i.test(desc) ? 'Cancelaste el ingreso con Google.' : 'Google no completó el ingreso. Intentá de nuevo.');
+    setAuthError(/denied|cancel/i.test(desc) ? 'Cancelaste el ingreso con Google.' : 'Google no completó el ingreso. Intenta de nuevo.');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
@@ -117,12 +118,12 @@ export default function ClientLogin(ctx) {
 
   const doGoogle = () => {
     if (IN_APP || gBusy) return; // el botón no se muestra en WebViews (UX-01)
-    if (!sb) { setAuthError('No se pudo conectar con el servidor. Intentá de nuevo.'); return; }
+    if (!sb) { setAuthError('No se pudo conectar con el servidor. Intenta de nuevo.'); return; }
     clearAuthErr();
     setGoogleBusy(true);
     sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } })
-      .then(({ error }) => { if (error) { setGoogleBusy(false); setAuthError('No se pudo abrir Google. Intentá de nuevo.'); } })
-      .catch(() => { setGoogleBusy(false); setAuthError('No se pudo abrir Google. Intentá de nuevo.'); });
+      .then(({ error }) => { if (error) { setGoogleBusy(false); setAuthError('No se pudo abrir Google. Intenta de nuevo.'); } })
+      .catch(() => { setGoogleBusy(false); setAuthError('No se pudo abrir Google. Intenta de nuevo.'); });
   };
 
   // UX-01: salir del WebView. Android → intent:// a Chrome (si no está,
@@ -132,7 +133,7 @@ export default function ClientLogin(ctx) {
     if (isAndroid() && openInChrome()) return;
     const ok = await copyLink();
     setLinkCopied(ok);
-    fire(ok ? 'Enlace copiado: pegalo en Chrome o Safari' : 'No se pudo copiar. Tocá los tres puntos y elegí "Abrir en el navegador".', ok ? 'success' : 'warn');
+    fire(ok ? 'Enlace copiado: pégalo en Chrome o Safari' : 'No se pudo copiar. Toca los tres puntos y elige "Abrir en el navegador".', ok ? 'success' : 'warn');
   };
 
   // ── Biometría (passkeys): el botón solo aparece si el navegador
@@ -148,7 +149,7 @@ export default function ClientLogin(ctx) {
     try {
       const res = await loginBiometric();
       const found = res.member ? mapMember(res.member) : custs.find(c => c.id === res.memberId);
-      if (!found) { setAuthError('No se pudo cargar tu perfil. Recargá la app e intentá de nuevo.'); return; }
+      if (!found) { setAuthError('No se pudo cargar tu perfil. Recarga la app e intenta de nuevo.'); return; }
       setMe(found); setAuthScreen('logged'); fire('Bienvenido ' + found.name, 'success');
     } catch (err) {
       if (!isUserCancel(err)) setAuthError(err.message || 'No se pudo verificar tu identidad');
@@ -254,8 +255,8 @@ export default function ClientLogin(ctx) {
           </div>
           <div style={{ fontSize: 13, lineHeight: 1.5, color: dark ? 'rgba(255,255,255,.75)' : '#48484A', marginBottom: 12 }}>
             {IN_APP_NAME ? `Estás dentro de ${IN_APP_NAME} y ` : 'Este navegador '}
-            no permite iniciar sesión con Google. Abrí Puntos Plus en Chrome
-            {isAndroid() ? '' : ' o Safari'} para usar tu cuenta de Google, o entrá arriba con tu teléfono y contraseña.
+            no permite iniciar sesión con Google. Abre Puntos Plus en Chrome
+            {isAndroid() ? '' : ' o Safari'} para usar tu cuenta de Google, o entra arriba con tu teléfono y contraseña.
           </div>
           <button onClick={leaveInApp} style={{
             ...btnStyle, background: dark ? 'rgba(255,255,255,.1)' : '#fff',

@@ -27,9 +27,9 @@ export default function SurveyResultModal({ result, onClose, dark }) {
   const ok = result.type === 'success';
   const TITLES = { early: 'Encuesta no completada', retry: 'Tu encuesta quedó en espera', failed: 'No pudimos registrar tu encuesta' };
   const BODIES = {
-    early: 'Volviste antes de terminar la encuesta de Shell y no se registró. Respondé todas las preguntas hasta el final y tus puntos se asignarán al regresar a la app.',
-    retry: 'Se perdió la conexión al registrarla. Tus puntos no se pierden: la app lo reintentará sola en cuanto vuelva la señal, sin que hagas nada. No cerrés sesión.',
-    failed: 'No hubo conexión con el servidor tras varios intentos. Escribinos por Asistencia y ayuda para acreditarte los puntos de esta encuesta.',
+    early: 'Volviste antes de terminar la encuesta de Shell y no se registró. Vuelve a abrirla desde la app y responde todas las preguntas hasta el final antes de regresar.',
+    retry: 'Se perdió la conexión al registrarla. Tus puntos no se pierden: la app lo reintentará sola en cuanto vuelva la señal, sin que hagas nada. No cierres sesión.',
+    failed: 'No hubo conexión con el servidor tras varios intentos. Escríbenos por Asistencia y ayuda para acreditarte los puntos de esta encuesta.',
   };
   const subTxt = dark ? 'rgba(255,255,255,.5)' : '#6E6E73';
 

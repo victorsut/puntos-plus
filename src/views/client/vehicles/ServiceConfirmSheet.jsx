@@ -113,7 +113,7 @@ export default function ServiceConfirmSheet({ vehicle: v, dark, fire, onClose, o
       vehicleId: v.id, doneOn: f.done_on, km, nextService: f.next_service || null, nextServiceKm: nextKm,
     });
     setSaving(false);
-    if (error) { fire(friendlyError(error, 'No se pudo guardar el servicio. Intentá de nuevo.'), 'error'); return; }
+    if (error) { fire(friendlyError(error, 'No se pudo guardar el servicio. Intenta de nuevo.'), 'error'); return; }
     const nxt = data.vehicle.next_service ? fmtDate(data.vehicle.next_service)
       : `${fmtKm(data.vehicle.next_service_km)}`;
     fire(`Servicio registrado · próximo: ${nxt}`, 'success');

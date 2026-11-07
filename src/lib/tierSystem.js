@@ -58,7 +58,7 @@ export function makeTier(gal, cfg = DEFAULT_CONFIG) {
       ptsPerGal: pt.ptsPerGal ?? null,
       qPerPt: pt.qPerPt ?? cfg.qPerPt ?? 10,
       next: 'BLACK',
-      rem: +(bk.gal - gal).toFixed(1),
+      rem: Math.ceil(bk.gal - gal), // UX-38: entero, coherente con la tarjeta (floor de los galones)
       icon: '💎',
       grad: 'linear-gradient(135deg,#E0E0E0 0%,#BDBDBD 50%,#E0E0E0 100%)',
       base: pt.gal,
@@ -78,7 +78,7 @@ export function makeTier(gal, cfg = DEFAULT_CONFIG) {
     ptsPerGal: or.ptsPerGal ?? null,
     qPerPt: or.qPerPt ?? cfg.qPerPt ?? 10,
     next: 'PLATINO',
-    rem: +(pt.gal - gal).toFixed(1),
+    rem: Math.ceil(pt.gal - gal),
     icon: '🟡',
     grad: 'linear-gradient(135deg,#FBBC04 0%,#FFD540 50%,#FBBC04 100%)',
     base: 0,

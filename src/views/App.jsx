@@ -439,7 +439,7 @@ export default function App() {
       <div style={{
         // Admin v2 (6-ago): el shell (y el login de pantalla dividida)
         // administran su propio ancho — sin límite de lienzo en admin.
-        maxWidth: isA ? 'none' : 480, margin: '0 auto', minHeight: '100vh',
+        maxWidth: isA ? 'none' : 480, margin: '0 auto', minHeight: '100dvh',
         background: isA ? adminTheme.bg
           : isO ? '#FAFAFA'
           : clientMainBg(cTier.name, dark),
