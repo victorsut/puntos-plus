@@ -7,6 +7,8 @@
 //   ?approx=1 → E3i: 12 cargas PARCIALES con km (nunca llena ni reserva)
 //               → tramos aproximados de 8+ cargas, method 'approx'
 //   ?approx=2 → E3i: 2 llenos y luego 12 parciales → 1 exacta + 1 tramo
+//   ?stale=1 → UX-24 (7-nov): la RPC de telemetría falló → titular local
+//            marcado "Provisional (sin conexión)"
 //   ?err=1   → UX-08 (7-nov): sin preload y sin backend → tarjeta
 //              "No se pudo cargar…" con botón Reintentar (antes: sección oculta)
 // Uso: npx vite --config tools/harness/vite.harness.config.js
@@ -101,12 +103,13 @@ const events = [
 function Harness() {
   useEffect(() => {
     if (q.get('hist') === '1') setTimeout(() => { [...document.querySelectorAll('button')].find(b => b.textContent.startsWith('Historial del vehículo'))?.click(); }, 150);
+    if (q.get('how') === '1') setTimeout(() => { [...document.querySelectorAll('button')].find(b => b.textContent.startsWith('¿Cómo se calcula?'))?.click(); }, 150);
     if (q.get('reg') === '1') setTimeout(() => { [...document.querySelectorAll('button')].find(b => b.textContent.trim() === '+ Registrar consumo')?.click(); }, 150);
   }, []);
   return (
     <div style={{ minHeight: '100vh', background: dark ? '#0D0D0F' : '#fff', padding: '16px 18px 40px', maxWidth: 384, margin: '0 auto', boxSizing: 'border-box' }}>
       <VehicleFuel dark={dark} fire={(m) => console.log('[toast]', m)} vehicles={[navi]} vehicle={navi}
-        stats={stats} onStatsDirty={() => {}} preload={q.get('err') === '1' ? null : loads} preloadEvents={events} />
+        stats={q.get('stale') === '1' ? {} : stats} statsError={q.get('stale') === '1'} onStatsDirty={() => {}} preload={q.get('err') === '1' ? null : loads} preloadEvents={events} />
       {tourTo && <ClientTour dark={dark} cScr="veh" setCScr={() => {}} onClose={() => {}} initialStep={Math.max(0, TOUR_STEPS.findIndex(s => s.target === tourTo))} />}
     </div>
   );

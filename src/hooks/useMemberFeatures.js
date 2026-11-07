@@ -7,28 +7,48 @@
 // Se vuelve a preguntar al cambiar de socio o al volver la app al
 // frente (el admin pudo habilitarlo entre medio; el vencimiento de un
 // probador también se evalúa en el servidor en cada consulta).
-import { useEffect, useState } from 'react';
+// UX-25 (7-nov-2026): un fallo de RED ya no se ve como "te quitaron la
+// función": se usa la última respuesta conocida del servidor (caché de
+// sesión por socio) y, si no hay ninguna, todo sigue bloqueado pero con
+// `error: true` + `retry()` para que FeatureGate ofrezca Reintentar.
+import { useEffect, useRef, useState } from 'react';
 import { getMyFeatures, LOCKED_FEATURES } from '../services/featureService';
+
+const cacheKey = (id) => `pp_features_${id}`;
+const readCache = (id) => { try { return JSON.parse(sessionStorage.getItem(cacheKey(id)) || 'null'); } catch { return null; } };
+const writeCache = (id, f) => { try { sessionStorage.setItem(cacheKey(id), JSON.stringify(f)); } catch { /* sin storage */ } };
 
 export default function useMemberFeatures({ meId, loggedIn }) {
   const [features, setFeatures] = useState(null);
   const ready = loggedIn && !!meId && !String(meId).startsWith('temp-');
+  const loadRef = useRef(() => {});
 
   useEffect(() => {
-    if (!ready) { setFeatures(null); return; }
+    if (!ready) { setFeatures(null); return undefined; }
     let alive = true;
     const load = () => {
       getMyFeatures().then(({ data }) => {
         if (!alive) return;
         const f = data?.ok ? data.features : null;
-        setFeatures(f ? { vehicles: f.vehicles === true, raffle: f.raffle === true } : LOCKED_FEATURES);
+        if (f) {
+          const next = { vehicles: f.vehicles === true, raffle: f.raffle === true };
+          writeCache(meId, next);
+          setFeatures(next);
+          return;
+        }
+        // Respuesta de negocio sin features (migración pendiente) o fallo
+        // de red: última conocida si existe; si no, bloqueado con error.
+        const cached = readCache(meId);
+        setFeatures(cached ? { ...cached, stale: true } : { ...LOCKED_FEATURES, error: true });
       });
     };
+    loadRef.current = load;
     load();
     const onVisible = () => { if (document.visibilityState === 'visible') load(); };
     document.addEventListener('visibilitychange', onVisible);
     return () => { alive = false; document.removeEventListener('visibilitychange', onVisible); };
   }, [ready, meId]);
 
-  return ready ? features : null;
+  if (!ready || !features) return null;
+  return { ...features, retry: () => loadRef.current() };
 }

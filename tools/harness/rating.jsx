@@ -2,6 +2,8 @@
 // (OpRatingModal) con las tres preguntas del vehículo: carga asignada a,
 // kilómetros recorridos y ¿llenaste el tanque? (22-sep-2026).
 //   ?dark=1 · ?km=1 (con km menor a los últimos → aviso)
+//   ?star=N (UX-22: toca N estrellas → con vehículos pasa al paso "Datos de
+//   la carga"; la RPC de calificación falla sin sesión y solo se loguea)
 //   ?back=1 (UX-15: dispara history.back() a los 900 ms → el modal debe
 //   cerrarse y escribir "[close]" en consola)
 // Los vehículos llegan por window.__PP_MOCK_VEHICLES (plugin del config
@@ -34,6 +36,7 @@ function Harness() {
 }
 createRoot(document.getElementById('root')).render(<Harness />);
 if (q.get('back') === '1') setTimeout(() => { console.log('[harness] history.back()'); history.back(); }, 900);
+if (q.get('star')) setTimeout(() => { document.querySelector(`[aria-label="${q.get('star')} estrellas"]`)?.click(); }, 700);
 if (q.get('km') === '1') setTimeout(() => {
   const inp = document.querySelector('input[inputmode="numeric"]');
   const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;

@@ -34,7 +34,7 @@ export default function OpRatingModal({
   surveyPending, setSurveyPending,
 }) {
   const [saving, setSaving] = useState(false);
-  const [step, setStep] = useState('rate'); // 'rate' | 'survey'
+  const [step, setStep] = useState('rate'); // 'rate' | 'vehicle' (UX-22) | 'survey'
   const [closing, setClosing] = useState(false);
   const launchedRef = useRef(false);
 
@@ -112,9 +112,20 @@ export default function OpRatingModal({
       else fire(`¡Gracias! Calificación enviada: ${starCount}/5`, 'success');
     }
     setSaving(false);
+    // UX-22 (7-nov-2026): con vehículos, las preguntas de la carga van en
+    // un paso PROPIO después de las estrellas — antes el bloque entraba
+    // ENCIMA de las estrellas al llegar listMyVehicles (se movían bajo el
+    // dedo) y quien calificaba primero ya no podía indicar vehículo/km.
+    if (vehOpts) setStep('vehicle');
+    else if (canInvite) setStep('survey');
+    else close();
+  }, [saving, sbConnected, data.operatorId, memberId, fire, canInvite, close, flushVehicle, vehOpts]);
+  // Paso "Datos de la carga": guardar y seguir (encuesta o cierre)
+  const finishVehicle = useCallback(() => {
+    flushVehicle();
     if (canInvite) setStep('survey');
     else close();
-  }, [saving, sbConnected, data.operatorId, memberId, fire, canInvite, close, flushVehicle]);
+  }, [flushVehicle, canInvite, close]);
 
   const startSurvey = () => {
     if (!surveyTarget || surveyPending) return;
@@ -217,9 +228,46 @@ export default function OpRatingModal({
               </div>
             )}
 
-            {/* F6 E2: ¿a cuál vehículo va esta carga? (solo betas con
-                vehículos) — chips + km recorridos + ¿tanque lleno?; se envía al
-                calificar u omitir */}
+            {/* Stars — tap to rate and auto-submit */}
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: dark ? '#E0E0E0' : '#424242', marginBottom: 12 }}>
+              Calificá la atención
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 18 }}>
+              {[1, 2, 3, 4, 5].map(s => (
+                <button key={s} onClick={() => submitRating(s)} aria-label={`${s} estrellas`} style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: bento.amber, padding: 2, lineHeight: 0,
+                  transition: 'transform .1s',
+                }}>
+                  <StarRate size={36} />
+                </button>
+              ))}
+            </div>
+
+            {/* Skip */}
+            <button onClick={close} style={{
+              width: '100%', padding: 12, borderRadius: 14,
+              background: 'none', border: 'none',
+              fontFamily: "'DM Sans'", fontSize: 13, fontWeight: 600,
+              color: '#9E9E9E', cursor: 'pointer',
+            }}>
+              Omitir
+            </button>
+          </>
+        ) : step === 'vehicle' ? (
+          <>
+            {/* UX-22 — Paso "Datos de la carga" (F6 E2): ¿a cuál vehículo va
+                esta carga? chips + km recorridos + ¿cómo fue la carga?; se
+                envía al guardar (u omitir, sin cambios) */}
+            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: BRAND_ORANGE, marginBottom: 4 }}>
+              Datos de la carga
+            </div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: dark ? '#fff' : '#0D0D0D', marginBottom: 4 }}>
+              ¡Gracias por calificar!
+            </div>
+            <div style={{ fontSize: 12.5, fontWeight: 600, color: subTxt, lineHeight: 1.5, marginBottom: 14 }}>
+              Contanos de esta carga para medir el rendimiento de tu vehículo.
+            </div>
             {vehOpts && (
               <div style={{ textAlign: 'left', marginBottom: 16 }}>
                 {/* Tres preguntas con el MISMO rótulo (dueño, 22-sep): que el
@@ -299,26 +347,15 @@ export default function OpRatingModal({
                 </button>
               </div>
             )}
-
-            {/* Stars — tap to rate and auto-submit */}
-            <div style={{ fontSize: 13.5, fontWeight: 700, color: dark ? '#E0E0E0' : '#424242', marginBottom: 12 }}>
-              Calificá la atención
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 18 }}>
-              {[1, 2, 3, 4, 5].map(s => (
-                <button key={s} onClick={() => submitRating(s)} aria-label={`${s} estrellas`} style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  color: bento.amber, padding: 2, lineHeight: 0,
-                  transition: 'transform .1s',
-                }}>
-                  <StarRate size={36} />
-                </button>
-              ))}
-            </div>
-
-            {/* Skip */}
-            <button onClick={close} style={{
-              width: '100%', padding: 12, borderRadius: 14,
+            <button onClick={finishVehicle} disabled={!!kmErr} style={{
+              width: '100%', padding: 15, borderRadius: 14, border: 'none',
+              background: BRAND_ORANGE, color: '#fff', opacity: kmErr ? .5 : 1,
+              fontFamily: "'DM Sans'", fontSize: 15, fontWeight: 800, cursor: kmErr ? 'default' : 'pointer',
+            }}>
+              Guardar
+            </button>
+            <button onClick={() => { vehSent.current = true; close(); }} style={{
+              width: '100%', marginTop: 6, padding: 12, borderRadius: 14,
               background: 'none', border: 'none',
               fontFamily: "'DM Sans'", fontSize: 13, fontWeight: 600,
               color: '#9E9E9E', cursor: 'pointer',

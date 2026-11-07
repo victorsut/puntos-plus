@@ -14,6 +14,7 @@ import { bodyFor } from '../../../constants/vehicleCatalog';
 import { has3D } from '../../../components/ui/vehicle3d/models3d';
 import { plateMask } from '../../../lib/inputMasks';
 import { listMyVehicleStats } from '../../../services/vehicleService';
+import { friendlyError } from '../../../lib/netError';
 import useSwipeTrack, { slideIn } from '../../../hooks/useSwipeTrack';
 import VehicleForm from './VehicleForm';
 import VehicleFuel from './VehicleFuel';
@@ -61,10 +62,16 @@ export default function VehiclesHome({ ctx, vehicles, setVehicles }) {
   // F6 E2 — telemetría por vehículo (cargas, galones, Q, km/gal, km/día)
   const [stats, setStats] = useState({});
   const [statsK, setStatsK] = useState(0); // E3a: reasignar en el historial recarga la telemetría
+  // UX-24 (7-nov-2026): si la RPC falla se AVISA con Reintentar — antes el
+  // error se ignoraba y la tarjeta Combustible mentía ("—" y "Tus cargas
+  // se asignan al calificar") aunque hubiera cargas.
+  const [statsErr, setStatsErr] = useState(null);
   useEffect(() => {
     let alive = true;
-    listMyVehicleStats().then(({ data }) => {
-      if (alive && data?.ok) setStats(data.stats || {});
+    listMyVehicleStats().then(({ data, error }) => {
+      if (!alive) return;
+      if (data?.ok) { setStats(data.stats || {}); setStatsErr(null); }
+      else setStatsErr(friendlyError(error, 'No se pudo actualizar la telemetría de tus vehículos.'));
     });
     return () => { alive = false; };
   }, [statsK]);
@@ -180,7 +187,7 @@ export default function VehiclesHome({ ctx, vehicles, setVehicles }) {
         : '—',
       note: st
         ? `Q${(+st.total_amount).toLocaleString('en-US')} en total${st.km_per_gal ? ` · ${st.km_per_gal} km/gal` : ''}`
-        : 'Tus cargas se asignan al calificar la compra',
+        : statsErr ? 'No se pudo actualizar · tocá Reintentar' : 'Tus cargas se asignan al calificar la compra',
     },
   ] : [];
 
@@ -310,6 +317,17 @@ export default function VehiclesHome({ ctx, vehicles, setVehicles }) {
             </div>
           )}
 
+          {/* UX-24: telemetría sin respuesta del servidor */}
+          {statsErr && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12, padding: '10px 12px', borderRadius: 15, background: dark ? 'rgba(230,81,0,.14)' : '#FFF3E9', color: '#E65100' }}>
+              <div style={{ flex: 1, fontSize: 12, fontWeight: 700, lineHeight: 1.4 }}>{statsErr}</div>
+              <button onClick={() => setStatsK(k => k + 1)} style={{
+                padding: '8px 12px', borderRadius: 11, border: 'none', cursor: 'pointer', flexShrink: 0,
+                background: '#E65100', color: '#fff', fontFamily: "'DM Sans'", fontSize: 12, fontWeight: 800,
+              }}>Reintentar</button>
+            </div>
+          )}
+
           {/* ── Datos relevantes ── */}
           <div ref={tilesRef} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
             {tiles.map(tl => (
@@ -354,7 +372,7 @@ export default function VehiclesHome({ ctx, vehicles, setVehicles }) {
           <div ref={fuelRef}>
             <VehicleFuel
               dark={dark} fire={fire} vehicles={vehicles} vehicle={v}
-              stats={stats} onStatsDirty={() => setStatsK(k => k + 1)}
+              stats={stats} statsError={!!statsErr} onStatsDirty={() => setStatsK(k => k + 1)}
             />
           </div>
 

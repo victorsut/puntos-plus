@@ -33,7 +33,7 @@ const rpcMissing = (error) => /PGRST202|42883|does not exist|Could not find the 
 
 // `preload` / `preloadEvents`: datos iniciales para el arnés de vista
 // previa (sin backend); en producción no se pasan y bajan por RPC.
-export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onStatsDirty, preload = null, preloadEvents = null }) {
+export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onStatsDirty, statsError = false, preload = null, preloadEvents = null }) {
   const [loads, setLoads] = useState(preload);    // null=cargando · false=sin RPC · []=vacío
   const [loadErr, setLoadErr] = useState(null);   // UX-08: fallo de carga (texto) — se ofrece Reintentar
   // E3g: movimientos del vehículo (servicios, alta, edición, silencio)
@@ -168,28 +168,34 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
   const n = summary.windows.length;
   // E3h: mediciones apartadas por implausibles (casi siempre una carga
   // sin registrar) — se avisa en la nota del indicador
-  const excl = summary.excluded ? ` · ${summary.excluded} apartada${summary.excluded === 1 ? '' : 's'} (¿carga sin registrar?)` : '';
+  const excl = summary.excluded ? ` · ${summary.excluded} no contada${summary.excluded === 1 ? '' : 's'}: parece que faltó una carga` : '';
+  // UX-24: sin respuesta del servidor el titular sale del cálculo local
+  // (últimas 40 cargas) — se marca como provisional
+  const provisional = statsError && !stats?.[vehicle?.id]?.windows;
   // Estimado: se muestra desde la SEGUNDA carga con km (decisión del
   // dueño: el socio quiere ver movimiento aunque aún no sea exacto)
   const kmLoads = mine.filter(l => l.km_reading != null).length;
   // E3i: tramos aproximados (sin lleno ni reserva) — se nombran como tales
   const nApprox = summary.nApprox || 0;
   const aprox = nApprox ? ` · ${nApprox} aprox.` : '';
-  const kmNote = trendPct != null
+  // UX-23 (7-nov-2026): lenguaje llano — "medido de lleno a lleno",
+  // "cálculo aproximado con N cargas", nunca "referencia/tramo/apartada"
+  const kmNote = (provisional ? 'Provisional (sin conexión) · ' : '') + (trendPct != null
     ? `${method === 'approx' ? 'Aprox. · ' : ''}${trendPct >= 0 ? '▲' : '▼'} ${Math.abs(trendPct)}% vs tu promedio${trendPct <= -10 ? ' — revisa servicio, llantas o presión' : ''}${excl}`
-    : method === 'full' ? `De referencia a referencia · ${n} medición${n === 1 ? '' : 'es'}${aprox}${excl}`
-    : method === 'approx' ? `Aproximado · ${n} tramo${n === 1 ? '' : 's'} de ${APPROX_LOADS}+ cargas · llena el tanque para afinarlo${excl}`
+    : method === 'full' ? `Medido de lleno a lleno · ${n} medición${n === 1 ? '' : 'es'}${aprox}${excl}`
+    : method === 'approx' ? `Cálculo aproximado con ${APPROX_LOADS}+ cargas · ${n} tramo${n === 1 ? '' : 's'} · llena el tanque para afinarlo${excl}`
     : method === 'estimate' ? `Estimado con ${kmLoads} cargas · llena el tanque para afinarlo${excl}`
     : hasKm ? 'Con tu próxima carga con km verás un estimado'
-    : 'Reporta tus km recorridos al calificar';
+    : 'Reporta tus km recorridos al calificar');
+  const [showHow, setShowHow] = useState(false); // UX-23: "¿Cómo se calcula?"
   // Sugerencia de LLENAR EL TANQUE (dueño, 21-sep): mientras no haya
   // medición exacta y ya existan cargas, se le explica cómo lograrla.
   const nudge = method !== 'full' && mine.length >= 2;
 
   const insights = [
     { k: 'kmgal', label: 'Rendimiento', value: kmgal ? `${fmtN(kmgal)} km/gal` : '—', note: kmNote, warn: trendPct != null && trendPct <= -10 },
-    { k: 'costo', label: 'Costo por km', value: costoKm ? `Q${fmtN(costoKm, 2)}` : '—', note: costoKm ? `A Q${fmtN(qGal, 2)} el galón${lastPriced ? ' (última carga)' : ''}` : 'Necesita rendimiento' },
-    { k: 'mes', label: 'Costo mensual', value: costoMes ? `~Q${fmtN(costoMes, 0)}` : '—', note: costoMes ? `A tu ritmo de ${fmtN(st.km_per_day, 0)} km/día` : 'Necesita rendimiento y ritmo' },
+    { k: 'costo', label: 'Costo por km', value: costoKm ? `Q${fmtN(costoKm, 2)}` : '—', note: costoKm ? `A Q${fmtN(qGal, 2)} el galón${lastPriced ? ' (última carga)' : ''}` : 'Se calcula con tu rendimiento' },
+    { k: 'mes', label: 'Costo mensual', value: costoMes ? `~Q${fmtN(costoMes, 0)}` : '—', note: costoMes ? `A tu ritmo de ${fmtN(st.km_per_day, 0)} km/día` : 'Se calcula con tu rendimiento y tus km por día' },
     { k: 'auto', label: 'Autonomía', value: autonomia ? `~${fmtN(autonomia, 0)} km` : '—', note: autonomia ? `Por tanque de ${fmtN(vehicle.tank_gal)} gal` : 'Agrega el tanque en Datos y ajustes' },
     { k: 'galc', label: 'Por carga', value: galCarga ? `${fmtN(galCarga)} gal` : '—', note: galCarga ? `Q${fmtN(st.total_amount / st.fuel_count, 0)} en promedio` : 'Aún sin cargas' },
     { k: 'frec', label: 'Frecuencia', value: frecuencia ? `Cada ${frecuencia} día${frecuencia === 1 ? '' : 's'}` : '—', note: frecuencia ? `${mine.length} cargas recientes` : 'Con 2+ cargas' },
@@ -310,11 +316,29 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
         </div>
       )}
 
+      {/* UX-23: cómo se calcula, en lenguaje llano (expandible) */}
+      <button onClick={() => setShowHow(h => !h)} aria-expanded={showHow} style={{
+        display: 'block', margin: '10px auto 0', padding: '6px 10px', border: 'none', background: 'none', cursor: 'pointer',
+        fontFamily: "'DM Sans'", fontSize: 11.5, fontWeight: 800, color: BRAND_ORANGE,
+      }}>
+        {showHow ? 'Ocultar ▴' : '¿Cómo se calcula? ▾'}
+      </button>
+      {showHow && (
+        <div style={{ background: cardBg, borderRadius: 15, padding: '12px 14px', marginTop: 4, fontSize: 11.5, color: ink, fontWeight: 600, lineHeight: 1.6 }}>
+          <b>Medido de lleno a lleno:</b> entre dos cargas con "Tanque lleno" y km recorridos, dividimos los
+          km entre todo el combustible que cargaste en medio. Lo mismo entre dos "Llegué en reserva".<br />
+          <b>Cálculo aproximado:</b> si nunca llenás ni llegás a reserva, cada {APPROX_LOADS} cargas con km
+          dan un tramo aproximado.<br />
+          <b>No contada:</b> una medición muy fuera de lo normal se aparta — casi siempre faltó registrar una carga.<br />
+          <b>Lleno deducido:</b> si no respondiste y cargaste casi todo el tanque, lo tomamos como lleno.
+        </div>
+      )}
+
       {/* E3e/E3f: rendimiento por llenado — una medición por ventana de
           lleno a lleno, con el promedio ponderado punteado (≥2 ventanas) */}
       {trendPoints.length >= 2 && (
         <div style={{ background: cardBg, borderRadius: 17, padding: '12px 14px 8px', marginTop: 10 }}>
-          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', color: sub, marginBottom: 6 }}>{method === 'approx' ? 'Rendimiento por tramo (aprox.)' : 'Rendimiento por llenado'}</div>
+          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', color: sub, marginBottom: 6 }}>{method === 'approx' ? 'Rendimiento aproximado por tramo' : 'Rendimiento por llenado'}</div>
           <TrendChart points={trendPoints} avg={summary.kmPerGal}
             dark={dark} ink={ink} sub={sub} surface={dark ? '#2A2A30' : '#F5F5F7'} />
         </div>

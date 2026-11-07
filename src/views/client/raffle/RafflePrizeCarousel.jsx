@@ -55,11 +55,14 @@ export default function RafflePrizeCarousel({
                     </div>
                   )}
                   <div style={{ fontSize: 17, fontWeight: 800, color: headerTxt, lineHeight: 1.25 }}>
-                    {rm.name || 'Premio por anunciar'}
+                    {rm.name || (rm.dbId ? 'Premio por anunciar' : 'Rifa aún no publicada')}
                   </div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: subTxt, marginTop: 2 }}>
-                    Valorado en {rm.v}
-                  </div>
+                  {/* UX-20: sin rifa cargada no hay valor que mostrar ("Valorado en Q0") */}
+                  {rm.dbId && rm.cost > 0 && (
+                    <div style={{ fontSize: 12, fontWeight: 700, color: subTxt, marginTop: 2 }}>
+                      Valorado en {rm.v}
+                    </div>
+                  )}
 
                   {/* Resultado del sorteo (meses anteriores) */}
                   {i !== curMonth && (

@@ -18,8 +18,9 @@ import useBackLayer from '../../hooks/useBackLayer';
 import useShortScreen from '../../hooks/useShortScreen';
 import useSwipeTrack, { slideIn } from '../../hooks/useSwipeTrack';
 import RafflePrizeCarousel from './raffle/RafflePrizeCarousel';
+import { fetchRaffleParticipants } from '../../services';
 
-const EMPTY_MONTH = { m: 'Mes', name: null, icon: null, img: null, v: 'Q0', winnerId: null };
+const EMPTY_MONTH = { m: 'Mes', name: null, icon: null, img: null, v: 'Q0', winnerId: null, dbId: null };
 
 const shuffle = (arr) => {
   const a = arr.slice();
@@ -31,11 +32,37 @@ const shuffle = (arr) => {
 };
 
 export default function ClientRaffle(ctx) {
-  const { me, cfg, cTier, raffleCal, rafData, buyTickets, curMonth, custs, dark } = ctx;
-  const [viewMonth, setViewMonth] = useState(curMonth);
+  const { me, cfg, cTier, raffleCal, rafData, buyTickets, curMonth, custs, dark, crossYearWins } = ctx;
+  // UX-21 (7-nov-2026): en enero y febrero el carrusel conserva DICIEMBRE
+  // del año anterior (su sorteo se hace el 1 de enero y antes desaparecía
+  // con el cambio de año). Va de primero; los índices del año en curso
+  // se corren `offset` posiciones y rafData se alinea igual.
+  const yr = new Date().getFullYear();
+  const prevDec = curMonth <= 1
+    ? (crossYearWins || []).find(r => r?.year === yr - 1 && r?.month === 12) || null
+    : null;
+  const offset = prevDec ? 1 : 0;
+  const curIdx = curMonth + offset;
+  const [viewMonth, setViewMonth] = useState(curIdx);
   // Meses del año en curso hasta el actual (una tarjeta por mes en el
   // carrusel); el gesto y la dirección viven en el hook compartido.
-  const months = Array.from({ length: curMonth + 1 }, (_, i) => raffleCal[i] || EMPTY_MONTH);
+  const months = [
+    ...(prevDec ? [prevDec] : []),
+    ...Array.from({ length: curMonth + 1 }, (_, i) => raffleCal[i] || EMPTY_MONTH),
+  ];
+  // Participantes de ese diciembre: rafData solo cubre el año en curso
+  const [prevParts, setPrevParts] = useState([]);
+  useEffect(() => {
+    if (!prevDec?.dbId) return undefined;
+    let alive = true;
+    fetchRaffleParticipants().then(rows => {
+      if (!alive || !rows) return;
+      setPrevParts(rows.filter(e => e.raffle_id === prevDec.dbId)
+        .map(e => ({ cid: e.member_id, name: e.display_name || e.name || 'Miembro', avatar: e.avatar_url || '', tickets: e.tickets || 1 })));
+    });
+    return () => { alive = false; };
+  }, [prevDec?.dbId]);
+  const rafAligned = prevDec ? [{ participants: prevParts }, ...rafData] : rafData;
   const swipe = useSwipeTrack({ count: months.length, idx: viewMonth, setIdx: setViewMonth });
   // 4-sep (pedido del dueño): encabezado + carrusel del premio (+ compra
   // en pantallas altas) PEGAJOSOS; solo la lista de participantes se
@@ -76,7 +103,7 @@ export default function ClientRaffle(ctx) {
   // Botón físico de volver: cierra la confirmación en vez de salir.
   useBackLayer(!!buyConfirm, closeBuy);
 
-  const parts = rafData[viewMonth]?.participants || [];
+  const parts = rafAligned[viewMonth]?.participants || [];
   // Orden aleatorio con "yo" siempre en la primera fila. Se rebaraja
   // solo al cambiar de mes o de datos (no en cada render).
   const ordered = useMemo(() => {
@@ -88,7 +115,11 @@ export default function ClientRaffle(ctx) {
   if (!me) return null;
 
   const rm = months[viewMonth] || EMPTY_MONTH;
-  const isCurrent = viewMonth === curMonth;
+  const isCurrent = viewMonth === curIdx;
+  // UX-20 (7-nov-2026): sin fila en raffle_calendar no hay rifa que
+  // comprar — antes se mostraba "Valorado en Q0" y la compra se dejaba
+  // completar para fallar al final ("Rifa no disponible para este mes").
+  const published = !!rm.dbId;
   // Costo del boleto: configurable por rifa (raffle_calendar.ticket_points);
   // si la rifa no define uno, rige el global cfg.ticketPts.
   const tPts = rm.ticketPts ?? cfg.ticketPts;
@@ -117,7 +148,14 @@ export default function ClientRaffle(ctx) {
   });
 
   const stickyBg = (dark || isBlack) ? clientMainBg(cTier?.name, true) : bento.pageBg;
-  const buyCard = isCurrent && (
+  const buyCard = isCurrent && !published ? (
+        <div ref={buyRef} data-tour="raf-buy" style={{ margin: '0 16px 14px', padding: '14px 16px', borderRadius: 20, background: surface, textAlign: 'center' }}>
+          <div style={{ fontSize: 13.5, fontWeight: 800, color: headerTxt }}>La rifa de {rm.m} aún no está publicada</div>
+          <div style={{ fontSize: 11.5, fontWeight: 600, color: subTxt, marginTop: 4, lineHeight: 1.5 }}>
+            En cuanto se anuncie el premio podrás comprar boletos acá. Tus puntos siguen sumando.
+          </div>
+        </div>
+  ) : isCurrent && (
         <div ref={buyRef} data-tour="raf-buy" style={{ margin: '0 16px 14px', padding: '12px 14px', borderRadius: 20, background: surface }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
             <span style={{ fontSize: 12, color: subTxt, fontWeight: 600 }}>Tus puntos</span>
@@ -167,7 +205,7 @@ export default function ClientRaffle(ctx) {
             {rm.m} {rm.year || ''} · sorteo al cierre del mes
           </div>
         </div>
-        <button onClick={() => swipe.go(viewMonth + 1)} aria-label="Mes siguiente" style={navBtn(viewMonth < curMonth)}>
+        <button onClick={() => swipe.go(viewMonth + 1)} aria-label="Mes siguiente" style={navBtn(viewMonth < curIdx)}>
           <Chev />
         </button>
       </div>
@@ -175,7 +213,7 @@ export default function ClientRaffle(ctx) {
       {/* ── Premio del mes + mis boletos/total: carrusel por mes que
           sigue al dedo (4-sep) — una tarjeta de información por mes ── */}
       <RafflePrizeCarousel
-        months={months} rafData={rafData} me={me} curMonth={curMonth}
+        months={months} rafData={rafAligned} me={me} curMonth={curIdx}
         idx={viewMonth} swipe={swipe} dark={dark} winnerNameFor={winnerNameFor}
         colors={{ headerTxt, subTxt, surface, rowLine, good }}
       />

@@ -13,7 +13,9 @@ export const fmtMonth = (iso) => {
 // lleno por tamaño (≥85 % del tanque) cuando no se dijo "lleno".
 export function tankStateLabel(state, inferred) {
   if (state === 'full') return 'Tanque lleno';
-  if (state === 'reserve') return inferred ? 'En reserva · lleno por tamaño' : 'Llegué en reserva';
+  // UX-23 (7-nov-2026): sin jerga — "lo dedujimos por los galones" en vez
+  // de "por tamaño"; sin respuesta ya no se muestra como pregunta pendiente
+  if (state === 'reserve') return inferred ? 'En reserva · lleno (por los galones)' : 'Llegué en reserva';
   if (state === 'partial') return 'Carga parcial';
-  return inferred ? 'Lleno (por tamaño)' : '¿Cómo fue la carga?';
+  return inferred ? 'Lleno (lo dedujimos por los galones)' : 'Sin dato · se deduce por galones';
 }

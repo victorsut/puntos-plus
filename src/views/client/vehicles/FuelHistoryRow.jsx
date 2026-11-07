@@ -43,11 +43,12 @@ export default function FuelHistoryRow({
   // de la anterior y se arrastra; gap_before reinicia la medición
   const state = tankStateOf(l);
   const isRef = isFull || state === 'reserve';
+  // UX-23 (7-nov-2026): lenguaje llano, sin "referencia/tramo/apartada"
   const role = win
-    ? `${win.kmgal} km/gal${win.kind === 'reserve' ? ' (reserva)' : win.kind === 'approx' ? ' (aprox., tramo sin referencias)' : ''}${win.grade === 'implausible' ? ' · apartada, ¿carga sin registrar?' : win.grade === 'inferred' ? ' · sin respuesta' : ''}`
+    ? `${win.kmgal} km/gal${win.kind === 'reserve' ? ' (de reserva a reserva)' : win.kind === 'approx' ? ' (aproximado)' : ''}${win.grade === 'implausible' ? ' · no contada: parece que faltó una carga' : win.grade === 'inferred' ? ' · lleno deducido por los galones' : ''}`
     : l.gap_before ? 'Reinicia la medición'
     : l.km_reading != null
-      ? (isRef ? (anchor ? 'Inicia la medición' : 'A pocos km → se suma a la siguiente') : 'Parcial → a la siguiente referencia o tramo')
+      ? (isRef ? (anchor ? 'Inicia la medición' : 'Muy cerca de la anterior: se suma a la siguiente') : 'Parcial: cuenta en la próxima medición')
     : null;
   const roleWarn = !!win && win.grade === 'implausible';
   const fullLabel = tankStateLabel(state, inferred);

@@ -7,6 +7,7 @@ import '../../src/styles/global.css';
 import VehiclesSoon from '../../src/views/client/VehiclesSoon';
 import RaffleSoon from '../../src/views/client/RaffleSoon';
 import VehicleBentoTile from '../../src/views/client/home/VehicleBentoTile';
+import FeatureGate from '../../src/components/ui/FeatureGate';
 import { homeTileColors, clientMainBg } from '../../src/constants/styles';
 
 const Panel = ({ tier, dark, children, label }) => (
@@ -20,7 +21,12 @@ const cTier = (name) => ({ name });
 const meWith = { id: 'x', vehicles: [{ type: 'moto', plate: 'M673JSH' }, { type: 'picop', plate: 'P123ABC' }] };
 const meNone = { id: 'y', vehicles: [] };
 
-createRoot(document.getElementById('root')).render(
+const onlyGate = new URLSearchParams(location.search).get('gate') === '1'; // UX-25: solo la compuerta con error
+createRoot(document.getElementById('root')).render(onlyGate ? (
+  <Panel tier="ORO" dark={false} label="UX-25 · FeatureGate sin red y sin respuesta previa (error → Reintentar)">
+    <FeatureGate features={{ vehicles: false, raffle: false, error: true, retry: () => console.log('[retry]') }} feature="raffle" dark={false} soon={<RaffleSoon dark={false} />}>real</FeatureGate>
+  </Panel>
+) : (
   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, background: '#333', padding: 8 }}>
     <Panel tier="ORO" dark={false} label="ORO claro · Vehículos con registrados">
       <VehiclesSoon cTier={cTier('ORO')} me={meWith} dark={false} />
@@ -34,6 +40,9 @@ createRoot(document.getElementById('root')).render(
     <Panel tier="BLACK" dark={true} label="BLACK · Rifa">
       <RaffleSoon dark={true} />
     </Panel>
+    <Panel tier="ORO" dark={false} label="UX-25 · FeatureGate sin red y sin respuesta previa (error → Reintentar)">
+      <FeatureGate features={{ vehicles: false, raffle: false, error: true, retry: () => console.log('[retry]') }} feature="raffle" dark={false} soon={<RaffleSoon dark={false} />}>real</FeatureGate>
+    </Panel>
     <Panel tier="ORO" dark={false} label="Cuadro Vehículo bloqueado / habilitado sin vehículos / cargando">
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 11, padding: 12 }}>
         <VehicleBentoTile me={meNone} htp={homeTileColors('ORO', false)} onOpen={() => {}} enabled={false} />
@@ -43,6 +52,6 @@ createRoot(document.getElementById('root')).render(
       </div>
     </Panel>
   </div>
-);
+));
 // Uso: npx vite --config tools/harness/vite.harness.config.js
 //      msedge --headless=new --screenshot=soon.png --window-size=1620,1400 --virtual-time-budget=15000 http://localhost:3100/tools/harness/soon.html

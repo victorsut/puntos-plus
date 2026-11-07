@@ -199,12 +199,15 @@ export async function loadFromSupabase({
         cal[r.month - 1] = mapRaffleSlot(r);
       });
       setRaffleCal(cal);
-      // Rifa multi-año (8-ago): las SORTEADAS de otros años entran a
-      // un pool aparte — caso real: la rifa de diciembre se sortea en
-      // enero del año siguiente, cuando raffleCal ya solo trae los
-      // slots del año nuevo, y el ganador no veía su felicitación.
+      // Rifa multi-año (8-ago): las rifas de OTROS años entran a un pool
+      // aparte — caso real: la rifa de diciembre se sortea en enero del
+      // año siguiente, cuando raffleCal ya solo trae los slots del año
+      // nuevo, y el ganador no veía su felicitación. UX-21 (7-nov): el
+      // pool trae TODAS las de otros años (no solo las ganadas) para que
+      // la pestaña Rifa siga mostrando diciembre en enero/febrero; el
+      // modal de ganador filtra por winnerId igual que antes.
       setCrossYearWins(
-        rcRes.data.filter(r => r.year && r.year !== yr && r.winner_id).map(mapRaffleSlot)
+        rcRes.data.filter(r => r.year && r.year !== yr).map(mapRaffleSlot)
       );
     }
 

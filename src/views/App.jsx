@@ -372,7 +372,7 @@ export default function App() {
     rewards, setRewards, promos, setPromos, promoIdx, setPromoIdx, activePromos,
     mySurveyCount, setMySurveyCount,
     activityLog, setActivityLog, cfg, setCfg,
-    raffleCal, setRaffleCal, rafData, setRafData,
+    raffleCal, setRaffleCal, rafData, setRafData, crossYearWins,
     opRatings, setOpRatings, redeemedList, setRedeemedList,
     sel, setSel, q, setQ, amt, setAmt, fuel, setFuel,
     catF, setCatF, catPendingSignal,

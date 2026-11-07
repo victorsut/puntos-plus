@@ -89,6 +89,11 @@ export default function VehicleBentoTile({ me, htp, onOpen, enabled = true }) {
   if (enabled === false) {
     return <BentoTile {...common} sub="Muy pronto" badge="PRÓXIMAMENTE" icon={<CarIcon color={htp.vehicleInk} />} />;
   }
+  // UX-25: mientras el servidor no responde (null) no se promete nada —
+  // antes decía "Administra…" y saltaba a "PRÓXIMAMENTE" (parpadeo)
+  if (enabled === null) {
+    return <BentoTile {...common} sub="Consultando…" icon={<CarIcon color={htp.vehicleInk} />} />;
+  }
   if (!main) {
     return <BentoTile {...common} icon={<CarIcon color={htp.vehicleInk} />} />;
   }

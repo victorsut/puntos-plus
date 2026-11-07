@@ -140,7 +140,7 @@ export default function ClientHome(ctx) {
         {/* 2 · Vehículo (F6 en producción, 4-sep): arte del principal
             si el socio tiene vehículos; carrito si no. home/VehicleBentoTile */}
         <VehicleBentoTile
-          me={me} htp={htp} enabled={features ? features.vehicles : null}
+          me={me} htp={htp} enabled={features && !features.error ? features.vehicles : null}
           onOpen={(e) => { if (setNavOrigin) setNavOrigin(originFromEvent(e)); setCScr('veh'); }}
         />
 
