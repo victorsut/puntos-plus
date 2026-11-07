@@ -1,9 +1,10 @@
 # Puntos Plus — Roadmap de Producto
 
-> **Versión:** 4.5
+> **Versión:** 4.6
 > **Fecha de creación:** 17 de mayo de 2026
-> **Última actualización:** 21 de septiembre de 2026
+> **Última actualización:** 7 de noviembre de 2026
 > **Estado:** Vivo (este documento evoluciona con el proyecto)
+> **Alcance v4.6 (7-nov-2026 — reconciliación del 22-sep al 16-oct):** **F6 TELEMETRÍA E3h/E3i** (km monótonos con tope por dedazo, cargas sin registrar, cadena de RESERVA, pregunta única "¿Cómo fue la carga?", servidor como única fuente de las ventanas — mig `20261015`; tramos APROXIMADOS para quien nunca llena ni llega a reserva — mig `20261016b`), **BETA CONTROLADA de secciones** (decisión del dueño 16-oct: Vehículos y Rifa vuelven a PRÓXIMAMENTE salvo probadores del admin — mig `20261016`, mecanismo genérico `feature_beta`; cierra además una sobrecarga insegura de `buy_raffle_tickets`), **precios de combustible desde PROPER** (extensión de D4, mig `20260923`, interruptor apagado), mantenimiento `20260922` (índices de FKs, teléfono duplicado, límite por IP), **Tanda 10 de artes** (Movesa Cruiser, Osborne Fantastic → 53 artes), **F8 Business v0.4/v0.4b** (B28-B39) y fixes (fechas del historial en la ficha del miembro, sheet de la rifa por portal). Restante de desarrollo: GO-LIVE + decisión del dueño sobre Business. Ver Changelog.
 > **Alcance v4.4 (22-sep-2026):** documentación — **F8 Puntos Plus Business v0.4**: reconciliación pedida por el dueño con la recalibración del 19-sep y la API v1.4 de PROPER (B28-B36): puntos de la empresa con la MISMA fórmula del programa (`round(gal × ptsPerGal)` propio, sin arrastre), premios de combustible con `rewards.cash_value`, red de seguridad que completa la compra existente y precede al rechazo `company_nit`, **API v1.5 aditiva** (campos de combustible en canjes, `operator.station` opcional, errores nuevos, `note: prepaid_voucher`) con documento de novedades, vocabulario "kilómetros recorridos", cargas de vale sin actividad de degradación, reportes segmentados por `source`, regla SEC.C.7 y acuerdo pendiente con PROPER sobre la forma de pago. Sigue EN PAUSA (premios B18, niveles B23). Estimación 186-259 hs. Mantenimiento del mismo día: migración `20260922` (índices de FKs, índice duplicado de teléfono, límite 10/h por IP a check_member_exists) EJECUTADA.
 > **Alcance v4.3 (5-sep-2026):** solo documentación de **F8 Puntos Plus Business v0.3**: nueve ajustes del dueño (B19-B27) — puntos de la empresa por GALONES con conversión propia editable en el admin, premios de combustible facturados a CF o al NIT de la empresa con control separado del dinero depositado, canjes con puntos que NO vencen, control de facturación (% facturado / por facturar), niveles de empresa pendientes, app normal solo para particulares, catálogo corporativo asignable con puntos→combustible, corte a la hora acordada y **cobro único al saldo al emitir el vale** (v0.2 duplicaba el cobro). Sigue EN PAUSA hasta definir premios y niveles; nada construido. Ver Changelog.
 > **Alcance v4.2 (4-sep-2026):** **F6 VEHÍCULOS EN PRODUCCIÓN PARA TODOS** (rollout, mig `20260904`) + cierre de las decisiones **D24** (umbrales editables y silencio por vehículo, `20260904b`) y **D4** (precios por estación, `20260904c`), D22 reconciliada como cerrada, dashboard con canjes reales (`20260904d`), inicio con el arte del vehículo principal, rifa con carrusel de meses, historiales con filtros compactos, y Historial/Canjes/Rifa con bloque superior fijo. Deuda documental saldada (`ESTADO-PROYECTO.md`). Restante de desarrollo: solo GO-LIVE. Ver Changelog.
@@ -148,6 +149,7 @@ Esta sección documenta las decisiones tomadas durante las conversaciones de pla
 **Motivo:** no hay cliente confirmado. Investigación acotada antes de invertir esfuerzo.
 **Actualización (4-sep-2026):** el dueño ya conversó con empresas interesadas → la pregunta comercial del spike queda respondida (GO). El producto se llama **Puntos Plus Business**: sin suscripción, la empresa prefiere Turkaj por el control de su flota; modelo PREPAGO con libro mayor por empresa, vales de combustible con QR que se comportan como canjes (compatibles con la API actual de PROPER sin cambios), choferes como socios afiliados, rol nuevo `flota`, facturación al depósito o por consumo, crédito solo preparado. Diseño técnico v0.2 ACORDADO (170-240 hs en 7 etapas) en [`docs/PUNTOS-PLUS-BUSINESS.md`](./docs/PUNTOS-PLUS-BUSINESS.md): la ENTREGA del canje es el consumo (monto completo al confirmar, galones con precio de Puntos Plus, modal de calificación al entregar, puntos a la empresa, sin galones de nivel para el socio). **EN PAUSA** hasta que el dueño defina los premios (corporativos, asignables y valor de los de combustible).
 **Ajustes (5-sep-2026, diseño v0.3, decisiones B19-B27):** (1) los puntos de la empresa se ganan por **galones**, no por quetzales, con conversión propia de Business editable en Admin → Configuración (`program_config.business_points`), independiente de los tiers del programa normal; (2) los premios de combustible por fidelidad (canjeados con puntos, no con dinero depositado) se facturan a **CF** por defecto o al NIT de la empresa si lo pide, con control separado del efectivo depositado, y el corte por consumo puede incluir todo o solo el combustible que no es premio; (3) los canjes y premios con puntos **no vencen** (el QR permanece en la app del socio o en los canjes de la flota); solo los vales con saldo vencen y devuelven lo no consumido; (4) control de facturación: depósito facturado en su totalidad y, en facturación diaria, % facturado del saldo y lo que falta; (5) **niveles de empresa PENDIENTES**; (6) la app normal es SOLO para particulares — una empresa con NIT propio entra por Business (reglas técnicas de NIT en `register_member`/`update_my_profile`/`api_register_purchase`); (7) catálogo corporativo asignable a colaboradores, incluida la conversión de puntos a combustible fuera del saldo; (8) el corte diario puede ser al final del día o a la hora acordada con la empresa, más corte manual; (9) **cobro único al saldo al EMITIR el vale** — la v0.2 restaba al emitir y otra vez al entregar; la entrega ya no toca el dinero. Estimación 183-254 hs. Sigue EN PAUSA (premios B18 y niveles B23).
+**Reconciliación (22-sep-2026, diseño v0.4 y v0.4b, decisiones B28-B39, commits `6147344`→`c51fa5f`):** pedida por el dueño tras la recalibración del 19-sep y la API v1.4. (B28) puntos de la empresa con la MISMA fórmula del programa, `round(gal × business_points.ptsPerGal)`, sin arrastre; punto a Q0.10 → premio corporativo = valor Q × 10. (B29) premios de combustible = categoría `combustible` + `rewards.cash_value`. (B30) la compra del vale nace sin `invoice_no`; si el POS la manda por `/v1/purchases` se COMPLETA la fila (nunca segunda compra; `201` con `points_earned 0` y `note: prepaid_voucher`), evaluado antes del rechazo `company_nit`. (B31) **API v1.5 aditiva** con documento de novedades obligatorio. (B32) vocabulario "kilómetros recorridos". (B33) la carga de un vale NO es actividad de degradación. (B34) reportes y KPIs segmentados por `source`. (B35) SEC.C.7 en toda RPC. (B36) acuerdo pendiente con PROPER: forma de pago "Puntos Plus prepago" en su POS. (B37-B38, v0.4b) los consumos de flota son CANJES de combustible independientes de la facturación; los PUNTOS de la empresa se acreditan AL FACTURAR, nunca al consumir; el modal de vehículo se abre en todo canje de combustible y no asigna puntos a nadie. (B39) depósitos consumidos FIFO. Estimación 186-259 hs. **Bloqueos del dueño:** premios (B18/B25), niveles (B23), `ptsPerGal` inicial, onboarding; solo el `ptsPerGal` bloquea B-E1 y puede ser provisional. El dueño iba a terminar la planificación en claude.ai; el 16-oct quedó en responder si trae el plan completo (compararlo contra §8/§9 del documento ANTES de construir) o se arranca B-E1 con valor provisional.
 
 ### D6 — Vehículos manuales con tracking básico
 **Decisión:** vehículos como entidad con datos ingresados manualmente por el cliente. Incluye CRUD, servicios, kilometraje y rendimiento (Nivel B).
@@ -371,14 +373,14 @@ Mover el `useState(checkingPhone)` al tope del componente con los otros useState
 | 8 | F4 | Tarjeta física + extensiones operador | 50-70 hs | Media | ⏸️ **EN PAUSA** (decisión del dueño 11-ago: tarjeta SOLO DIGITAL; la física es deseo a futuro que podría descartarse). Esquema listo (`physical_cards` con seed inactivo reversible) — NO implementar sin pedido explícito |
 | 9 | F7b | Endpoints `/physical-members` (completa contrato PROPER) | 8-12 hs | Media | ⏸️ **EN PAUSA** (depende de F4) |
 | 10 | F5 | Features faltantes (WhatsApp+SMS, password, dirección) | 56-73 hs | Media | ✅ **CERRADA EN CÓDIGO** (8-ago, mig `20260808c`) — OTP al registrar implementado (Twilio Verify + `/api/verify-phone` + `phone_verifications`; interruptor `phone_verification` APAGADO hasta configurar `TWILIO_*` en Vercel); dirección estructurada ✓ (`AddressPicker` + `geoGt.js`); confirmación de compra de boletos ✓ (sheet en ClientRaffle). Recuperación de password RESUELTA por decisión del dueño (14-ago): vía chat de WhatsApp — NO SMS/correo. PENDIENTE OPERATIVO: credenciales Twilio + encender el interruptor |
-| 11 | F6 | Vehículos como entidad + alertas push | 72-93 hs | Media | ✅ **CERRADA EN CÓDIGO** (15-ago → 3-sep, v4.1; migs `20260815_f6e1/b`, `20260819_f6e2`, `20260902/b/c`, `20260903/b/c`) — entidad `vehicles` + BETA controlada, 50 artes por modelo (E1), combustible y telemetría (E2), análisis, consumos manuales, gráficas y push de servicio D24 (E3), confirmación de servicio desde la notificación (E4), unificación jsonb→tabla (E2b) y retiro de Mi cuenta → Vehículos. ✅ **ROLLOUT a todos los socios (4-sep, mig `20260904`):** beta retirada (tabla, config, RPCs y tarjeta de admin), placeholder PRÓXIMAMENTE eliminado — `VehiclesScreen` monta `VehiclesHome` directo |
-| 12 | F8 | **Puntos Plus Business** (flotas): diseño técnico v0.3 en `docs/PUNTOS-PLUS-BUSINESS.md` (7 etapas B-E1…E7; 27 decisiones B1-B27) | 183-254 hs | Media | ⏸️ **DISEÑO ACORDADO, EN PAUSA** (4-sep; ajustes B19-B27 el 5-sep: puntos por galones, cobro único al emitir el vale, canjes sin vencimiento, control de facturación, solo particulares en la app normal) — se retoma cuando el dueño defina los premios y los niveles de empresa; nada construido |
+| 11 | F6 | Vehículos como entidad + alertas push | 72-93 hs | Media | ✅ **CERRADA EN CÓDIGO** (15-ago → 3-sep, v4.1; migs `20260815_f6e1/b`, `20260819_f6e2`, `20260902/b/c`, `20260903/b/c`) — entidad `vehicles` + BETA controlada, 50 artes por modelo (E1), combustible y telemetría (E2), análisis, consumos manuales, gráficas y push de servicio D24 (E3), confirmación de servicio desde la notificación (E4), unificación jsonb→tabla (E2b) y retiro de Mi cuenta → Vehículos. ✅ **ROLLOUT a todos los socios (4-sep, mig `20260904`):** beta retirada (tabla, config, RPCs y tarjeta de admin), placeholder PRÓXIMAMENTE eliminado — `VehiclesScreen` monta `VehiclesHome` directo. **E3f-E3i (21-sep → 16-oct, migs `20260921b/c/d`, `20261015`, `20261016b`):** rendimiento de lleno a lleno, historial del vehículo con movimientos, km monótonos, cargas sin registrar, cadena de reserva, tramos aproximados. ⚠️ **16-oct: la pestaña vuelve a BETA CONTROLADA** junto con Rifa (mig `20261016`, mecanismo genérico `feature_beta`; rollout = interruptor "para todos" en Admin → Configuración → Secciones en beta) |
+| 12 | F8 | **Puntos Plus Business** (flotas): diseño técnico v0.4b en `docs/PUNTOS-PLUS-BUSINESS.md` (7 etapas B-E1…E7; 39 decisiones B1-B39) | 186-259 hs | Media | ⏸️ **DISEÑO ACORDADO, EN PAUSA** (4-sep; B19-B27 el 5-sep; **v0.4/v0.4b el 22-sep: reconciliación con la recalibración y la API v1.4** — misma fórmula `round(gal × ptsPerGal)`, premios de combustible con `cash_value`, API v1.5 aditiva, consumos de flota = canjes independientes de la facturación, puntos a la empresa AL FACTURAR, depósitos FIFO). Bloqueos del dueño: premios (B18/B25), niveles de empresa (B23), `ptsPerGal` inicial (puede ser provisional), onboarding. El 16-oct el dueño pidió el estado y quedó en responder si trae su plan completo o arranca B-E1 con valor provisional; nada construido |
 | 13 | F9 | Reportería enriquecida (opcional) | 40-55 hs | Opcional | 🟡 **PARCIAL** — el grupo Análisis del admin (13-ago: AnClientes/AnOperadores/AnPromos/AnIntegridad con RPCs `report_*`, integridad auditada; sin método de pago — solo Q total) cubre el grueso; el resto queda opcional |
 | — | **TIENDAS** | **Track operativo nuevo (v4.0):** publicación en Play Store (TWA/PWABuilder + `assetlinks.json`) y App Store (Sign in with Apple + push APNs, decisiones del dueño 14-ago) — checklist en `docs/TIENDAS.md` | 15-25 hs + gestiones | Alta | 🟡 **PREPARADO** (14-ago: manifest completo, privacidad/eliminación corregidas, iconos 192). BLOQUEADO por cuentas del dueño (Play Console + Apple Developer) + capturas 1080×1920 + cuenta demo |
-| — | **GO-LIVE** | **Checklist de lanzamiento:** ~~rollout de Vehículos~~ (✅ 4-sep), encender motor de degradación (`set_degradation_enabled` — el contador de todos arranca en cero), encender `phone_verification` (con Twilio), revocar la API key "Pruebas" de PROPER, verificación general | 4-8 hs | Alta | 📋 Pendiente (los interruptores están apagados A PROPÓSITO hasta el lanzamiento oficial) |
+| — | **GO-LIVE** | **Checklist de lanzamiento:** ~~rollout de Vehículos~~ (✅ 4-sep), encender motor de degradación (`set_degradation_enabled` — el contador de todos arranca en cero), encender `phone_verification` (con Twilio), revocar la API key "Pruebas" de PROPER, limpiar los operadores espejo y socios de prueba de PROPER, abrir Vehículos y Rifa a todos (`features_beta.<sección>.public`, 16-oct), verificación general | 4-8 hs | Alta | 📋 Pendiente (los interruptores están apagados A PROPÓSITO hasta el lanzamiento oficial) |
 | ∥ | **R1b** | **Track paralelo: rediseño visual iterativo por vistas** (Home → Promociones → Historiales → Menú → Canjes/Rifa) | 75-110 hs | Alta | 🔛 ACTIVO — **R1b.1 Home ✅ CERRADA** (17-jul, `4972e1d`→`dd50f30`, validada por el dueño: bento adaptable, cuadrados fijos Promos/Vehículo, degradados+iconos SVG, historiales con períodos derivados de datos + libro mayor de puntos, container transform con tinte de continuidad). **R1b.2 Promociones ✅ CERRADA** (18-jul, `dbe2ffd`→`6adb57c`, validada por el dueño) — cards verticales 3:4 en grid de 2 (vista PROMOCIONES con chips), 1:1 en el home (carrusel arrastrable, tap → vista); imagen 900×1200 como FONDO completo con textos encima (saltos de línea manuales, color por bloque via `text_colors` jsonb), preview admin a tamaño real; bucket promo-images solo-service-role + `/api/upload-promo-image`. **Actualización v4.0 (15-ago):** desde entonces el track cerró TODAS las vistas base del cliente — Menú (23-jul), modo claro/oscuro completo (24-jul), paleta por nivel + BLACK galaxia (23-jul→14-ago), Historiales con filtros por tipo + paginado (11-ago), Admin v2 con shell lateral y lienzo ancho (4→6-ago), divisiones <500 líneas de App/ClientHome/Settings/AdminDash (12→15-ago), code splitting por rol (cliente 354 kB, 14-ago) y **splash de entrada con monedas PP 3D** según referencia "idea intro" (15-ago). El track sigue ACTIVO para correcciones visuales puntuales según referencias |
 
-**Total restante estimado (v4.3):** ≈4-8 hs de desarrollo (solo go-live) + **F8 Puntos Plus Business (183-254 hs, diseño v0.3 acordado, en pausa hasta definir premios y niveles de empresa)** + F9 opcional restante + gestiones externas del dueño (PROPER, Twilio, Play/Apple). F6 (72-93 hs estimadas) se ejecutó entre el 15-ago y el 3-sep; el plan v3.0 de 550-750 hs queda ejecutado en ~95%.
+**Total restante estimado (v4.6):** ≈4-8 hs de desarrollo (solo go-live) + **F8 Puntos Plus Business (186-259 hs, diseño v0.4b acordado, en pausa: espera el plan del dueño o el arranque de B-E1 con `ptsPerGal` provisional)** + F9 opcional restante + gestiones externas del dueño (PROPER, Twilio, Play/Apple). F6 (72-93 hs estimadas) se ejecutó entre el 15-ago y el 3-sep y recibió la telemetría E3f-E3i entre el 21-sep y el 16-oct; el plan v3.0 de 550-750 hs queda ejecutado en ~95%.
 
 > **Nota v3.0:** este orden ES la re-planificación (Nivel 2) que v2.4/v2.5
 > difirieron. F3 ya no existe como fase monolítica: se disuelve en R1a + track
@@ -1116,9 +1118,11 @@ Vistas base del track R1b rediseñadas + gestiones Twilio/WhatsApp completadas.
 
 Sin cambios respecto a v2.1. Ver versiones anteriores del documento para detalle si hace falta consultarlas.
 
-- **F6 — Vehículos como entidad + alertas push:** 72-93 hs. **✅ CERRADA Y EN
-  PRODUCCIÓN PARA TODOS (15-ago → 4-sep-2026, v4.2).** Ejecutada en
-  etapas, cada una validada por el dueño en su celular:
+- **F6 — Vehículos como entidad + alertas push:** 72-93 hs. **✅ CERRADA (15-ago
+  → 4-sep-2026, v4.2); telemetría ampliada E3f-E3i (21-sep → 16-oct,
+  v4.5/v4.6). Desde el 16-oct la pestaña está en BETA CONTROLADA por decisión
+  del dueño (ver bullet al final).** Ejecutada en etapas, cada una validada
+  por el dueño en su celular:
   - **E1 (15-ago, migs `20260815_f6e1` + `20260815b`):** tabla `vehicles` cerrada
     a la API abierta (RPCs `list/save/delete_my_vehicle` con sesión), ventana
     real `VehiclesHome` en BETA CONTROLADA (`program_config.vehicles_beta` +
@@ -1174,10 +1178,64 @@ Sin cambios respecto a v2.1. Ver versiones anteriores del documento para detalle
     por vehículo (`vehicles.alerts_muted`, interruptor en Datos y ajustes);
     cron y RPC de candidatos leen la config; la vista usa los mismos umbrales.
   - **Artes Pulsar/CGL/DR:** validadas por el dueño el 4-sep ("todo bien").
+  - **E3f/E3g (21-sep, migs `20260921b/c/d`):** rendimiento DE LLENO A LLENO
+    (ancla = carga con km y tanque lleno; entre anclas los km se dividen entre
+    TODO el combustible cargado en medio; ventanas ≥10 km; titular ponderado),
+    historial DEL VEHÍCULO con movimientos (`vehicle_events`), estimado desde
+    la 2ª carga con km, costo por km con el ÚLTIMO precio pagado. Vocabulario
+    "kilómetros recorridos", nunca "odómetro". Detalle en Changelog 4.5.
+  - **E3h (15-oct, mig `20261015_km_monotonico_ventanas_cortas`):** km
+    MONÓTONOS con tope por dedazo (`assert_vehicle_km`: nunca menor que la
+    última lectura, ni mayor que una posterior, ni por encima de última +
+    1,500 km + 500 km/día; mismas constantes en `kmReadingProblem` del
+    cliente); pregunta ÚNICA "¿Cómo fue la carga?" (Tanque lleno / Llegué en
+    reserva / Carga parcial → `full_tank`/`at_reserve`; corrección en el
+    historial por `set_my_fuel_load_state`, `set_my_fuel_load_full` ya no
+    existe); cadena de RESERVA (ventana reserva→reserva, descartada si se
+    solapa con una de lleno); ventanas <10 km que ARRASTRAN sus galones sin
+    mover el ancla; carga SIN REGISTRAR (`gap_before`, reinicia la medición);
+    plausibilidad por tipo (`KMGAL_CAP`) y por mediana (`grade='implausible'`,
+    fuera del titular y la tendencia); el SERVIDOR es la única fuente de las
+    ventanas (`list_my_vehicle_stats` → `windows[]`, `anchors[]`,
+    `trend_pct`, `excluded`; `fuelEconomy.js` solo respaldo). Registros
+    manuales AL MOMENTO, sin fecha propia (decisión del dueño). Validado en el
+    celular de Ezer (titular 154.6 sin cambios).
+  - **E3i (16-oct, mig `20261016b_rendimiento_aproximado_por_tramos`):**
+    tramos APROXIMADOS para quien nunca llena ni llega a reserva — cierran con
+    ≥8 cargas con km tras el ancla (`APPROX_LOADS`) y, si se conoce
+    `tank_gal`, ≥4 tanques cargados (`APPROX_TANKS`); toda referencia o
+    `gap_before` reinicia el tramo; `kind='approx'`, entran al titular y la
+    tendencia solo como "confiable"; `km_per_gal_method` full | approx |
+    estimate. Arnés `tools/harness/fuel.html?approx=1|2`. Nadie los ve aún
+    (solo la Navi de Ezer tiene cargas con km).
+  - **E1.27 · Tanda 10 (16-oct, `676d223`):** Movesa Cruiser y Osborne
+    Fantastic calcadas de referencias en estilo PLANO (fondo de color, cuerpo
+    azul); flags nuevos del motor `trace-mix` (`lightKeep`, `specialClasses`,
+    `passes: 1` + `minPx 300`); 53 artes en producción. Validadas por el dueño.
+  - **⚠️ BETA CONTROLADA (16-oct, decisión del dueño, mig
+    `20261016_beta_secciones_vehiculos_rifa`, `e399dd2`):** Vehículos y Rifa
+    vuelven a PRÓXIMAMENTE salvo para los probadores que configure el admin.
+    Mecanismo GENÉRICO: `program_config.features_beta.<vehicles|raffle>.public`
+    + tabla `feature_beta` (socio × sección, vencimiento opcional) + helper
+    `feature_enabled_for` (REVOKE) + `get_my_features` (PWA, fail closed:
+    sin servidor todo bloqueado) + RPCs `admin_list/set_feature_beta` (sesión
+    de admin, auditadas); UI `FeatureBetaCard` en Admin → Configuración →
+    Secciones en beta; `buy_raffle_tickets` rechaza socios sin la rifa y el
+    cron de servicio omite socios sin Vehículos. Probadores configurados por
+    el dueño el mismo día (Vehículos: Ezer, Fernando M., angel, Tomas,
+    Alexander; Rifa: Ezer, Alexander; Emanuel Martinez —cuenta de prueba—
+    solo hasta el 1-nov). ROLLOUT = encender "para todos" (no borrar código).
+    Hallazgo de seguridad cerrado en la misma migración: sobrecarga legada de
+    `buy_raffle_tickets` ejecutable por anon sin token (DROP). Toda sección
+    nueva que deba nacer cerrada usa este mecanismo.
   - **PENDIENTE:** (1) benchmark anónimo de rendimiento entre socios (idea del
     dueño 2-sep, a futuro); (2) retirar el campo `beta: true` de
     compatibilidad en `list_my_vehicles` cuando ya no queden PWA con el
-    placeholder cacheado.
+    placeholder cacheado; (3) `OpRaffle` (vista del operador) sigue vendiendo
+    boletos a cualquier socio aunque la Rifa esté cerrada para él —
+    compuertar si la beta se alarga; (4) Fernando Morales tiene 1 boleto de
+    octubre y no está en la beta de Rifa (decisión del dueño); (5) verificar
+    E3i en campo con el primer socio que cierre un tramo.
 - **F8 — Puntos Plus Business:** el spike (D5) se cerró con GO comercial el 4-sep-2026 (empresas interesadas). Diseño técnico v0.3 acordado en `docs/PUNTOS-PLUS-BUSINESS.md` (v0.2 el 4-sep; ajustes B19-B27 el 5-sep): modelo de datos con DOS libros por empresa (dinero y puntos), rol `flota`, vales como canjes compatibles con la API de PROPER (cobro único al emitir; la entrega es el consumo de combustible: galones, telemetría y puntos por galón a la empresa), canjes y premios con puntos sin vencimiento, apartado "Mi flota" en la app, catálogo corporativo asignable a colaboradores (puntos→combustible fuera del saldo), facturación al depósito o por corte a la hora acordada con control de % facturado / por facturar, premios facturados a CF o al NIT de la empresa, reglas de NIT para que la app normal sea solo de particulares, métricas; 7 etapas, 183-254 hs. EN PAUSA hasta definir los premios (B18) y los niveles de empresa (B23); nada construido.
 - **F9 — Reportería enriquecida (opcional):** 40-55 hs. **🟡 PARCIAL (v4.0):**
   el grupo **Análisis** del admin (13-ago) cubrió el grueso — 4 vistas de
@@ -1793,6 +1851,9 @@ quedó **RESUELTO** aparte (commit `5270f98`).
 
 | Item | Severidad | Cuándo |
 |---|---|---|
+| **`OpRaffle` vende boletos a cualquier socio aunque la Rifa esté en beta controlada para él** (16-oct; el servidor sí rechaza `buy_raffle_tickets` del propio socio, no la venta del operador) | Baja | Al abrir la Rifa a todos deja de importar; compuertar si la beta se alarga |
+| **Tramos aproximados E3i sin verificación en campo** — ningún socio llega a 9 cargas con km (16-oct) | Baja | Con el primer socio que cierre un tramo |
+| ~~ROADMAP/ESTADO-PROYECTO sin los cierres del 22-sep al 16-oct (regla §0.3 incumplida)~~ — saldado el 7-nov (v4.6) | Baja (cerrado) | ✅ 7-nov-2026 |
 | **Incidente 3-sep (F6 E2b):** el backfill de `20260903b` reconcilió la tabla `vehicles` desde un `members.vehicles` desactualizado ANTES de espejar y borró 2 vehículos de la beta (Hero Eco Deluxe de Ezer M. con 3 compras re-ligadas; Hero Eco 100 de Fernando M.). Reparado en `20260903c`; color/km/aceite/próximo servicio de ambos NO recuperables (reingreso por el socio). LECCIÓN: en toda unificación, espejar primero y NUNCA borrar filas con datos propios desde una fuente legada | Alta (cerrado) | ✅ 3-sep-2026 |
 | ~~`ESTADO-PROYECTO.md` desactualizado (junio 2026)~~ — reescrito el 4-sep-2026 contra el repo (626 archivos, 268 en src) y la base (38 tablas, 125 funciones, Realtime, buckets, crons, env, RPCs por familia) | Baja (cerrado) | ✅ 4-sep-2026 |
 | ~~Placeholder `VehiclesSoon` + compuerta de beta en `list_my_vehicles` quedarán muertos tras el rollout de F6~~ — retirados en el rollout (mig `20260904`); queda solo el campo `beta: true` de compatibilidad en el payload | Baja (cerrado) | ✅ 4-sep-2026 |
@@ -1941,6 +2002,105 @@ Cambios mayores van en commits separados con mensaje `docs: actualizar ROADMAP �
 ---
 
 ## Changelog
+
+### Versión 4.6 — 7 de noviembre de 2026
+
+Reconciliación documental del 22-sep al 16-oct-2026 (la regla §0.3 de
+sincronía por commit no se cumplió en esas fechas; saldada hoy). Nada nuevo
+de código en esta versión.
+
+**22-sep · Mantenimiento de base (mig `20260922_mantenimiento_indices_limite_registro`,
+`4d2a38f`):** índice duplicado de `members.phone` eliminado (queda
+`members_phone_key`), 20 índices de llaves foráneas, tabla `rpc_rate_hits` +
+`request_client_ip()` + `rate_limit_allow(key,max,window)` (revocados a anon)
+y `check_member_exists` con límite de 10 consultas/hora por IP (decisión del
+dueño) → `limited:true` sin revelar; el registro sigue y `register_member`
+valida al final. Linter: solo quedan avisos INFO. Fix del mismo día
+(`e002b09`): paso 25 del tutorial legible + preguntas del vehículo al calificar.
+
+**22-sep · F8 Puntos Plus Business v0.4 y v0.4b (B28-B39, `6147344` →
+`c51fa5f`):** reconciliación con la recalibración del 19-sep y la API v1.4 —
+ver D5. Sigue EN PAUSA; nada construido.
+
+**23-sep · Precios de combustible desde PROPER (extensión de D4, mig
+`20260923_precios_desde_proper`, `7d63f4d`):** PROPER no manda precio
+unitario, pero `fuel_amount / gallons` (5 decimales) lo reproduce exacto.
+`api_register_purchase` llama a `api_observe_fuel_price` en cada acreditación
+(sub-bloque que nunca falla la compra) y guarda la observación en
+`fuel_price_observations` (estación × combustible, racha de facturas
+iguales). Con `program_config.fuel_prices_auto` ENCENDIDO (Admin →
+Configuración → Precios → "Adoptar precios de PROPER", RPC
+`set_fuel_prices_auto`, auditado; **nace APAGADO**), dos facturas seguidas
+iguales actualizan el precio global o el de la estación según D4, con fila
+de auditoría a nombre de "PROPER (API)"; en modo global no adopta si otra
+estación confirmó un precio distinto en 3 días (`stations_disagree`). El
+precio NUNCA afecta los puntos de la API (galones reales). Componente
+`ProperPricesSwitch.jsx`.
+
+**15-oct · F6 E3h — Telemetría de vehículos (mig
+`20261015_km_monotonico_ventanas_cortas`, `e46a577`):** km monótonos con
+tope por dedazo (`assert_vehicle_km`, usado por `assign_purchase_vehicle`,
+`add_my_fuel_log` y `save_my_vehicle`; el km de la ficha solo AVANZA con las
+cargas), pregunta única "¿Cómo fue la carga?" (lleno / reserva / parcial →
+`purchases.full_tank`/`at_reserve`, `set_my_fuel_load_state`), cadena de
+RESERVA, ventanas <10 km que arrastran galones, carga SIN REGISTRAR
+(`gap_before`, `set_my_fuel_load_gap`), plausibilidad por tipo y por mediana,
+servidor como única fuente de las ventanas (`list_my_vehicle_stats` →
+`windows[]`/`anchors[]`/`trend_pct`/`excluded`). Registros manuales al
+momento (sin fecha propia). Detalle en §5 F6. Validado en el celular de Ezer.
+
+**16-oct · Beta controlada de secciones (mig
+`20261016_beta_secciones_vehiculos_rifa`, `e399dd2`, decisión del dueño):**
+Vehículos y Rifa vuelven a PRÓXIMAMENTE salvo probadores del admin. Mecanismo
+genérico `features_beta` + `feature_beta` + `feature_enabled_for` +
+`get_my_features` + `admin_list/set_feature_beta`; `FeatureGate`,
+`ComingSoon` (`VehiclesSoon`/`RaffleSoon`), insignia en el cuadro Vehículo,
+`FeatureBetaCard` en Admin → Configuración. `buy_raffle_tickets` rechaza
+socios sin la rifa; el cron de servicio omite socios sin Vehículos. Hallazgo
+de seguridad cerrado: sobrecarga legada `buy_raffle_tickets(uuid, uuid, int,
+text)` ejecutable por anon sin token — DROP (lección: al cambiar la firma de
+una RPC, DROP explícito de la vieja; el diagnóstico SEC.C.7 debe listar
+sobrecargas). Probadores configurados por el dueño ese mismo día; Emanuel
+Martinez (cuenta de prueba) solo hasta el 1-nov. Rollout = interruptor
+"para todos" (no borrar código).
+
+**16-oct · Fix fechas del historial en la ficha del miembro (`483e18e`):**
+la fecha iba formateada dd/mm/aaaa y el render la recortaba como ISO
+(mostraba el año en lugar del día); ahora se conserva el ISO crudo y se pinta
+dd/mm/aa hh:mm en hora de Guatemala. REGLA: las filas de actividad llevan la
+fecha CRUDA y se formatea solo al pintar.
+
+**16-oct · F6 E1.27 — Tanda 10 de artes (`676d223`):** Movesa Cruiser y
+Osborne Fantastic (referencias nuevas del dueño en estilo plano). Flags
+opt-in del motor `trace-mix`: `lightKeep`, `specialClasses`, `passes: 1` +
+`minPx 300`; cromados con dilatación 1; `motas.cjs` entiende fondo de color.
+Cero manchas en ambas. Marcas Movesa y Osborne en el catálogo; `bodyFor` con
+guarda SUV para "cruiser". 53 artes en producción. Validadas por el dueño.
+
+**16-oct · F6 E3i — Rendimiento aproximado por tramos (mig
+`20261016b_rendimiento_aproximado_por_tramos`, `a1b301e`, opción aprobada
+por el dueño):** para socios que nunca llenan ni llegan a reserva, tramos
+que cierran con ≥8 cargas con km / ≥4 tanques; `kind='approx'`,
+`km_per_gal_method` full | approx | estimate, campo aditivo
+`km_per_gal_approx`. UI: "Aproximado · N tramos de 8+ cargas". Detalle en
+§5 F6.
+
+**16-oct · Fix sheet "Confirmar compra" de la rifa (`1680bee`):** quedaba
+debajo de la barra inferior y tapaba Cancelar/Comprar (el root fixed de
+`ClientRaffle` creaba un stacking context y la `BottomNav` zIndex 100 lo
+tapaba). Ahora va por `createPortal` al body. REGLA: los overlays de
+pantalla completa van por portal al body, nunca dentro de un contenedor fixed.
+
+**Validaciones del dueño en celular (16-oct):** motos de la Tanda 10,
+tutorial interactivo ("queda listo"), telemetría E3h y compra de boletos.
+
+**Estado al 7-nov (verificado en la base):** degradación, verificación de
+teléfono y precios automáticos de PROPER APAGADOS; llave API "Pruebas"
+ACTIVA; PROPER sigue probando con la llave "PROPER" (último uso 6-nov, 17
+facturas de socios de prueba desde el 16-oct); operadores espejo de prueba
+activos; rifa de octubre sorteada el 1-nov (ganó Ezer, está en la beta);
+rifa de noviembre creada; beta de Rifa de Emanuel vencida el 1-nov como se
+acordó.
 
 ### Versión 4.5 — 21 de septiembre de 2026
 
