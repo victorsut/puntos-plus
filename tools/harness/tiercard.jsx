@@ -19,14 +19,14 @@ const Panel = ({ tier, gal, points, label }) => {
   return (
     <div style={{ width: 390, background: clientMainBg(tier, dark), paddingBottom: 14 }}>
       <div style={{ fontSize: 11, fontWeight: 800, padding: '8px 16px 0', color: dark ? '#fff' : '#000', opacity: .7 }}>{label}</div>
-      <TierCardBento me={{ points, gallons: gal }} cTier={cTier} onOpenDetail={() => {}} onPointsTap={() => {}} />
+      <TierCardBento me={{ points, gallons: gal }} cTier={cTier} dark={dark} onOpenDetail={() => {}} onPointsTap={() => {}} />
     </div>
   );
 };
 createRoot(document.getElementById('root')).render(
   <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: '#333', padding: 8, width: 390, boxSizing: 'content-box' }}>
     <Panel tier="ORO" gal={92.6} points={12345} label="ORO · 92.6 gal → muestra 92 / 150 (faltan 58)" />
-    <Panel tier="PLATINO" gal={310.2} points={2480} label="PLATINO · tinta oscura" />
+    <Panel tier="PLATINO" gal={310.2} points={2480} label={`PLATINO · ${dark ? 'blanco (modo oscuro)' : 'tinta oscura (modo claro)'}`} />
     <Panel tier="BLACK" gal={640} points={15890} label="BLACK · galaxia" />
     <div style={{ width: 390, background: clientMainBg('ORO', dark), paddingBottom: 14 }}>
       <div style={{ fontSize: 11, fontWeight: 800, padding: '8px 16px 0', color: dark ? '#fff' : '#000', opacity: .7 }}>UX-28 · PushPromptCard (si el permiso está en default)</div>

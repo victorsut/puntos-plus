@@ -20,7 +20,7 @@ import useShortScreen from '../../hooks/useShortScreen';
 // ya en su ancho y los cambios reales los suaviza la transition de width.
 let barFilled = false;
 
-export default function TierCardBento({ me, cTier, onOpenDetail, onPointsTap }) {
+export default function TierCardBento({ me, cTier, onOpenDetail, onPointsTap, dark = false }) {
   const [fillAnim] = useState(() => {
     if (barFilled) return false;
     barFilled = true;
@@ -28,6 +28,9 @@ export default function TierCardBento({ me, cTier, onOpenDetail, onPointsTap }) 
   });
   const isBlack = cTier.name === 'BLACK';
   const isPlat = cTier.name === 'PLATINO';
+  // UX-34 ajuste del dueño (7-nov): la tinta oscura de PLATINO solo en modo
+  // CLARO; en modo oscuro los textos de la tarjeta vuelven al blanco.
+  const platInk = isPlat && !dark;
   const pg = tierProgress(me.gallons, cTier);
   const points = useCountUp(me.points);
   const shortScr = useShortScreen();
@@ -37,11 +40,11 @@ export default function TierCardBento({ me, cTier, onOpenDetail, onPointsTap }) 
     : isPlat ? '#9EA7AD' : bento.gold;
   // UX-34 (7-nov-2026): PLATINO con tinta oscura (blanco sobre #9EA7AD daba
   // 2.45:1); ORO conserva el blanco con una sombra suave que lo despega.
-  const barBg = isBlack ? 'rgba(255,255,255,.18)' : isPlat ? 'rgba(20,20,23,.22)' : 'rgba(0,0,0,.30)';
+  const barBg = isBlack ? 'rgba(255,255,255,.18)' : platInk ? 'rgba(20,20,23,.22)' : 'rgba(0,0,0,.30)';
   // BLACK: acentos en dorado champán (referencia nivel black inicio) —
   // barra y puntos dorados sobre la galaxia.
   const gold = '#D8A94E';
-  const barFill = isBlack ? gold : isPlat ? '#141417' : '#fff';
+  const barFill = isBlack ? gold : platInk ? '#141417' : '#fff';
 
   return (
     <div
@@ -52,8 +55,8 @@ export default function TierCardBento({ me, cTier, onOpenDetail, onPointsTap }) 
         borderRadius: bento.radius,
         padding: shortScr ? '14px 18px' : '18px 20px',
         margin: shortScr ? '10px 16px 0' : '12px 16px 0',
-        background: bg, color: isPlat ? '#141417' : '#fff',
-        textShadow: isBlack || isPlat ? 'none' : '0 1px 2px rgba(0,0,0,.35)',
+        background: bg, color: platInk ? '#141417' : '#fff',
+        textShadow: isBlack || platInk ? 'none' : '0 1px 2px rgba(0,0,0,.35)',
         position: 'relative', overflow: 'hidden', cursor: 'pointer',
       }}
     >

@@ -126,6 +126,7 @@ export default function ClientHome(ctx) {
       <TierCardBento
         me={me}
         cTier={cTier}
+        dark={dark}
         onOpenDetail={(e) => { setModalOrigin(withTint(e, tierTint)); setShowTierDetail(true); }}
         onPointsTap={(e) => { if (setNavOrigin) setNavOrigin(originFromEvent(e)); setCScr('cat'); }}
       />
