@@ -14,21 +14,27 @@ export async function loadFromSupabase({
   setRewards, setStores, setPromos, setStations, setCfg,
   setRaffleCal, setCrossYearWins, setCusts, setOperators,
   setOpRatings, setSbConnected, setSbLoading,
+  // UX-11 (7-nov-2026): la vista CLIENTE no necesita la lista de todos
+  // los miembros ni todas las calificaciones (solo las usa el staff, y
+  // el staff las recarga completas con su sesión al loguearse).
+  isClient = () => false,
 }) {
   try {
     // Sorteo perezoso de rifas: si un mes terminó sin ganador, se
     // sortea acá (ponderado por boletos, idempotente — ver migration
     // 20260721_rifa_sorteo). Debe correr ANTES de leer raffle_calendar
     // para que winner_id/drawn_at lleguen frescos.
-    try { await sb.rpc('draw_due_raffles'); } catch (e) { console.warn('[Raffle] draw_due_raffles:', e?.message); }
-
     // Degradación perezosa por inactividad (25-jul): mismo patrón que
     // el sorteo — corre ANTES de leer members para que los galones
     // (y por tanto el NIVEL, que deriva de ellos) lleguen frescos.
     // Ver migration 20260725e_degradacion_real.
-    try { await sb.rpc('apply_due_degradations'); } catch (e) { console.warn('[Degrad] apply_due_degradations:', e?.message); }
+    // UX-11: ambos RPCs en PARALELO (antes eran dos viajes seriados).
+    await Promise.all([
+      Promise.resolve(sb.rpc('draw_due_raffles')).catch(e => console.warn('[Raffle] draw_due_raffles:', e?.message)),
+      Promise.resolve(sb.rpc('apply_due_degradations')).catch(e => console.warn('[Degrad] apply_due_degradations:', e?.message)),
+    ]);
 
-    const [rwRes, prRes, stRes, cfgRes, rcRes, psRes] = await Promise.all([
+    const [rwRes, prRes, stRes, cfgRes, rcRes, psRes, opRes] = await Promise.all([
       sb.from('rewards').select('*').order('sort_order'),
       sb.from('promotions').select('*').order('sort_order'),
       sb.from('stations').select('*'),
@@ -37,6 +43,11 @@ export async function loadFromSupabase({
       // D18: tiendas asociadas (antes de la migración 20260806c la
       // tabla no existe → error silencioso y stores queda [])
       sb.from('partner_stores').select('*').order('name'),
+      // Operadores — objetivo #1 (29-jul): solo columnas públicas (el
+      // cliente necesita el nombre para el modal de calificación); la
+      // ficha completa la carga el admin con su sesión. UX-11: viaja en
+      // el mismo lote que el resto (antes era un viaje seriado más).
+      sb.from('operators').select('id, name, username, station_id, bomba, turno, active').order('name'),
     ]);
     if (!isMounted()) return;
 
@@ -197,14 +208,42 @@ export async function loadFromSupabase({
       );
     }
 
+    if (opRes.error) console.error('[Puntos Plus] Error cargando operadores:', opRes.error);
+    if (opRes.data?.length > 0) {
+      const stById = {};
+      (stRes.data || []).forEach(s => { stById[s.id] = s.name; });
+      const bootOps = opRes.data.map(o => ({
+        id: o.id, name: o.name, user: o.username,
+        dpi: '', gafete: '', phone: '', email: '',
+        station: stById[o.station_id] || '', stationId: o.station_id || null,
+        bomba: o.bomba || '', turno: o.turno || '',
+        active: o.active !== false,
+      }));
+      // No pisar la ficha completa si ya la trajo el efecto de staff.
+      setOperators(prev => (opsFullRef.current ? prev : bootOps));
+      console.log('[Puntos Plus] Operadores cargados:', opRes.data.length);
+    }
+
+    // UX-11: el cliente ya tiene todo lo suyo — catálogo, promos,
+    // estaciones, config, rifa, tiendas y operadores. Miembros y
+    // calificaciones son datos del STAFF (abajo).
+    if (isClient()) {
+      setSbConnected(true);
+      console.log('[Puntos Plus] ✅ Datos cargados desde Supabase (cliente)');
+      return;
+    }
+
     // Load members — SEC.C.1/C.5: en el boot solo columnas NO
     // sensibles; el NOMBRE también quedó fuera de la API abierta
     // (1-ago — la rifa usa display_name del RPC de participantes).
     // Operador/admin cargan la ficha completa (con nombres) vía
     // list_members_full con SU sesión al loguearse.
-    const memRes = await sb.from('members')
-      .select('id, points, gallons, spent, visits, tickets, redeemed_count, last_buy, last_station, card_id, created_at, updated_at')
-      .order('created_at', { ascending: false });
+    const [memRes, ratRes] = await Promise.all([
+      sb.from('members')
+        .select('id, points, gallons, spent, visits, tickets, redeemed_count, last_buy, last_station, card_id, created_at, updated_at')
+        .order('created_at', { ascending: false }),
+      sb.from('operator_ratings').select('operator_id, stars').order('created_at', { ascending: false }),
+    ]);
     if (memRes.error) console.error('[Puntos Plus] Error cargando miembros:', memRes.error);
     console.log('[Puntos Plus] Miembros encontrados:', memRes.data?.length || 0);
 
@@ -242,38 +281,13 @@ export async function loadFromSupabase({
       setCusts(prev => (custsFullRef.current ? prev : mapped));
     }
 
-    // Load operators — objetivo #1 (29-jul): `operators` dejó de
-    // exponer DPI/gafete/teléfono/correo/hash por la API abierta.
-    // El boot trae solo columnas públicas (el cliente necesita el
-    // nombre para el modal de calificación); la ficha completa la
-    // carga el admin con su sesión (efecto opsFull más abajo).
-    const opRes = await sb.from('operators')
-      .select('id, name, username, station_id, bomba, turno, active')
-      .order('name');
-    if (opRes.error) console.error('[Puntos Plus] Error cargando operadores:', opRes.error);
-    if (opRes.data?.length > 0) {
-      const stById = {};
-      (stRes.data || []).forEach(s => { stById[s.id] = s.name; });
-      const bootOps = opRes.data.map(o => ({
-        id: o.id, name: o.name, user: o.username,
-        dpi: '', gafete: '', phone: '', email: '',
-        station: stById[o.station_id] || '', stationId: o.station_id || null,
-        bomba: o.bomba || '', turno: o.turno || '',
-        active: o.active !== false,
-      }));
-      // No pisar la ficha completa si ya la trajo el efecto de staff.
-      setOperators(prev => (opsFullRef.current ? prev : bootOps));
-      console.log('[Puntos Plus] Operadores cargados:', opRes.data.length);
-    }
-
     // SEC.C.2: activity_log, redemptions y raffle_tickets ya NO se
     // leen en el boot — su SELECT abierto quedó revocado. El libro
     // mayor y los canjes del miembro llegan por RPC con su sesión al
     // loguearse; el mapa global del staff y los participantes de la
     // rifa, con la sesión de operador/admin (efectos más abajo).
 
-    // Load operator ratings
-    const ratRes = await sb.from('operator_ratings').select('operator_id, stars').order('created_at', { ascending: false });
+    // Calificaciones de operadores (staff) — ya llegaron en el lote de arriba
     if (ratRes.data?.length > 0) {
       const ratMap = {};
       ratRes.data.forEach(r => {

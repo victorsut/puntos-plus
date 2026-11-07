@@ -273,20 +273,20 @@ export default function App() {
   // ===== ARRANQUE (división 15-ago-2026) =====
   // Listener de Google OAuth + getSession + limpieza del hash y la
   // carga inicial (services/bootLoader) viven en hooks/useAuthBoot.js.
-  useAuthBoot({
+  const { oauthBusy } = useAuthBoot({
     viewRef,
     setMe, setCusts, setAuthScreen, setView, setGoogleStep, setRegProfile,
     bootCustsRef, custsFullRef, opsFullRef,
     setRewards, setStores, setPromos, setStations, setCfg,
     setRaffleCal, setCrossYearWins, setOperators,
-    setOpRatings, setSbConnected, setSbLoading,
+    setOpRatings, setSbConnected, setSbLoading, setAuthError,
   });
 
   // Miembro: rehidratación de sesión (SEC.C.1), libro mayor y canjes
   // propios (SEC.C.2) y canales realtime (puntos en vivo, confirmación
   // de canje, modal de calificación tras combustible, rating en vivo).
   const { reloadMyRedemptions } = useMemberRealtime({
-    me, authScreen, sbConnected, viewRef,
+    me, authScreen, sbConnected, viewRef, fire,
     rewards, stations, operators, loggedOp,
     setMe, setAuthScreen, setCusts, setActivityLog, setRedeemedList,
     setPendingRedeemConfirm, setPendingOpRating, setShowQR, setQrClosing,
@@ -392,7 +392,7 @@ export default function App() {
     // Auth
     authScreen, setAuthScreen, authOp, setAuthOp, loggedOp, setLoggedOp, opScanMode, setOpScanMode, opRedeemScan, setOpRedeemScan, stations, setStations, stores, setStores, authAdmin, setAuthAdmin, loggedAdmin, setLoggedAdmin,
     opRafClient, setOpRafClient, opRafScan, setOpRafScan, opRafQty, setOpRafQty, opSearch, setOpSearch,
-    authError, setAuthError, clearAuthErr,
+    authError, setAuthError, clearAuthErr, oauthBusy,
     loginPhone, setLoginPhone, loginPass, setLoginPass,
     regPhone, setRegPhone, regProfile, setRegProfile,
     googleStep, setGoogleStep,

@@ -4,7 +4,7 @@
 // naranja/negro/blanco. "Regístrate" entra DIRECTO al wizard (la bienvenida
 // intermedia se eliminó — decisión del dueño 22-jul).
 import { useState, useEffect, useRef } from 'react';
-import { sb } from '../../lib/supabaseClient';
+import { sb, OAUTH_RETURN_HASH } from '../../lib/supabaseClient';
 import { inputFlat, btnStyle, BRAND_ORANGE } from '../../constants/styles';
 import { GoogleLogo, Phone, Lock, Fingerprint, HelpCircle } from '../../components/ui/Icons';
 import PasswordInput from '../../components/ui/PasswordInput';
@@ -27,7 +27,7 @@ const IN_APP_NAME = IN_APP ? inAppBrowserName() : null;
 export default function ClientLogin(ctx) {
   const { loginPhone, setLoginPhone, loginPass, setLoginPass, authError, setAuthError,
     clearAuthErr, setAuthScreen, setMe, setRegProfile, setGoogleStep, custs, fire,
-    dark, setUiMode, cfg } = ctx;
+    dark, setUiMode, cfg, oauthBusy } = ctx;
 
   // Canal de asistencia (4-ago): disponible desde el login
   const [supportOpen, setSupportOpen] = useState(false);
@@ -87,10 +87,42 @@ export default function ClientLogin(ctx) {
     }
   };
 
+  // UX-13 (7-nov-2026): estado de carga de Google. Se enciende al tocar
+  // el botón (la página se va a Google), arranca encendido si la URL
+  // trae el token de vuelta (Supabase aún lo procesa) y sigue mientras
+  // el servidor emite la sesión (oauthBusy). Se apaga con el resultado,
+  // con un error o a los 20 s por si el flujo murió a medio camino.
+  const [googleBusy, setGoogleBusy] = useState(() => /access_token=/.test(OAUTH_RETURN_HASH));
+  const sawOauthBusy = useRef(false);
+  // Google devolvió un error (p. ej. el socio canceló): decirlo, no callar.
+  useEffect(() => {
+    const m = OAUTH_RETURN_HASH.match(/error_description=([^&]+)/);
+    if (!m && !/error=/.test(OAUTH_RETURN_HASH)) return;
+    let desc = '';
+    try { desc = decodeURIComponent(m?.[1] || '').replace(/\+/g, ' '); } catch { /* noop */ }
+    setAuthError(/denied|cancel/i.test(desc) ? 'Cancelaste el ingreso con Google.' : 'Google no completó el ingreso. Intentá de nuevo.');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (oauthBusy) sawOauthBusy.current = true;
+    else if (sawOauthBusy.current) setGoogleBusy(false);
+  }, [oauthBusy]);
+  useEffect(() => { if (authError) setGoogleBusy(false); }, [authError]);
+  useEffect(() => {
+    if (!googleBusy) return undefined;
+    const t = setTimeout(() => setGoogleBusy(false), 20000);
+    return () => clearTimeout(t);
+  }, [googleBusy]);
+  const gBusy = googleBusy || !!oauthBusy;
+
   const doGoogle = () => {
-    if (IN_APP) return; // el botón no se muestra en WebViews (UX-01)
-    if (sb) sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
-    else setAuthError('No se pudo conectar con el servidor. Intentá de nuevo.');
+    if (IN_APP || gBusy) return; // el botón no se muestra en WebViews (UX-01)
+    if (!sb) { setAuthError('No se pudo conectar con el servidor. Intentá de nuevo.'); return; }
+    clearAuthErr();
+    setGoogleBusy(true);
+    sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } })
+      .then(({ error }) => { if (error) { setGoogleBusy(false); setAuthError('No se pudo abrir Google. Intentá de nuevo.'); } })
+      .catch(() => { setGoogleBusy(false); setAuthError('No se pudo abrir Google. Intentá de nuevo.'); });
   };
 
   // UX-01: salir del WebView. Android → intent:// a Chrome (si no está,
@@ -234,14 +266,14 @@ export default function ClientLogin(ctx) {
           </button>
         </div>
       ) : (
-        <button onClick={doGoogle} style={{
+        <button onClick={doGoogle} disabled={gBusy} aria-busy={gBusy} style={{
           ...btnStyle,
           background: dark ? 'rgba(255,255,255,.08)' : '#fff',
           border: dark ? '1.5px solid rgba(255,255,255,.14)' : '1.5px solid #ECECEE',
-          color: dark ? '#fff' : '#333',
+          color: dark ? '#fff' : '#333', opacity: gBusy ? .7 : 1,
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 24,
         }}>
-          <GoogleLogo /> Continuar con Google
+          <GoogleLogo /> {gBusy ? 'Conectando con Google…' : 'Continuar con Google'}
         </button>
       )}
 

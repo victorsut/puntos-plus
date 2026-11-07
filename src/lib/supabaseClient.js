@@ -13,6 +13,17 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
   || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmaGFybnJzYXRnbGl5bnpjdXdwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMzAzNjYsImV4cCI6MjA4NzcwNjM2Nn0.zkiZweaU3H5hfbdvdhv1iwO1sttkzj5fz29Z8J6Pi0s';
 
+// UX-13 (7-nov-2026): ¿la URL trae el RETORNO de Google? Se captura
+// ANTES de crear el cliente — detectSessionInUrl consume y limpia el
+// hash al instante, y el login necesita saberlo para mostrar
+// "Conectando con Google…" (o el error que devolvió Google).
+export const OAUTH_RETURN_HASH = (() => {
+  try {
+    const h = globalThis.location?.hash || '';
+    return /access_token=|error=|error_description=/.test(h) ? h : '';
+  } catch { return ''; }
+})();
+
 // Crear cliente con opciones optimizadas para PWA
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {

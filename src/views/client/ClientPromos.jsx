@@ -24,7 +24,9 @@ const CHIPS = [
 ];
 
 export default function ClientPromos(ctx) {
-  const { cTier, activePromos, setCScr, setNavOrigin, dark } = ctx;
+  const { cTier, activePromos, setCScr, setNavOrigin, dark, sbLoading } = ctx;
+  // UX-11 (7-nov-2026): esqueleto mientras el boot no trae las promos
+  const booting = !!sbLoading && activePromos.length === 0;
   const isBlack = cTier.name === 'BLACK';
   const headerTxt = dark ? '#fff' : '#0D0D0D';
   const subTxt = dark ? 'rgba(255,255,255,.55)' : '#6E6E73';
@@ -73,7 +75,17 @@ export default function ClientPromos(ctx) {
 
       {/* Cards verticales agrupadas en cuadrícula de 2 columnas
           (orientación de la referencia) — toda la información */}
-      {visible.length === 0 && (
+      {booting && (
+        <div aria-busy="true" aria-label="Cargando promociones" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, padding: '0 14px' }}>
+          {[0, 1].map(i => (
+            <div key={i} className="pp-skeleton" style={{
+              borderRadius: 20, aspectRatio: '3 / 4', animationDelay: `${i * 120}ms`,
+              background: dark ? 'rgba(255,255,255,.07)' : '#fff',
+            }} />
+          ))}
+        </div>
+      )}
+      {visible.length === 0 && !booting && (
         <div style={{ textAlign: 'center', padding: '48px 20px', color: subTxt }}>
           <div style={{ marginBottom: 12, lineHeight: 0, display: 'flex', justifyContent: 'center' }}>
             <GiftIcon size={44} color={subTxt} />

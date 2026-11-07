@@ -24,6 +24,7 @@ import ClientTourGate from './tour/ClientTourGate';
 import OpRatingModal from './OpRatingModal';
 import SurveyResultModal from './SurveyResultModal';
 import { homeColors } from '../constants/styles';
+import { markRatingSeen } from '../lib/ratingSeen';
 
 export default function AppModals({
   ctx, toast,
@@ -139,7 +140,10 @@ export default function AppModals({
         <OpRatingModal
           key={pendingOpRating.purchaseId || 'compra'}
           data={pendingOpRating}
-          onClose={() => setPendingOpRating(null)}
+          // UX-14: cerrado = visto; el chequeo de compras recientes al
+          // volver al frente no lo vuelve a abrir (también cubre el
+          // deep-link de la notificación, que no pasa por Realtime).
+          onClose={() => { markRatingSeen(pendingOpRating.purchaseId); setPendingOpRating(null); }}
           dark={dark}
           memberId={me.id}
           sbConnected={sbConnected}

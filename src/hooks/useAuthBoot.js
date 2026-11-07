@@ -9,11 +9,12 @@
 // hook (los refs son estables; el orden de registro de efectos es
 // indiferente: las guardas de sbConnected/sesión de useStaffData ya
 // toleraban cualquier orden de llegada respecto al boot).
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { sb } from '../lib/supabaseClient';
 import { createMemberSessionOauth } from '../services';
 import { loadFromSupabase } from '../services/bootLoader';
 import { localDate, utcToLocal } from '../lib/dates';
+import { friendlyError } from '../lib/netError';
 
 export default function useAuthBoot({
   viewRef,
@@ -22,7 +23,13 @@ export default function useAuthBoot({
   setRewards, setStores, setPromos, setStations, setCfg,
   setRaffleCal, setCrossYearWins, setOperators,
   setOpRatings, setSbConnected, setSbLoading,
+  setAuthError = () => {},
 }) {
+  // UX-13 (7-nov-2026): mientras create_member_session_oauth resuelve al
+  // volver de Google, el login muestra "Conectando con Google…" en vez
+  // de quedarse mudo; si falla, el error llega a la pantalla.
+  const [oauthBusy, setOauthBusy] = useState(false);
+
   // ===== AUTH: Set user from Supabase session =====
   function setUserFromSession(u) {
     if (!u) return;
@@ -89,13 +96,23 @@ export default function useAuthBoot({
       // vínculo por email si aplica, persiste el avatar y emite la
       // sesión de miembro. Sustituye a los 3 SELECT directos (members
       // ya no expone PII por la API abierta).
+      setOauthBusy(true);
       createMemberSessionOauth(avatar).then((res) => {
+        setOauthBusy(false);
         if (res.ok && res.member) {
           handleMemberResult([res.member]);
           return;
         }
         if (res.notFound) { showRegistration(); return; }
         console.error('[Auth] oauth session:', res.error);
+        // UX-13: solo si el socio viene del LOGIN (sin perfil cacheado) —
+        // con sesión cacheada el refresco silencioso de Google puede
+        // fallar sin red y no debe sembrar un error en el login de después.
+        let cached = false;
+        try { cached = !!localStorage.getItem('ct_me'); } catch { /* noop */ }
+        if (!cached) {
+          setAuthError(friendlyError({ message: res.error }, 'No se pudo completar el ingreso con Google. Intentá de nuevo.'));
+        }
       });
     }
   }
@@ -141,6 +158,7 @@ export default function useAuthBoot({
     // etapa 2): recibe los setters/refs y aborta sets tras el unmount.
     loadFromSupabase({
       isMounted: () => mounted,
+      isClient: () => viewRef.current === 'client', // UX-11
       bootCustsRef, custsFullRef, opsFullRef,
       setRewards, setStores, setPromos, setStations, setCfg,
       setRaffleCal, setCrossYearWins, setCusts, setOperators,
@@ -151,4 +169,6 @@ export default function useAuthBoot({
       authSub?.data?.subscription?.unsubscribe();
     };
   }, []);
+
+  return { oauthBusy };
 }

@@ -5,14 +5,20 @@
 // y el disparo del modal de calificación tras COMBUSTIBLE. Extraído de
 // App.jsx en la división etapa 3 (12-ago-2026) SIN cambios de lógica.
 // Devuelve reloadMyRedemptions (lo usan App y el modal de confirmación).
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { sb } from '../lib/supabaseClient';
 import { getMyMember, fetchMyActivity, fetchMyRedemptions, fetchPurchasePromo } from '../services';
+import { clearMemberToken } from '../services/sessionTokens';
 import { mapMember } from '../lib/mapMember';
 import { utcToLocal } from '../lib/dates';
+import { ratingSeen, markRatingSeen } from '../lib/ratingSeen';
+
+// UX-14 (7-nov-2026): mínimo entre dos refrescos por visibilidad (cambiar
+// de app y volver dispara varios eventos seguidos).
+const FOREGROUND_GAP = 15000;
 
 export default function useMemberRealtime({
-  me, authScreen, sbConnected, viewRef,
+  me, authScreen, sbConnected, viewRef, fire,
   rewards, stations, operators, loggedOp,
   setMe, setAuthScreen, setCusts, setActivityLog, setRedeemedList,
   setPendingRedeemConfirm, setPendingOpRating, setShowQR, setQrClosing,
@@ -82,24 +88,46 @@ export default function useMemberRealtime({
     reloadMyRedemptions();
   }, [me?.id, authScreen, reloadMyRedemptions]);
 
+  // UX-12 (7-nov-2026): cerrar la sesión cacheada AVISANDO. Antes el
+  // caso A (token rechazado) mandaba al login en silencio y el caso B
+  // (token vencido a los 180 días → sin token) dejaba una sesión ZOMBI:
+  // el socio seguía "logueado" con el perfil cacheado pero con historial
+  // y canjes vacíos y las secciones bloqueadas.
+  const expireMemberSession = useCallback(() => {
+    console.warn('[SEC.C] Sesión de miembro vencida/inválida → login');
+    clearMemberToken();
+    try { localStorage.removeItem('ct_me'); } catch { /* noop */ }
+    setMe(null); setAuthScreen('login');
+    if (fire) fire('⏱️ Tu sesión expiró, iniciá sesión de nuevo');
+  }, [fire]);
+
+  // Perfil fresco por RPC con la sesión; decide también si la sesión
+  // sigue viva. `noToken` con perfil cacheado = vencida, SALVO que haya
+  // sesión de Google viva (create_member_session_oauth emite el token
+  // al llegar SIGNED_IN/INITIAL_SESSION — no adelantarse).
+  const refreshMe = useCallback(() => getMyMember().then(res => {
+    if (res.ok && res.member) {
+      setMe(prev => prev ? { ...prev, ...mapMember(res.member) } : prev);
+      return res.member;
+    }
+    if (res.invalidSession) { expireMemberSession(); return null; }
+    if (res.noToken) {
+      return Promise.resolve(sb.auth.getSession()).then(({ data }) => {
+        if (!data?.session) expireMemberSession();
+        return null;
+      }).catch(() => null);
+    }
+    return null; // error de red: no tocar la sesión
+  }), [expireMemberSession]);
+
   // ===== SEC.C.1: REHIDRATAR/VALIDAR la sesión de miembro al abrir =====
   // ct_me es solo caché: si hay token, el servidor devuelve el perfil
   // FRESCO (la ficha completa ya no baja por la API abierta). Token
-  // inválido/revocado → cerrar la sesión cacheada. Sin token (sesiones
-  // pre-SEC.C o Google, que lo obtiene en SIGNED_IN) → no forzar nada.
+  // inválido/revocado o vencido → cerrar la sesión cacheada (UX-12).
   useEffect(() => {
     if (!me?.id || authScreen !== 'logged' || viewRef.current !== 'client') return;
     if (String(me.id).startsWith('temp-')) return;
-    getMyMember().then(res => {
-      if (res.ok && res.member) {
-        setMe(prev => prev ? { ...prev, ...mapMember(res.member) } : prev);
-      } else if (res.invalidSession) {
-        console.warn('[SEC.C] Sesión de miembro inválida → logout');
-        localStorage.removeItem('ct_me');
-        setMe(null); setAuthScreen('login');
-      }
-      // noToken: sesión legada o Google pendiente de SIGNED_IN — seguir.
-    });
+    refreshMe();
     // Solo al montar con sesión ya restaurada; los cambios de me.id
     // posteriores vienen de logins que ya traen perfil fresco.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -247,6 +275,89 @@ export default function useMemberRealtime({
     return () => { sb.removeChannel(ch); sb.removeChannel(bc); };
   }, [me?.id, sbConnected, rewards]);
 
+  // Abre el modal de calificación para una fila de purchases (la usan el
+  // canal Realtime y el chequeo al volver al frente, UX-14).
+  const openRatingFor = useCallback((p, { onlyIfNew = false } = {}) => {
+    const opId = p.operator_id;
+    const stId = p.station_id;
+    if (!opId || viewRef.current !== 'client') return;
+    if (onlyIfNew && ratingSeen(p.id)) return;
+    markRatingSeen(p.id);
+    // El cliente suele tener su Código QR abierto (se lo mostró al
+    // operador para la compra): cerrarlo para que el modal de
+    // calificación quede al frente (pedido del dueño 25-jul).
+    setShowQR(false); setQrClosing(false);
+    const stationName = stations.find(s => s.id === stId)?.name || '';
+    // PROMO-1: el modal muestra los puntos de la compra y la promo aplicada.
+    const base = {
+      purchaseId: p.id,
+      operatorId: opId,
+      stationName,
+      points: p.points_earned ?? null,
+      amount: p.amount ?? null,
+    };
+    const op = operators.find(o => o.id === opId);
+    if (op) {
+      setPendingOpRating({ ...base, operatorName: op.name });
+    } else {
+      sb.from('operators').select('name').eq('id', opId).single().then(r => {
+        setPendingOpRating({ ...base, operatorName: r.data?.name || 'Operador' });
+      });
+    }
+    // La promo llega en query aparte (promo_applications, misma tx que la
+    // compra → ya commiteada). Enriquecer el modal si sigue abierto.
+    fetchPurchasePromo(p.id).then(({ data: promo }) => {
+      if (promo) setPendingOpRating(prev => (prev?.purchaseId === p.id ? { ...prev, promo } : prev));
+    });
+  }, [operators, stations]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ===== UX-14: REFRESCO AL VOLVER AL FRENTE =====
+  // `me` solo cambiaba por Realtime o al montar. Caso típico: el socio
+  // muestra su QR, bloquea el teléfono, el websocket se cae, la compra
+  // se acredita → saldo viejo y sin modal de calificación hasta reabrir.
+  // Al volver visible: perfil fresco (y sesión viva), canjes, y la última
+  // compra de los últimos 15 min (ventana abierta de purchases, SEC.C.2)
+  // si todavía no se calificó en este dispositivo. Si el saldo cambió,
+  // también el historial.
+  const lastFgRef = useRef(0);
+  const meRef = useRef(me);
+  meRef.current = me;
+  useEffect(() => {
+    if (!sb || !me?.id || authScreen !== 'logged' || viewRef.current !== 'client') return undefined;
+    if (String(me.id).startsWith('temp-')) return undefined;
+    const mid = me.id;
+    const onVis = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (Date.now() - lastFgRef.current < FOREGROUND_GAP) return;
+      lastFgRef.current = Date.now();
+      const before = meRef.current;
+      refreshMe().then(m => {
+        if (!m || !before) return;
+        if ((m.points ?? 0) !== (before.points ?? 0) || (m.visits ?? 0) !== (before.visits ?? 0)) {
+          fetchMyActivity(mid, 1000).then(rows => {
+            if (!rows.length) return;
+            setActivityLog(prev => ({
+              ...prev,
+              [mid]: rows.map(a => ({
+                type: a.activity_type, desc: a.description, pts: a.points_change,
+                amount: a.amount ? parseFloat(a.amount) : null,
+                date: utcToLocal(a.created_at) || '', station: a.station_id || '',
+              })),
+            }));
+          });
+        }
+      });
+      reloadMyRedemptions();
+      sb.from('purchases')
+        .select('id, operator_id, station_id, points_earned, amount, created_at')
+        .eq('member_id', mid).order('created_at', { ascending: false }).limit(1)
+        .then(({ data }) => { const p = data?.[0]; if (p) openRatingFor(p, { onlyIfNew: true }); })
+        .catch(() => { /* sin red: nada que hacer */ });
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, [me?.id, authScreen, refreshMe, reloadMyRedemptions, openRatingFor]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ===== REALTIME: Modal de calificación de operador tras COMBUSTIBLE =====
   // FIX-MODAL: señal correcta para abrir el modal de estrellas. Antes lo
   // disparaba el handler de members por delta de visits (newVisits > prevVisits)
@@ -267,43 +378,15 @@ export default function useMemberRealtime({
         filter: `member_id=eq.${me.id}`,
       }, (payload) => {
         const p = payload.new;
-        const opId = p.operator_id;
-        const stId = p.station_id;
-        console.log('[Realtime] purchase insert:', p.id, 'op_id:', opId, 'station_id:', stId);
+        console.log('[Realtime] purchase insert:', p.id, 'op_id:', p.operator_id, 'station_id:', p.station_id);
         // Sin operador no hay a quién calificar; el modal es solo de la vista cliente.
-        if (!opId || viewRef.current !== 'client') return;
-        // El cliente suele tener su Código QR abierto (se lo mostró al
-        // operador para la compra): cerrarlo para que el modal de
-        // calificación quede al frente (pedido del dueño 25-jul).
-        setShowQR(false); setQrClosing(false);
-        const stationName = stations.find(s => s.id === stId)?.name || '';
-        // PROMO-1: el modal muestra los puntos de la compra y la promo aplicada.
-        const base = {
-          purchaseId: p.id,
-          operatorId: opId,
-          stationName,
-          points: p.points_earned ?? null,
-          amount: p.amount ?? null,
-        };
-        const op = operators.find(o => o.id === opId);
-        if (op) {
-          setPendingOpRating({ ...base, operatorName: op.name });
-        } else {
-          sb.from('operators').select('name').eq('id', opId).single().then(r => {
-            setPendingOpRating({ ...base, operatorName: r.data?.name || 'Operador' });
-          });
-        }
-        // La promo llega en query aparte (promo_applications, misma tx que la
-        // compra → ya commiteada). Enriquecer el modal si sigue abierto.
-        fetchPurchasePromo(p.id).then(({ data: promo }) => {
-          if (promo) setPendingOpRating(prev => (prev ? { ...prev, promo } : prev));
-        });
+        openRatingFor(p);
       })
       .subscribe((status) => {
         console.log('[Realtime] purchases subscription:', status);
       });
     return () => sb.removeChannel(ch);
-  }, [me?.id, sbConnected, operators, stations]);
+  }, [me?.id, sbConnected, openRatingFor]);
 
   // ===== REALTIME: Actualizar rating del operador en tiempo real =====
   useEffect(() => {

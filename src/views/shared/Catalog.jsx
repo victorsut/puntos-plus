@@ -15,12 +15,15 @@ import { originFromEvent } from '../../lib/motionOrigin';
 import { rewardLocationNames } from '../../lib/rewardLocations';
 
 export default function Catalog(ctx) {
-  const { rewards, me, gT, cfg, cTier, catF, setCatF, redeem, setRedeemConfirm, client = true, redeemedList, activityLog, dark: modeDark, showQR, catPendingSignal, rewardQrCloseSignal, stations = [], stores = [] } = ctx;
+  const { rewards, me, gT, cfg, cTier, catF, setCatF, redeem, setRedeemConfirm, client = true, redeemedList, activityLog, dark: modeDark, showQR, catPendingSignal, rewardQrCloseSignal, stations = [], stores = [], sbLoading = false } = ctx;
   // El modo claro/oscuro solo aplica a la vista del cliente — en el
   // panel admin el catálogo conserva su presentación clara actual.
   const dark = client && !!modeDark;
   const t    = me ? gT(me.gallons) : gT(0);
   const visible = (rewards || []).filter(r => r.active !== false);
+  // UX-11 (7-nov-2026): mientras el boot no trae el catálogo, esqueleto
+  // en vez de "No hay premios en esta categoría" (se veía varios segundos).
+  const booting = client && sbLoading && visible.length === 0;
   // Solo categorías CON premios activos (4-ago, pedido del dueño): una
   // categoría vacía no aparece hasta que el admin le asigne un premio.
   // El orden lo sigue marcando CAT_LABELS (estable entre renders).
@@ -212,7 +215,17 @@ export default function Catalog(ctx) {
         })}
       </div>
 
-      {filtered.length === 0 && (
+      {booting && (
+        <div aria-busy="true" aria-label="Cargando premios" style={{ padding: '0 14px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          {[0, 1, 2, 3].map(i => (
+            <div key={i} className="pp-skeleton" style={{
+              borderRadius: 20, height: 172, animationDelay: `${i * 120}ms`,
+              background: dark ? 'rgba(255,255,255,.07)' : '#fff',
+            }} />
+          ))}
+        </div>
+      )}
+      {filtered.length === 0 && !booting && (
         <div style={{ textAlign: 'center', padding: 40, color: subTxt, fontSize: 13, fontWeight: 700 }}>
           No hay premios en esta categoría
         </div>
