@@ -26,7 +26,10 @@ export function friendlyError(err, fallback = 'Algo salió mal. Intentá de nuev
   if (isNetworkError(err)) return OFFLINE_MSG;
   const msg = typeof err === 'string' ? err : err?.message;
   if (!msg) return fallback;
-  // Mensajes técnicos de PostgREST/Postgres que no son de negocio
-  if (/^(PGRST|[0-9A-Z]{5}:)|permission denied|function .* does not exist|JSON object requested|invalid input syntax/i.test(msg)) return fallback;
+  // Mensajes técnicos de PostgREST/Postgres que no son de negocio (los de
+  // negocio salen de RAISE con texto en español; PostgREST pone su código
+  // en err.code, p. ej. PGRST202 "Could not find the function…")
+  if (/^PGRST/.test(err?.code || '')) return fallback;
+  if (/^(PGRST|[0-9A-Z]{5}:)|permission denied|function .* does not exist|Could not find the function|schema cache|JSON object requested|invalid input syntax/i.test(msg)) return fallback;
   return msg;
 }

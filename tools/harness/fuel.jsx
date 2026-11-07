@@ -7,6 +7,8 @@
 //   ?approx=1 → E3i: 12 cargas PARCIALES con km (nunca llena ni reserva)
 //               → tramos aproximados de 8+ cargas, method 'approx'
 //   ?approx=2 → E3i: 2 llenos y luego 12 parciales → 1 exacta + 1 tramo
+//   ?err=1   → UX-08 (7-nov): sin preload y sin backend → tarjeta
+//              "No se pudo cargar…" con botón Reintentar (antes: sección oculta)
 // Uso: npx vite --config tools/harness/vite.harness.config.js
 //      http://localhost:3100/tools/harness/fuel.html?hist=1
 import { useEffect } from 'react';
@@ -21,6 +23,7 @@ const q = new URLSearchParams(location.search);
 // ?tour=veh-fuel|veh-fuel-log|veh-history: monta el tutorial y avanza hasta ese paso (22-sep)
 const tourTo = q.get('tour');
 const dark = q.get('dark') === '1';
+if (q.get('err') === '1') window.__PP_MOCK_FUEL_FAIL = true; // UX-08: la RPC "falla por red"
 
 const navi = {
   id: 'v-navi', vtype: 'moto', brand: 'Honda', model: 'Navi', plate: 'M033LDJ',
@@ -103,7 +106,7 @@ function Harness() {
   return (
     <div style={{ minHeight: '100vh', background: dark ? '#0D0D0F' : '#fff', padding: '16px 18px 40px', maxWidth: 384, margin: '0 auto', boxSizing: 'border-box' }}>
       <VehicleFuel dark={dark} fire={(m) => console.log('[toast]', m)} vehicles={[navi]} vehicle={navi}
-        stats={stats} onStatsDirty={() => {}} preload={loads} preloadEvents={events} />
+        stats={stats} onStatsDirty={() => {}} preload={q.get('err') === '1' ? null : loads} preloadEvents={events} />
       {tourTo && <ClientTour dark={dark} cScr="veh" setCScr={() => {}} onClose={() => {}} initialStep={Math.max(0, TOUR_STEPS.findIndex(s => s.target === tourTo))} />}
     </div>
   );

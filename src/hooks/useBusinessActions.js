@@ -14,7 +14,11 @@ import { getMemberToken } from '../services/sessionTokens';
 import { localDate } from '../lib/dates';
 import { sendPushToMember } from '../lib/pushNotifications';
 import { firstName } from '../lib/text'; // regla 29-jul: al cliente solo el primer nombre del personal
-import { friendlyError, isNetworkError } from '../lib/netError';
+import { friendlyError, isNetworkError, OFFLINE_MSG } from '../lib/netError';
+import { getMyMember } from '../services/authService';
+import { fetchMyRedemptions } from '../services/secureReads';
+import { mapMember } from '../lib/mapMember';
+import { utcToLocal } from '../lib/dates';
 
 export default function useBusinessActions({
   me, curMonth, fire, sbConnected, loggedOp,
@@ -35,6 +39,27 @@ export default function useBusinessActions({
     return true;
   };
   const unlock = () => { busyRef.current = null; setActionBusy(null); };
+  // UX-09: `sbConnected` significa "boot terminado" y nunca vuelve a
+  // false; la señal real de estar sin red es navigator.onLine.
+  const offline = () => typeof navigator !== 'undefined' && navigator.onLine === false;
+  // UX-09: tras un fallo de RED en canje/compra el servidor pudo haber
+  // procesado la operación (respuesta perdida) → releer saldo (y canjes)
+  // para que la pantalla no muestre puntos que ya no están.
+  const reconcile = useCallback(async (withRedemptions) => {
+    try {
+      const r = await getMyMember();
+      if (r.ok && r.member) setMe(prev => (prev ? { ...prev, ...mapMember(r.member) } : prev));
+      if (withRedemptions) {
+        const rows = await fetchMyRedemptions();
+        if (rows.length) setRedeemedList(rows.map(rd => ({
+          id: rd.id, memberId: rd.member_id,
+          reward: { name: rd.reward_name || 'Premio', icon: rd.reward_icon || '🎁', cat: rd.reward_category || '' },
+          cost: rd.points_spent, date: utcToLocal(rd.created_at) || '', code: rd.redemption_code,
+          collected: rd.collected || false, expiresAt: rd.expires_at || null,
+        })));
+      }
+    } catch { /* sin red todavía: se reconcilia al siguiente arranque */ }
+  }, [setMe, setRedeemedList]);
   // ===== SUPABASE WRITE HELPERS =====
   const logActivity = useCallback((memberId, type, desc, ptsChange, amount) => {
     // SEC.C.3: el INSERT directo de activity_log quedó revocado — este
@@ -133,7 +158,7 @@ export default function useBusinessActions({
   // salía siempre, incluso si el RPC rechazaba).
   const addPurchase = useCallback(async (cid, a, f) => {
     if (!a || a < 10) { fire('Mínimo Q10'); return false; }
-    if (!sb || !sbConnected) { fire('Sin conexión'); return false; }
+    if (!sb || !sbConnected || offline()) { fire(OFFLINE_MSG); return false; }
 
     const stationName = loggedOp?.station || '';
 
@@ -248,7 +273,7 @@ export default function useBusinessActions({
   // Devuelve true si el canje se completó (las hojas cierran al terminar).
   const redeem = useCallback(async (r) => {
     if (!me?.id) return false;
-    if (!sb || !sbConnected) { fire('Sin conexión'); return false; }
+    if (!sb || !sbConnected || offline()) { fire(OFFLINE_MSG); return false; }
     if (!r.id) { fire('Premio sin ID válido'); return false; }
     if (!lock('redeem')) return false; // UX-03: ya hay un canje en curso
 
@@ -261,6 +286,7 @@ export default function useBusinessActions({
 
       if (error) {
         fire('❌ ' + friendlyError(error, 'No se pudo canjear. Intentá de nuevo.'));
+        if (error.network) reconcile(true); // UX-09: ¿se canjeó sin respuesta?
         return false;
       }
 
@@ -284,7 +310,7 @@ export default function useBusinessActions({
     } finally {
       unlock();
     }
-  }, [me, fire, sbConnected]);
+  }, [me, fire, sbConnected, reconcile]);
 
   // ──────────────────────────────────────────────
   // buyTickets — delega en RPC buy_raffle_tickets
@@ -295,7 +321,7 @@ export default function useBusinessActions({
   const buyTickets = useCallback(async (n) => {
     if (!me?.id) return false;
     if (!n || n < 1) { fire('Cantidad inválida'); return false; }
-    if (!sb || !sbConnected) { fire('Sin conexión'); return false; }
+    if (!sb || !sbConnected || offline()) { fire(OFFLINE_MSG); return false; }
     if (!lock('buy')) return false; // UX-03: ya hay una compra en curso
 
     try {
@@ -324,6 +350,7 @@ export default function useBusinessActions({
 
       if (error) {
         fire('❌ ' + friendlyError(error, 'No se pudieron comprar los boletos. Intentá de nuevo.'));
+        if (error.network) reconcile(false); // UX-09: ¿se cobró sin respuesta?
         return false;
       }
 
@@ -347,7 +374,7 @@ export default function useBusinessActions({
     } finally {
       unlock();
     }
-  }, [me, fire, curMonth, sbConnected]);
+  }, [me, fire, curMonth, sbConnected, reconcile]);
 
   // ──────────────────────────────────────────────
   // doSurvey — delega en RPC complete_survey

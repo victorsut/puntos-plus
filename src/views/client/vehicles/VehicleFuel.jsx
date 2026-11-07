@@ -25,11 +25,17 @@ import FuelLogForm from './FuelLogForm';
 import FuelHistoryRow from './FuelHistoryRow';
 import FuelEventRow from './FuelEventRow';
 import { fmtN, fmtDay, fmtMonth } from './fuelFmt';
+import { friendlyError } from '../../../lib/netError';
+
+// RPC inexistente (migración pendiente / arnés sin backend) → la sección
+// no aparece; cualquier OTRO fallo (red, timeout) se avisa con reintento (UX-08).
+const rpcMissing = (error) => /PGRST202|42883|does not exist|Could not find the function/i.test(`${error?.code || ''} ${error?.message || ''}`);
 
 // `preload` / `preloadEvents`: datos iniciales para el arnés de vista
 // previa (sin backend); en producción no se pasan y bajan por RPC.
 export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onStatsDirty, preload = null, preloadEvents = null }) {
   const [loads, setLoads] = useState(preload);    // null=cargando · false=sin RPC · []=vacío
+  const [loadErr, setLoadErr] = useState(null);   // UX-08: fallo de carga (texto) — se ofrece Reintentar
   // E3g: movimientos del vehículo (servicios, alta, edición, silencio)
   // — se intercalan con las cargas en el Historial del vehículo. Si la
   // migración 20260921d no está, queda [] y el historial sigue igual.
@@ -49,22 +55,25 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
   const [delLogArmed, setDelLogArmed] = useState(null); // id armado para borrar
   const [histOpen, setHistOpen] = useState(false);    // E3d: historial contraído por defecto
 
-  const fetchLoads = () => listMyFuelHistory().then(({ data, error }) => {
-    if (error || !data?.ok) { setLoads(false); return; }
+  const applyLoads = ({ data, error }) => {
+    if (error || !data?.ok) {
+      if (error && rpcMissing(error)) { setLoads(false); return; }
+      // UX-08: antes cualquier error ocultaba TODA la sección en silencio
+      setLoadErr(friendlyError(error, 'No se pudo cargar tu consumo.'));
+      setLoads(ls => (Array.isArray(ls) ? ls : null));
+      return;
+    }
+    setLoadErr(null);
     setLoads(Array.isArray(data.loads) ? data.loads : []);
     if (data.editable_days) setEditableDays(data.editable_days);
-  });
+  };
+  const fetchLoads = () => { setLoadErr(null); return listMyFuelHistory().then(applyLoads); };
   useEffect(() => {
     if (preload) return;
     let alive = true;
-    listMyFuelHistory().then(({ data, error }) => {
-      if (!alive) return;
-      if (error || !data?.ok) { setLoads(false); return; }
-      setLoads(Array.isArray(data.loads) ? data.loads : []);
-      if (data.editable_days) setEditableDays(data.editable_days);
-    });
+    listMyFuelHistory().then(res => { if (alive) applyLoads(res); });
     return () => { alive = false; };
-  }, [preload]);
+  }, [preload]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const ink = dark ? '#fff' : '#0D0D0D';
   const sub = dark ? 'rgba(255,255,255,.5)' : '#9E9E9E';
@@ -149,7 +158,9 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
   const autonomia = vehicle?.tank_gal > 0 && kmgal > 0 ? Math.round(vehicle.tank_gal * kmgal) : null;
   const hasKm = mine.some(l => l.km_reading != null);
 
-  if (loads === false || !vehicle) return null; // migración pendiente o sin vehículo
+  // (el retorno "migración pendiente / sin vehículo" va al FINAL, después de
+  // todos los hooks — UX-08: acá arriba violaba las Rules of Hooks y
+  // tronaba el componente cuando la RPC fallaba tras el primer render)
 
   // Nota del indicador de rendimiento según el método y la tendencia
   // (E3d: caída ≥10 % vs tu promedio = aviso; solo con ≥3 ventanas)
@@ -201,7 +212,7 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
   // sus cargas) y su fecha — base del bloqueo de lecturas en el registro
   // manual (kmReadingProblem; el servidor repite la regla)
   const { lastKm, lastAt } = (() => {
-    let lastKm = vehicle.km || 0, lastAt = vehicle.km_updated_at || null;
+    let lastKm = vehicle?.km || 0, lastAt = vehicle?.km_updated_at || null;
     for (const l of mine) {
       if (l.km_reading != null && l.km_reading >= lastKm) { lastKm = l.km_reading; lastAt = l.created_at; }
     }
@@ -263,6 +274,8 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
   const setGap = (l, gap) => patchLoad(l, { gap_before: gap },
     () => setMyFuelLoadGap({ loadId: l.id, source: l.source, gap }),
     gap ? 'Marcada: hubo cargas sin registrar — la medición reinicia aquí' : 'Quitada la marca de cargas sin registrar');
+
+  if (loads === false || !vehicle) return null; // migración pendiente o sin vehículo
 
   return (
     <div style={{ marginTop: 22 }}>
@@ -367,8 +380,17 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
         </div>
       )}
 
-      {loads === null && (
+      {loads === null && !loadErr && (
         <div style={{ fontSize: 12, color: sub, fontWeight: 600 }}>Cargando…</div>
+      )}
+      {loadErr && (
+        <div style={{ background: cardBg, borderRadius: 17, padding: '14px', fontSize: 12.5, color: sub, fontWeight: 600, lineHeight: 1.5 }}>
+          {loadErr}
+          <button onClick={fetchLoads} style={{
+            display: 'block', marginTop: 10, padding: '10px 16px', borderRadius: 12, border: 'none', cursor: 'pointer',
+            background: BRAND_ORANGE, color: '#fff', fontFamily: "'DM Sans'", fontSize: 13, fontWeight: 800,
+          }}>Reintentar</button>
+        </div>
       )}
       {Array.isArray(loads) && loads.length === 0 && (
         <div style={{ background: cardBg, borderRadius: 17, padding: '14px', fontSize: 12.5, color: sub, fontWeight: 600, lineHeight: 1.5 }}>

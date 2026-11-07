@@ -9,6 +9,7 @@
 
 import { sb } from '../lib/supabaseClient';
 import { notifySessionExpired } from './sessionExpiry'; // SEC.B.8.2: rechazo reactivo de sesión (28000)
+import { isNetworkError, OFFLINE_MSG } from '../lib/netError'; // UX-09
 
 // ──────────────────────────────────────────────
 // Helper genérico para llamadas RPC
@@ -30,6 +31,13 @@ export async function callRpc(fnName, params, { sessionToken } = {}) {
     if (error.code === '28000') {
       notifySessionExpired();
       return { data: null, error, sessionExpired: true };
+    }
+    // UX-09 (7-nov-2026): un fallo de transporte ("TypeError: Failed to
+    // fetch", timeout…) llega a TODAS las pantallas como mensaje del
+    // socio; `network: true` permite al caller reconciliar (el servidor
+    // pudo haber procesado la llamada aunque la respuesta se perdiera).
+    if (isNetworkError(error)) {
+      return { data: null, error: { ...error, message: OFFLINE_MSG, network: true } };
     }
     return { data: null, error };
   }

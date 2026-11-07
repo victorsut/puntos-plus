@@ -10,6 +10,8 @@
 import { useState } from 'react';
 import { BRAND_ORANGE } from '../../../constants/styles';
 import { confirmMyVehicleService } from '../../../services/vehicleService';
+import { kmReadingProblem } from '../../../lib/fuelEconomy';
+import { friendlyError } from '../../../lib/netError';
 import BottomSheet from '../../../components/ui/BottomSheet';
 
 const todayISO = () => {
@@ -51,6 +53,25 @@ export default function ServiceConfirmSheet({ vehicle: v, dark, fire, onClose, o
   }));
   const set = (k, val) => setF(p => ({ ...p, [k]: val }));
 
+  // UX-07 (7-nov-2026): el km "al hacerlo" entra a la ficha y a la cadena de
+  // lecturas — un dedazo (520000 por 52000) dejaba rechazadas todas las
+  // cargas reales ("menores que tu última lectura"). Misma regla que el
+  // registro manual (kmReadingProblem; el servidor la repite con
+  // assert_vehicle_km a la fecha del servicio): nunca por debajo del
+  // servicio anterior; a la fecha de hoy nunca por debajo de la última
+  // lectura; nunca disparado. Un servicio de días atrás SÍ puede traer
+  // menos km que la ficha de hoy (el servidor lo acota a esa fecha).
+  const kmNum = /^\d{1,7}$/.test(f.km) ? parseInt(f.km, 10) : null;
+  const kmErr = (() => {
+    if (kmNum == null) return null;
+    if (v.last_service_km != null && kmNum < v.last_service_km) {
+      return `Los km (${fmtKm(kmNum)}) son menores que los del servicio anterior (${fmtKm(v.last_service_km)}).`;
+    }
+    const at = f.done_on ? new Date(`${f.done_on}T12:00:00`) : new Date();
+    const prob = kmReadingProblem(kmNum, v.km, v.km_updated_at, at);
+    return prob && (kmNum >= (v.km || 0) || f.done_on >= today) ? prob : null;
+  })();
+
   // Estado actual del servicio (para el encabezado)
   const name = [v.brand, v.model].filter(Boolean).join(' ') || 'tu vehículo';
   const days = v.next_service ? diffDays(today, v.next_service) : null;
@@ -83,6 +104,7 @@ export default function ServiceConfirmSheet({ vehicle: v, dark, fire, onClose, o
     if (!f.done_on || f.done_on > today) { fire('La fecha del servicio no puede ser futura', 'warn'); return; }
     const km = f.km === '' ? null : parseInt(f.km, 10);
     const nextKm = f.next_service_km === '' ? null : parseInt(f.next_service_km, 10);
+    if (kmErr) { fire(kmErr, 'warn'); return; }
     if (!f.next_service && nextKm == null) { fire('Anota el próximo servicio: una fecha o un kilometraje', 'warn'); return; }
     if (f.next_service && f.next_service <= f.done_on) { fire('El próximo servicio debe ser después del realizado', 'warn'); return; }
     if (nextKm != null && km != null && nextKm <= km) { fire('El kilometraje del próximo servicio debe ser mayor al actual', 'warn'); return; }
@@ -91,7 +113,7 @@ export default function ServiceConfirmSheet({ vehicle: v, dark, fire, onClose, o
       vehicleId: v.id, doneOn: f.done_on, km, nextService: f.next_service || null, nextServiceKm: nextKm,
     });
     setSaving(false);
-    if (error) { fire('Error: ' + (error.message || 'no se pudo guardar'), 'error'); return; }
+    if (error) { fire(friendlyError(error, 'No se pudo guardar el servicio. Intentá de nuevo.'), 'error'); return; }
     const nxt = data.vehicle.next_service ? fmtDate(data.vehicle.next_service)
       : `${fmtKm(data.vehicle.next_service_km)}`;
     fire(`Servicio registrado · próximo: ${nxt}`, 'success');
@@ -133,9 +155,12 @@ export default function ServiceConfirmSheet({ vehicle: v, dark, fire, onClose, o
               <div style={small}>Kilometraje al hacerlo</div>
               <input value={f.km} inputMode="numeric" placeholder={v.km != null ? String(v.km) : '52000'}
                 onChange={e => set('km', e.target.value.replace(/[^0-9]/g, '').slice(0, 7))}
-                style={{ ...input, fontFamily: "'JetBrains Mono', monospace" }} />
+                style={{ ...input, fontFamily: "'JetBrains Mono', monospace", border: kmErr ? '1.5px solid #E65100' : 'none' }} />
             </div>
           </div>
+          {kmErr && (
+            <div style={{ fontSize: 10.5, color: '#E65100', fontWeight: 700, marginTop: 6, lineHeight: 1.4 }}>{kmErr}</div>
+          )}
 
           <label style={lbl}>Próximo servicio</label>
           <div style={{ display: 'flex', gap: 10 }}>
