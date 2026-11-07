@@ -78,12 +78,12 @@ export default function FuelEventRow({ e, dark, ink, sub, cardBg, name, dot }) {
         <div style={{ fontSize: 12.5, fontWeight: 800, color: ink }}>
           {fmtDay(e.created_at)}<span style={{ color: sub, fontWeight: 600 }}> · {title}</span>
         </div>
-        {detail && <div style={{ fontSize: 10.5, color: sub, fontWeight: 600, marginTop: 1, lineHeight: 1.45 }}>{detail}</div>}
+        {detail && <div style={{ fontSize: 11.5, color: sub, fontWeight: 600, marginTop: 1, lineHeight: 1.45 }}>{detail}</div>}
       </div>
       {name && (
         <span style={{
           display: 'inline-flex', alignItems: 'center', gap: 5, maxWidth: 120, flexShrink: 0,
-          fontSize: 10.5, fontWeight: 800, color: ink,
+          fontSize: 11.5, fontWeight: 800, color: ink,
           background: dark ? 'rgba(255,255,255,.08)' : '#fff', borderRadius: 20, padding: '5px 9px',
         }}>
           {dot && <span style={{ width: 8, height: 8, borderRadius: 4, background: dot, flexShrink: 0 }} />}

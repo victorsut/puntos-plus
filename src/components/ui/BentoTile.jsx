@@ -47,7 +47,7 @@ export default function BentoTile({
       {badge && (
         <span style={{
           position: 'absolute', top: 8, right: 8, zIndex: 2,
-          fontSize: 8, fontWeight: 900, letterSpacing: 0.5,
+          fontSize: 10, fontWeight: 900, letterSpacing: 0.5,
           background: 'rgba(255,255,255,.25)', padding: '3px 7px', borderRadius: 8,
         }}>
           {badge}

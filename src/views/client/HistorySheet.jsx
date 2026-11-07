@@ -186,7 +186,7 @@ export default function HistorySheet({ type, origin, tint, accent, accentInk, on
   const typeLabel = typeFilter === 'todos' ? null : (TYPE_GROUPS.find(g => g.id === typeFilter)?.label || null);
 
   const subChip = (selected) => ({
-    padding: '8px 14px', borderRadius: 12, border: 'none', flexShrink: 0,
+    padding: '10px 14px', minHeight: 38, borderRadius: 12, border: 'none', flexShrink: 0,
     background: selected ? TH.chipOn : TH.surface,
     color: selected ? TH.chipInk : TH.txt,
     fontFamily: "'DM Sans'", fontSize: 12, fontWeight: 700, cursor: 'pointer',
@@ -258,7 +258,7 @@ export default function HistorySheet({ type, origin, tint, accent, accentInk, on
                 position: 'absolute', top: 3, right: 3,
                 minWidth: 16, height: 16, borderRadius: 8, padding: '0 4px',
                 background: bento.red, color: '#fff',
-                fontSize: 9.5, fontWeight: 800, lineHeight: '16px',
+                fontSize: 10, fontWeight: 800, lineHeight: '16px',
                 fontFamily: "'DM Sans'", boxSizing: 'border-box',
               }}>
                 {pendingCount}
@@ -320,7 +320,7 @@ export default function HistorySheet({ type, origin, tint, accent, accentInk, on
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 12.5, fontWeight: 700, color: TH.txt, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stripEmojis(a.desc)}</div>
-                    <div style={{ fontSize: 10, color: TH.sub, ...sMono, marginTop: 2 }}>{fmtDay(day)}</div>
+                    <div style={{ fontSize: 11, color: TH.sub, ...sMono, marginTop: 2 }}>{fmtDay(day)}</div>
                   </div>
                   <div style={{ fontSize: 13, fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: pos ? good : bad, flexShrink: 0 }}>
                     {pos ? '+' : ''}{pts}
@@ -350,11 +350,11 @@ export default function HistorySheet({ type, origin, tint, accent, accentInk, on
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: TH.txt, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stripEmojis(rd.reward?.name) || 'Premio'}</div>
-                  <div style={{ fontSize: 10, color: TH.sub, ...sMono, marginTop: 2 }}>{fmtDay(itemDay(rd.date))} · {rd.code}</div>
+                  <div style={{ fontSize: 11, color: TH.sub, ...sMono, marginTop: 2 }}>{fmtDay(itemDay(rd.date))} · {rd.code}</div>
                   {!rd.collected && !expired && (() => {
                     const locs = locsFor(rd);
                     return locs && (
-                      <div style={{ fontSize: 10.5, fontWeight: 700, color: dark ? '#FFD54F' : '#B58000', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: 11.5, fontWeight: 700, color: dark ? '#FFD54F' : '#B58000', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         Válido en: {locs.join(' · ')}
                       </div>
                     );
@@ -365,7 +365,7 @@ export default function HistorySheet({ type, origin, tint, accent, accentInk, on
                   <div style={{
                     display: 'inline-block', marginTop: 3,
                     padding: '3px 8px', borderRadius: 8,
-                    fontSize: 9, fontWeight: 800, letterSpacing: 0.3,
+                    fontSize: 10.5, fontWeight: 800, letterSpacing: 0.3,
                     background: rd.collected
                       ? (dark ? 'rgba(30,122,51,.25)' : 'rgba(30,122,51,.12)')
                       : expired
@@ -381,7 +381,7 @@ export default function HistorySheet({ type, origin, tint, accent, accentInk, on
                   </div>
                   {!rd.collected && !expired && (
                     <div style={{
-                      fontSize: 9, fontWeight: 800, marginTop: 4, letterSpacing: 0.5,
+                      fontSize: 11, fontWeight: 800, marginTop: 6, letterSpacing: 0.5, padding: '4px 0',
                       color: dark ? '#FFD54F' : '#B58000',
                     }}>
                       VER QR ›

@@ -206,33 +206,36 @@ export default function ClientLogin(ctx) {
       {authError && (
         <div style={{
           background: dark ? 'rgba(214,40,26,.18)' : '#FFEBEE', color: dark ? '#FF8A80' : '#C62828', padding: '10px 14px',
-          borderRadius: 12, fontSize: 12, fontWeight: 700, marginBottom: 16, textAlign: 'center',
+          borderRadius: 12, fontSize: 13, fontWeight: 700, marginBottom: 16, textAlign: 'center',
         }}>
           {authError}
         </div>
       )}
 
-      {/* Phone + Password */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+      {/* Phone + Password — UX-29 (7-nov-2026): formulario real (Enter envía,
+          el gestor de contraseñas reconoce teléfono + contraseña) */}
+      <form onSubmit={(e) => { e.preventDefault(); if (!loggingIn) doLogin(); }} style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
         <div style={{ position: 'relative' }}>
           <div style={iconBox}><Phone /></div>
           <input placeholder="Número de teléfono" value={phoneMask.format(loginPhone || '')} inputMode="numeric"
+            type="tel" name="phone" autoComplete="tel-national" enterKeyHint="next"
             onChange={e => { setLoginPhone(phoneMask.clean(e.target.value)); clearAuthErr(); }} style={{ ...field, paddingLeft: 44 }} />
         </div>
         <PasswordInput placeholder="Contraseña" value={loginPass}
+          name="password" autoComplete="current-password" enterKeyHint="go"
           onChange={e => { setLoginPass(e.target.value); clearAuthErr(); }}
           style={{ ...field, paddingLeft: 44, paddingRight: 50 }}
           leftIcon={<div style={iconBox}><Lock /></div>} />
         {showForgot && (
-          <button onClick={requestPasswordReset}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', alignSelf: 'flex-end', padding: 0, fontSize: 12, fontWeight: 700, color: BRAND_ORANGE, fontFamily: "'DM Sans'", animation: 'fadeIn .3s ease' }}>
+          <button type="button" onClick={requestPasswordReset}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', alignSelf: 'flex-end', padding: '10px 4px', margin: '-8px 0', minHeight: 44, fontSize: 13, fontWeight: 700, color: BRAND_ORANGE, fontFamily: "'DM Sans'", animation: 'fadeIn .3s ease' }}>
             ¿Olvidaste tu contraseña?
           </button>
         )}
-        <button onClick={doLogin} disabled={loggingIn} style={{ ...btnStyle, background: BRAND_ORANGE, color: '#fff', opacity: loggingIn ? .7 : 1 }}>
+        <button type="submit" disabled={loggingIn} style={{ ...btnStyle, background: BRAND_ORANGE, color: '#fff', opacity: loggingIn ? .7 : 1 }}>
           {loggingIn ? 'Ingresando...' : 'Iniciar sesión'}
         </button>
-      </div>
+      </form>
 
       {/* Divider */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0' }}>
@@ -297,7 +300,7 @@ export default function ClientLogin(ctx) {
       <div style={{ textAlign: 'center' }}>
         <span style={{ fontSize: 13, color: sub }}>¿No tienes cuenta? </span>
         <button onClick={startRegister}
-          style={{ background: 'none', border: 'none', color: BRAND_ORANGE, fontWeight: 800, fontSize: 13, cursor: 'pointer', fontFamily: "'DM Sans'", padding: 0 }}>
+          style={{ background: 'none', border: 'none', color: BRAND_ORANGE, fontWeight: 800, fontSize: 13, cursor: 'pointer', fontFamily: "'DM Sans'", padding: '12px 8px', minHeight: 44 }}>
           Regístrate
         </button>
       </div>

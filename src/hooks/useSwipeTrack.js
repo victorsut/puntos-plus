@@ -78,6 +78,8 @@ export default function useSwipeTrack({ count, idx, setIdx }) {
 // sobre nodos vivos — sin remontar). `els` = nodos (los null se ignoran);
 // cada uno con retraso escalonado `stagger` ms a partir de `delay`.
 export function slideIn(els, dir, { delay = 0, stagger = 45, duration = 380, scale = true } = {}) {
+  // UX-47 (7-nov-2026): sin animación si el sistema pide reducir movimiento
+  if (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const from = `${dir * 28}px`;
   els.filter(Boolean).forEach((el, i) => el.animate(
     [{ opacity: 0, transform: `translateX(${from})${scale ? ' scale(.96)' : ''}` }, { opacity: 1, transform: 'none' }],

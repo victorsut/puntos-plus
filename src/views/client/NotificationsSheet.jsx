@@ -116,7 +116,7 @@ export default function NotificationsSheet({ origin, onClose, notifs, markRead, 
         {/* Limpiar todas — doble tap de confirmación (14-ago) */}
         {items.length > 0 ? (
           <button onClick={onClearAll} style={{
-            border: 'none', cursor: 'pointer', background: 'none', padding: '4px 0',
+            border: 'none', cursor: 'pointer', background: 'none', padding: '10px 0 10px 12px', minHeight: 44,
             minWidth: 52, flexShrink: 0, textAlign: 'right',
             fontFamily: "'DM Sans'", fontSize: 12, fontWeight: 800,
             color: confirmClear ? bento.red : BRAND_ORANGE,
@@ -177,7 +177,7 @@ export default function NotificationsSheet({ origin, onClose, notifs, markRead, 
               {/* Quitar ESTA notificación (14-ago) */}
               <button onClick={(e) => { e.stopPropagation(); clearNotifs?.(n.id); }} aria-label="Quitar notificación" style={{
                 border: 'none', cursor: 'pointer', background: 'none',
-                color: TH.sub, padding: 4, margin: '-4px -6px 0 0',
+                color: TH.sub, padding: 12, margin: '-12px -14px -12px -4px', // UX-30: 44 px
                 flexShrink: 0, display: 'flex', alignSelf: 'flex-start',
               }}>
                 <XMark />

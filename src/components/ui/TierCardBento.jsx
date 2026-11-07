@@ -35,11 +35,13 @@ export default function TierCardBento({ me, cTier, onOpenDetail, onPointsTap }) 
   const bg = isBlack
     ? 'radial-gradient(ellipse at 20% 30%, #0d0d1a 0%, #050508 40%, #000 100%)'
     : isPlat ? '#9EA7AD' : bento.gold;
-  const barBg = isBlack ? 'rgba(255,255,255,.18)' : 'rgba(0,0,0,.30)';
+  // UX-34 (7-nov-2026): PLATINO con tinta oscura (blanco sobre #9EA7AD daba
+  // 2.45:1); ORO conserva el blanco con una sombra suave que lo despega.
+  const barBg = isBlack ? 'rgba(255,255,255,.18)' : isPlat ? 'rgba(20,20,23,.22)' : 'rgba(0,0,0,.30)';
   // BLACK: acentos en dorado champán (referencia nivel black inicio) —
   // barra y puntos dorados sobre la galaxia.
   const gold = '#D8A94E';
-  const barFill = isBlack ? gold : '#fff';
+  const barFill = isBlack ? gold : isPlat ? '#141417' : '#fff';
 
   return (
     <div
@@ -50,7 +52,8 @@ export default function TierCardBento({ me, cTier, onOpenDetail, onPointsTap }) 
         borderRadius: bento.radius,
         padding: shortScr ? '14px 18px' : '18px 20px',
         margin: shortScr ? '10px 16px 0' : '12px 16px 0',
-        background: bg, color: '#fff',
+        background: bg, color: isPlat ? '#141417' : '#fff',
+        textShadow: isBlack || isPlat ? 'none' : '0 1px 2px rgba(0,0,0,.35)',
         position: 'relative', overflow: 'hidden', cursor: 'pointer',
       }}
     >

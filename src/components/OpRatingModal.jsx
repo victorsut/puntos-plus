@@ -229,11 +229,11 @@ export default function OpRatingModal({
             <div style={{ fontSize: 13.5, fontWeight: 700, color: dark ? '#E0E0E0' : '#424242', marginBottom: 12 }}>
               Califica la atención
             </div>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 18 }}>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 2, marginBottom: 18 }}>
               {[1, 2, 3, 4, 5].map(s => (
                 <button key={s} onClick={() => tapStar(s)} aria-label={`${s} estrellas`} aria-pressed={vehOpts ? s <= stars : undefined} style={{
                   background: 'none', border: 'none', cursor: 'pointer',
-                  color: bento.amber, padding: 2, lineHeight: 0,
+                  color: bento.amber, padding: 5, lineHeight: 0, // UX-30: 46 px por estrella
                   opacity: stars && s > stars ? .4 : 1,
                   transform: stars && s <= stars ? 'scale(1.08)' : 'none',
                   transition: 'transform .1s, opacity .15s',
@@ -320,11 +320,11 @@ export default function OpRatingModal({
                 {/* Carga sin registrar antes (reinicia la medición) — marca
                     opcional de bajo peso, no una pregunta más */}
                 <button onClick={() => { setGapSel(g => !g); vehSent.current = false; }} style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 8, padding: 0,
+                  display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 4, padding: '10px 0', minHeight: 44,
                   border: 'none', background: 'transparent', cursor: 'pointer',
-                  fontFamily: "'DM Sans'", fontSize: 10.5, fontWeight: 700, color: gapSel ? BRAND_ORANGE : '#9E9E9E',
+                  fontFamily: "'DM Sans'", fontSize: 12, fontWeight: 700, color: gapSel ? BRAND_ORANGE : subTxt,
                 }}>
-                  <span style={{ width: 13, height: 13, borderRadius: 4, border: `1.5px solid ${gapSel ? BRAND_ORANGE : '#9E9E9E'}`, background: gapSel ? BRAND_ORANGE : 'transparent', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 9 }}>{gapSel ? '✓' : ''}</span>
+                  <span style={{ width: 15, height: 15, borderRadius: 4, border: `1.5px solid ${gapSel ? BRAND_ORANGE : '#9E9E9E'}`, background: gapSel ? BRAND_ORANGE : 'transparent', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 9 }}>{gapSel ? '✓' : ''}</span>
                   Cargué en otro lado y no lo registré
                 </button>
               </div>

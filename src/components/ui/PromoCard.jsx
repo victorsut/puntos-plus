@@ -64,7 +64,7 @@ export default function PromoCard({ promo, ratio = '3:4', style = {}, onClick })
       {hasImage && (
         <img
           src={promo.image_url}
-          alt=""
+          alt="" loading="lazy" decoding="async"
           style={{
             position: 'absolute', inset: 0, width: '100%', height: '100%',
             objectFit: 'cover', objectPosition: 'center',

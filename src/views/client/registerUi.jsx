@@ -21,7 +21,7 @@ export function WizardHeader({ step, onBack, dark }) {
     <div style={{ marginBottom: 24 }}>
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: 18 }}>
         <button onClick={onBack} aria-label="Volver"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', color: ink, width: 40 }}>
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: ink, width: 44, height: 44, margin: '-8px 0 -8px -10px' }}>
           <ArrowLeft />
         </button>
         <div style={{ flex: 1, textAlign: 'center', fontSize: 16, fontWeight: 800, color: ink }}>Crear cuenta</div>
@@ -71,7 +71,7 @@ export function InfoBubble({ icon, color, text, dark }) {
 // `transform` post-procesa el crudo (ej. capWords); `autoCap` pasa
 // autoCapitalize al teclado del celular. `bubble` ({icon, color, text})
 // muestra un InfoBubble sobre el campo mientras está enfocado.
-export function Field({ icon, placeholder, fieldKey, type, inputMode, maxLen, bonus, mask, autoCap, transform, bubble,
+export function Field({ icon, placeholder, fieldKey, type, inputMode, maxLen, bonus, mask, autoCap, transform, bubble, autoComplete,
                         regProfile, setRegProfile, clearAuthErr, regOptional, dark }) {
   const [focused, setFocused] = useState(false);
   const val    = regProfile[fieldKey] || '';
@@ -81,7 +81,7 @@ export function Field({ icon, placeholder, fieldKey, type, inputMode, maxLen, bo
       {bubble && focused && <InfoBubble {...bubble} dark={dark} />}
       <div style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: '#9E9E9E', display: 'flex', zIndex: 1 }}>{icon}</div>
       <input
-        placeholder={placeholder} type={type || 'text'} inputMode={inputMode}
+        placeholder={placeholder} type={type || 'text'} inputMode={inputMode} autoComplete={autoComplete} name={fieldKey}
         maxLength={mask ? undefined : maxLen} autoCapitalize={autoCap}
         value={mask ? mask.format(val) : val}
         onFocus={bubble ? () => setFocused(true) : undefined}

@@ -89,12 +89,12 @@ export default function RafflePrizeCarousel({
                   <div style={{ display: 'flex', marginTop: 14, paddingTop: 12, borderTop: `1px solid ${rowLine}` }}>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 24, fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: BRAND_ORANGE }}>{myTickets}</div>
-                      <div style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: subTxt, marginTop: 1 }}>Mis boletos</div>
+                      <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: subTxt, marginTop: 1 }}>Mis boletos</div>
                     </div>
                     <div style={{ width: 1, background: rowLine }} />
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 24, fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: headerTxt }}>{totalTickets}</div>
-                      <div style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: subTxt, marginTop: 1 }}>Total del mes</div>
+                      <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: subTxt, marginTop: 1 }}>Total del mes</div>
                     </div>
                   </div>
                 </div>
@@ -109,10 +109,10 @@ export default function RafflePrizeCarousel({
         <div style={{ display: 'flex', justifyContent: 'center', gap: 6, margin: '6px 0 10px' }}>
           {months.map((rm, i) => (
             <button key={i} onClick={() => swipe.go(i)} aria-label={rm.m} style={{
-              width: i === idx ? 20 : 7, height: 7, borderRadius: 4, border: 'none', padding: 0, cursor: 'pointer',
+              width: i === idx ? 20 : 7, height: 7, borderRadius: 4, border: 'none', padding: 0, cursor: 'pointer', position: 'relative',
               background: i === idx ? BRAND_ORANGE : (dark ? 'rgba(255,255,255,.25)' : '#D5D5D8'),
               transition: 'width .25s ease',
-            }} />
+            }} ><span aria-hidden style={{ position: 'absolute', inset: -9 }} /></button>
           ))}
         </div>
       )}

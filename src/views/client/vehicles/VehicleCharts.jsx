@@ -25,9 +25,11 @@ const barPath = (x, y, w, y0, r) => {
 };
 
 // ── Rendimiento por tramo (línea) ────────────────────────────
-export function TrendChart({ points, avg, dark, ink, sub, surface }) {
+export function TrendChart({ points: allPoints, avg, dark, ink, sub, surface }) {
   const [sel, setSel] = useState(null);
-  if (!points || points.length < 2) return null;
+  // UX-47 (7-nov-2026): con muchas ventanas los puntos de toque se solapaban
+  const points = (allPoints || []).slice(-8);
+  if (points.length < 2) return null;
   const W = 320, H = 128, PL = 10, PR = 52, PT = 26, PB = 22;
   const vs = points.map(p => p.v);
   const lo = Math.min(...vs, avg), hi = Math.max(...vs, avg);
@@ -40,7 +42,7 @@ export function TrendChart({ points, avg, dark, ink, sub, surface }) {
     <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
       {/* referencia: promedio punteado (neutro, recesivo) */}
       <line x1={PL} x2={W - PR} y1={y(avg)} y2={y(avg)} stroke={sub} strokeWidth="1" strokeDasharray="3 4" opacity=".7" />
-      <text x={W - PR + 5} y={y(avg) + 3} fontSize="8.5" fontWeight="700" fill={sub} fontFamily="'DM Sans'">prom {fmtN(avg)}</text>
+      <text x={W - PR + 3} y={y(avg) + 3} fontSize="9.5" fontWeight="700" fill={sub} fontFamily="'DM Sans'">prom {fmtN(avg)}</text>
       {/* línea base sutil */}
       <line x1={PL} x2={W - PR} y1={H - PB} y2={H - PB} stroke={sub} strokeWidth="1" opacity=".25" />
       <path d={line} fill="none" stroke={DATA_C(dark)} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
@@ -56,15 +58,15 @@ export function TrendChart({ points, avg, dark, ink, sub, surface }) {
         {fmtN(points[last].v)} km/gal
       </text>
       {/* eje x: primera y última fecha */}
-      <text x={PL} y={H - 7} fontSize="9" fontWeight="700" fill={sub} fontFamily="'DM Sans'">{points[0].label}</text>
-      <text x={W - PR} y={H - 7} textAnchor="end" fontSize="9" fontWeight="700" fill={sub} fontFamily="'DM Sans'">{points[last].label}</text>
+      <text x={PL} y={H - 7} fontSize="10" fontWeight="700" fill={sub} fontFamily="'DM Sans'">{points[0].label}</text>
+      <text x={W - PR} y={H - 7} textAnchor="end" fontSize="10" fontWeight="700" fill={sub} fontFamily="'DM Sans'">{points[last].label}</text>
       {/* burbuja del punto tocado */}
       {sel != null && sel !== last && (
         <g>
           <rect x={Math.min(Math.max(x(sel) - 42, 2), W - 86)} y={Math.max(y(points[sel].v) - 26, 2)} width="84" height="17" rx="6"
             fill={dark ? '#2B2B31' : '#FFFFFF'} stroke={sub} strokeOpacity=".35" />
           <text x={Math.min(Math.max(x(sel) - 42, 2), W - 86) + 42} y={Math.max(y(points[sel].v) - 26, 2) + 12} textAnchor="middle"
-            fontSize="9.5" fontWeight="800" fill={ink} fontFamily="'DM Sans'">
+            fontSize="10.5" fontWeight="800" fill={ink} fontFamily="'DM Sans'">
             {points[sel].label} · {fmtN(points[sel].v)} km/gal
           </text>
         </g>
@@ -94,16 +96,16 @@ export function MonthBars({ months, dark, ink, sub }) {
             <rect x={slot * i} y={PT - 8} width={slot} height={H - PT - PB + 8 + PB} fill="transparent" />
             <path d={barPath(bx, by, bw, H - PB, 4)} fill={DATA_C(dark)} opacity={sel == null || sel === i ? 1 : 0.45} />
             {/* valor en tinta de texto sobre la barra */}
-            <text x={bx + bw / 2} y={by - 5} textAnchor="middle" fontSize="9.5" fontWeight="800" fill={ink} fontFamily="'DM Sans'">
+            <text x={bx + bw / 2} y={by - 5} textAnchor="middle" fontSize="10.5" fontWeight="800" fill={ink} fontFamily="'DM Sans'">
               Q{fmtN(m.amt, 0)}
             </text>
-            <text x={bx + bw / 2} y={H - 6} textAnchor="middle" fontSize="9" fontWeight="700" fill={sub} fontFamily="'DM Sans'">{m.short}</text>
+            <text x={bx + bw / 2} y={H - 6} textAnchor="middle" fontSize="10" fontWeight="700" fill={sub} fontFamily="'DM Sans'">{m.short}</text>
           </g>
         );
       })}
       {/* burbuja del mes tocado: cargas y galones */}
       {sel != null && (
-        <text x={W / 2} y={12} textAnchor="middle" fontSize="9.5" fontWeight="800" fill={ink} fontFamily="'DM Sans'">
+        <text x={W / 2} y={12} textAnchor="middle" fontSize="10.5" fontWeight="800" fill={ink} fontFamily="'DM Sans'">
           {months[sel].label}: {months[sel].n} carga{months[sel].n === 1 ? '' : 's'} · {fmtN(months[sel].gal)} gal · Q{fmtN(months[sel].amt, 0)}
         </text>
       )}

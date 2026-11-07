@@ -59,8 +59,11 @@ export default function FuelLogForm({ dark, ink, sub, cardBg, vehicle, vehName, 
 
   return (
     <div style={{ background: cardBg, borderRadius: 17, padding: '13px 14px', marginTop: 10 }}>
-      <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', color: sub }}>
+      <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', color: sub }}>
         Registrar consumo · {vehName}
+      </div>
+      <div style={{ fontSize: 11.5, color: sub, fontWeight: 600, marginTop: 3, lineHeight: 1.4 }}>
+        Se guarda con la fecha y hora de ahora: regístralo al momento de cargar.
       </div>
       <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
         {[
@@ -69,7 +72,7 @@ export default function FuelLogForm({ dark, ink, sub, cardBg, vehicle, vehName, 
           { k: 'km', label: 'Km recorridos', ph: '45900', mode: 'numeric' },
         ].map(f => (
           <div key={f.k} style={{ flex: 1 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: sub, marginBottom: 4 }}>{f.label}</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: sub, marginBottom: 4 }}>{f.label}</div>
             <input value={rg[f.k]} inputMode={f.mode} placeholder={f.ph}
               onChange={e => {
                 // decimal: dígitos + UN punto (galones 8.5, precio 319.90)
@@ -93,7 +96,7 @@ export default function FuelLogForm({ dark, ink, sub, cardBg, vehicle, vehName, 
       {/* E3h: UNA pregunta, tres respuestas (dueño, 15-oct): lleno = nivel
           conocido después de cargar; reserva = nivel conocido antes de
           cargar (segunda referencia); parcial = ninguna de las dos */}
-      <div style={{ fontSize: 10, fontWeight: 700, color: sub, marginTop: 12, marginBottom: 4 }}>¿Cómo fue la carga?</div>
+      <div style={{ fontSize: 11, fontWeight: 700, color: sub, marginTop: 12, marginBottom: 4 }}>¿Cómo fue la carga?</div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
         {TANK_STATES.map(o => (
           <button key={o.v} onClick={() => setRg(p => ({ ...p, state: p.state === o.v ? null : o.v }))}
@@ -103,20 +106,20 @@ export default function FuelLogForm({ dark, ink, sub, cardBg, vehicle, vehName, 
       {/* Carga sin registrar antes: reinicia la medición (no es otra
           pregunta — es una marca opcional de bajo peso visual) */}
       <button onClick={() => setRg(p => ({ ...p, gap: !p.gap }))} style={{
-        display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 8, padding: 0,
+        display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 4, padding: '10px 0', minHeight: 44,
         border: 'none', background: 'transparent', cursor: 'pointer',
-        fontFamily: "'DM Sans'", fontSize: 10.5, fontWeight: 700, color: rg.gap ? BRAND_ORANGE : sub,
+        fontFamily: "'DM Sans'", fontSize: 12, fontWeight: 700, color: rg.gap ? BRAND_ORANGE : sub,
       }}>
-        <span style={{ width: 13, height: 13, borderRadius: 4, border: `1.5px solid ${rg.gap ? BRAND_ORANGE : sub}`, background: rg.gap ? BRAND_ORANGE : 'transparent', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 9 }}>{rg.gap ? '✓' : ''}</span>
+        <span style={{ width: 15, height: 15, borderRadius: 4, border: `1.5px solid ${rg.gap ? BRAND_ORANGE : sub}`, background: rg.gap ? BRAND_ORANGE : 'transparent', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 9 }}>{rg.gap ? '✓' : ''}</span>
         Cargué en otro lado y no lo registré
       </button>
-      <div style={{ fontSize: 10.5, color: sub, fontWeight: 600, lineHeight: 1.5, marginTop: 8 }}>
+      <div style={{ fontSize: 11.5, color: sub, fontWeight: 600, lineHeight: 1.5, marginTop: 8 }}>
         Medimos de un tanque lleno al siguiente (o de una reserva a la siguiente): las cargas
         parciales se suman a la siguiente referencia. Si llegaste en reserva <b>y</b> lo llenaste,
         marca "Tanque lleno". Los km recorridos son los que marca tu tablero.
       </div>
       {warns.map(w => (
-        <div key={w} style={{ fontSize: 10.5, color: '#E65100', fontWeight: 700, lineHeight: 1.5, marginTop: 6 }}>{w}</div>
+        <div key={w} style={{ fontSize: 11.5, color: '#E65100', fontWeight: 700, lineHeight: 1.5, marginTop: 6 }}>{w}</div>
       ))}
 
       <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>

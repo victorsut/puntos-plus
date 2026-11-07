@@ -7,6 +7,7 @@ import LegalFooter from '../../components/ui/LegalFooter';
 import BentoTile from '../../components/ui/BentoTile';
 import TierCardBento from '../../components/ui/TierCardBento';
 import InactivityWarning from '../../components/ui/InactivityWarning';
+import PushPromptCard from '../../components/ui/PushPromptCard';
 import HistorySheet from './HistorySheet';
 import TierDetailModal from './home/TierDetailModal';
 import WifiModal from './home/WifiModal';
@@ -109,6 +110,8 @@ export default function ClientHome(ctx) {
       {/* Inactivity warning */}
       {/* Aviso de inactividad — solo con el motor de degradación ACTIVO */}
       {cfg.degradEnabled && <InactivityWarning lastBuy={me.lastBuy} tierName={cTier.name} dark={dark} />}
+      {/* UX-28: avisos push con contexto (solo si el permiso sigue sin decidir) */}
+      {me?.id && !String(me.id).startsWith('temp-') && <PushPromptCard memberId={me.id} dark={dark} fire={fire} />}
 
       {/* Header + saludo + festivo (home/HomeHeader) */}
       <HomeHeader

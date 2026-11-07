@@ -226,7 +226,7 @@ export default function GoogleProfile(ctx) {
   };
 
   const errBox = authError ? (
-    <div style={{ background: dark ? 'rgba(214,40,26,.18)' : '#FFEBEE', color: dark ? '#FF8A80' : '#C62828', padding: '10px 14px', borderRadius: 12, fontSize: 12, fontWeight: 700, marginBottom: 16, textAlign: 'center' }}>{authError}</div>
+    <div style={{ background: dark ? 'rgba(214,40,26,.18)' : '#FFEBEE', color: dark ? '#FF8A80' : '#C62828', padding: '10px 14px', borderRadius: 12, fontSize: 13, fontWeight: 700, marginBottom: 16, textAlign: 'center' }}>{authError}</div>
   ) : null;
 
   // ══ Verificación del número (entre "Finalizar" y el alta real) ══
@@ -287,7 +287,7 @@ export default function GoogleProfile(ctx) {
           {/* 1-ago: nombre REAL — luego no se puede editar en la app.
               4-ago: globo de énfasis al enfocar — verificación de identidad */}
           <div>
-            <Field {...fieldProps} icon={<User />} placeholder="Nombre real completo *" fieldKey="name" autoCap="words" transform={capWords}
+            <Field {...fieldProps} icon={<User />} placeholder="Nombre real completo *" fieldKey="name" autoComplete="name" autoCap="words" transform={capWords}
               bubble={{ icon: <User />, color: bento.amber, text: 'Tu nombre completo se usará para verificar tu identidad.' }} />
             <div style={{ fontSize: 11, color: '#9E9E9E', marginTop: 5, paddingLeft: 4 }}>
               Escribe tu nombre real — después no podrás cambiarlo en la app.
@@ -311,7 +311,7 @@ export default function GoogleProfile(ctx) {
           <div style={{ position: 'relative', zIndex: phoneFocus ? 6 : undefined }}>
             {phoneFocus && <InfoBubble icon={<Phone />} color={bento.green} text="Verificaremos este número al finalizar tu registro." dark={dark} />}
             <div style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: '#9E9E9E', fontWeight: 700, zIndex: 1 }}>+502</div>
-            <input placeholder="Teléfono 8 dígitos *" value={phoneMask.format(regProfile.phone || '')} inputMode="numeric"
+            <input placeholder="Teléfono 8 dígitos *" value={phoneMask.format(regProfile.phone || '')} inputMode="numeric" type="tel" name="phone" autoComplete="tel-national"
               onFocus={() => setPhoneFocus(true)} onBlur={() => setPhoneFocus(false)}
               onChange={e => { setRegProfile(p => ({ ...p, phone: phoneMask.clean(e.target.value) })); clearAuthErr(); }}
               style={{ ...fieldFlat, paddingLeft: 62 }} />
@@ -352,7 +352,7 @@ export default function GoogleProfile(ctx) {
 
         {/* Correo + NIT */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 22 }}>
-          <Field {...fieldProps} icon={<Mail />} placeholder="Correo electrónico (opcional)" fieldKey="email" type="email" bonus />
+          <Field {...fieldProps} icon={<Mail />} placeholder="Correo electrónico (opcional)" fieldKey="email" type="email" autoComplete="email" bonus />
           <Field {...fieldProps} icon={<Receipt />} placeholder="NIT (opcional)" fieldKey="nit" bonus />
         </div>
 
@@ -452,7 +452,7 @@ export default function GoogleProfile(ctx) {
           {/* Nueva contraseña */}
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#9E9E9E', marginBottom: 6, textTransform: 'uppercase', letterSpacing: .5 }}>Contraseña</div>
-            <PasswordInput placeholder="Mínimo 6 caracteres" value={password}
+            <PasswordInput placeholder="Mínimo 6 caracteres" value={password} name="new-password" autoComplete="new-password"
               onChange={e => { setPassword(e.target.value); clearAuthErr(); }}
               style={{ ...fieldFlat, paddingRight: 50 }} />
           </div>
@@ -460,7 +460,7 @@ export default function GoogleProfile(ctx) {
           {/* Confirmar contraseña */}
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#9E9E9E', marginBottom: 6, textTransform: 'uppercase', letterSpacing: .5 }}>Confirmar contraseña</div>
-            <PasswordInput placeholder="Repite tu contraseña" value={passConfirm}
+            <PasswordInput placeholder="Repite tu contraseña" value={passConfirm} name="confirm-password" autoComplete="new-password"
               onChange={e => { setPassConfirm(e.target.value); clearAuthErr(); }}
               style={{ ...fieldFlat, paddingRight: 50,
                 borderColor: passConfirm && passConfirm !== password ? '#EF5350' : passConfirm && passConfirm === password ? BRAND_ORANGE : 'transparent' }} />

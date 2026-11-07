@@ -177,7 +177,7 @@ export default function ClientRaffle(ctx) {
               );
             })}
           </div>
-          <div style={{ fontSize: 10.5, fontWeight: 600, color: subTxt, textAlign: 'center', marginTop: 8 }}>
+          <div style={{ fontSize: 11.5, fontWeight: 600, color: subTxt, textAlign: 'center', marginTop: 8 }}>
             Toca para comprar boletos · más boletos, más posibilidades
           </div>
         </div>
@@ -273,7 +273,7 @@ export default function ClientRaffle(ctx) {
                       <span style={{
                         flexShrink: 0, padding: '2px 8px', borderRadius: 8,
                         background: dark ? 'rgba(30,122,51,.25)' : 'rgba(30,122,51,.12)',
-                        fontSize: 9, fontWeight: 800, letterSpacing: 0.5, color: good,
+                        fontSize: 10, fontWeight: 800, letterSpacing: 0.5, color: good,
                       }}>
                         GANADOR
                       </span>
@@ -284,7 +284,7 @@ export default function ClientRaffle(ctx) {
                   {isMe && (
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
                       <div style={{ fontSize: 15, fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: headerTxt }}>{p.tickets}</div>
-                      <div style={{ fontSize: 9, color: subTxt, fontWeight: 700, letterSpacing: 0.5 }}>BOLETOS</div>
+                      <div style={{ fontSize: 10, color: subTxt, fontWeight: 700, letterSpacing: 0.5 }}>BOLETOS</div>
                     </div>
                   )}
                 </div>

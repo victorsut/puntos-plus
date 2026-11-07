@@ -28,9 +28,10 @@ export default function PasswordInput({
       <button type="button" onClick={() => setShow(p => !p)}
         aria-label={show ? 'Ocultar contraseña' : 'Mostrar contraseña'}
         style={{
-          position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)',
+          // UX-30: blanco táctil de 44 px (el ícono sigue del mismo tamaño)
+          position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)',
           background: 'none', border: 'none', cursor: 'pointer',
-          color: buttonColor, display: 'flex', padding: 2,
+          color: buttonColor, display: 'flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, padding: 0,
         }}>
         {show ? <EyeOff /> : <Eye />}
       </button>

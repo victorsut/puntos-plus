@@ -321,8 +321,11 @@ export default function App() {
       console.log('[Push] Not supported in this browser/context');
       return;
     }
-    // Always attempt subscription — subscribePush is idempotent (upsert)
-    // This retries if previous attempt failed (e.g. missing manifest before fix)
+    // UX-28 (7-nov-2026): solo se (re)suscribe en silencio si el permiso
+    // YA fue concedido; si está en 'default' lo pide PushPromptCard con
+    // contexto (una denegación en Chrome Android es permanente).
+    if (Notification.permission !== 'granted') return;
+    // subscribePush es idempotente (upsert): rehace la suscripción si cambió
     console.log('[Push] Attempting subscription for member:', me.id);
     subscribePush(me.id).then(ok => {
       console.log('[Push] Subscription result:', ok ? '✅ OK' : '⚠️ Failed/Denied');

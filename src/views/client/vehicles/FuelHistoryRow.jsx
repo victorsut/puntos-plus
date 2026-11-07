@@ -19,15 +19,15 @@ export default function FuelHistoryRow({
   win, anchor, isFull, inferred,
   canReassign, canMarkFull,
   editOpen, onToggleEdit, onReassign, busy,
-  delArmed, onDel,
+  delArmed, onDel, onDelCancel,
   fullOpen, onToggleFullOpen, onSetState, onSetGap,
 }) {
   const soft = dark ? 'rgba(255,255,255,.1)' : '#fff';
   const line = `1px solid ${dark ? 'rgba(255,255,255,.1)' : 'rgba(0,0,0,.07)'}`;
   const iconBtn = (active) => ({
-    width: 30, height: 30, borderRadius: 10, border: 'none', cursor: 'pointer', flexShrink: 0,
+    width: 32, height: 32, borderRadius: 10, border: 'none', cursor: 'pointer', flexShrink: 0,
     background: active ? BRAND_ORANGE : soft, color: active ? '#fff' : sub,
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', // UX-30: + área táctil
   });
   const opt = (on) => ({
     padding: '7px 11px', borderRadius: 11, border: 'none', cursor: 'pointer',
@@ -63,7 +63,7 @@ export default function FuelHistoryRow({
           </div>
           {/* se permite partir en dos líneas: el km/gal de la ventana es
               lo importante y con nowrap quedaba recortado en 360px */}
-          <div style={{ fontSize: 10.5, color: sub, fontWeight: 600, marginTop: 2, lineHeight: 1.45 }}>
+          <div style={{ fontSize: 11.5, color: sub, fontWeight: 600, marginTop: 2, lineHeight: 1.45 }}>
             {[l.source === 'manual' ? 'Registro manual' : l.station_name, l.km_reading != null ? `${fmtN(l.km_reading, 0)} km` : null]
               .filter(Boolean).join(' · ') || '—'}
             {role && <span style={{ color: roleWarn ? '#E65100' : win ? ink : sub, fontWeight: win ? 800 : 600 }}> · {role}</span>}
@@ -74,25 +74,37 @@ export default function FuelHistoryRow({
             )}
           </div>
         </div>
-        <span style={{
-          display: 'inline-flex', alignItems: 'center', gap: 5, maxWidth: 120,
-          fontSize: 10.5, fontWeight: 800, color: name ? ink : '#E65100',
-          background: dark ? 'rgba(255,255,255,.08)' : '#fff', borderRadius: 20, padding: '5px 9px',
-        }}>
-          {dot && <span style={{ width: 8, height: 8, borderRadius: 4, background: dot, flexShrink: 0 }} />}
-          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name || 'Sin vehículo'}</span>
-        </span>
-        {l.source === 'manual' && (
-          <button aria-label="Borrar registro" onClick={onDel} style={{
-            ...iconBtn(false), background: delArmed ? '#C62828' : soft, color: delArmed ? '#fff' : sub,
+        {/* UX-47: mientras se confirma el borrado la pastilla cede el espacio */}
+        {!delArmed && (
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 5, maxWidth: 120,
+            fontSize: 11.5, fontWeight: 800, color: name ? ink : '#E65100',
+            background: dark ? 'rgba(255,255,255,.08)' : '#fff', borderRadius: 20, padding: '5px 9px',
           }}>
+            {dot && <span style={{ width: 8, height: 8, borderRadius: 4, background: dot, flexShrink: 0 }} />}
+            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name || 'Sin vehículo'}</span>
+          </span>
+        )}
+        {l.source === 'manual' && !delArmed && (
+          <button aria-label="Borrar registro" onClick={onDel} style={iconBtn(false)}>
+            <span aria-hidden style={{ position: 'absolute', inset: -6 }} />
             <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
               <path d="M2.5 4h11M6.5 4V2.5h3V4M4 4l.8 10h6.4L12 4M6.7 7v4.5M9.3 7v4.5" />
             </svg>
           </button>
         )}
+        {/* UX-47 (7-nov-2026): confirmación explícita en la fila — antes era
+            un doble toque de 2.5 s con solo un cambio de color */}
+        {l.source === 'manual' && delArmed && (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 800, color: '#C62828', flexShrink: 0 }}>
+            ¿Borrar?
+            <button onClick={onDel} style={{ padding: '7px 12px', minHeight: 32, borderRadius: 10, border: 'none', cursor: 'pointer', background: '#C62828', color: '#fff', fontFamily: "'DM Sans'", fontSize: 12, fontWeight: 800 }}>Sí</button>
+            <button onClick={onDelCancel} style={{ padding: '7px 12px', minHeight: 32, borderRadius: 10, border: 'none', cursor: 'pointer', background: soft, color: sub, fontFamily: "'DM Sans'", fontSize: 12, fontWeight: 800 }}>No</button>
+          </span>
+        )}
         {canReassign && vehicles.length > 0 && (
           <button aria-label="Corregir vehículo" onClick={onToggleEdit} style={iconBtn(editOpen)}>
+            <span aria-hidden style={{ position: 'absolute', inset: -6 }} />
             <svg width="14" height="14" viewBox="0 0 16 16"><path d="M11.3 1.7a1.6 1.6 0 0 1 2.3 0l.7.7a1.6 1.6 0 0 1 0 2.3L5.8 13.2 2 14l.8-3.8Z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" /></svg>
           </button>
         )}
@@ -103,17 +115,17 @@ export default function FuelHistoryRow({
       {l.vehicle_id && (
         <div style={{ marginTop: 7, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           <button onClick={canMarkFull ? onToggleFullOpen : undefined} aria-label="Estado del tanque" style={{
-            display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 9px', borderRadius: 20,
+            display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 11px', minHeight: 32, borderRadius: 20,
             border: 'none', cursor: canMarkFull ? 'pointer' : 'default',
             background: isRef ? (dark ? 'rgba(129,199,132,.16)' : 'rgba(46,125,50,.10)') : soft,
             color: isRef ? (dark ? '#81C784' : '#2E7D32') : sub,
-            fontFamily: "'DM Sans'", fontSize: 10.5, fontWeight: 800,
+            fontFamily: "'DM Sans'", fontSize: 11.5, fontWeight: 800,
           }}>
             <span style={{ width: 7, height: 7, borderRadius: 4, background: isRef ? (dark ? '#81C784' : '#2E7D32') : sub, opacity: state == null && !inferred ? .4 : 1 }} />
             {fullLabel}{canMarkFull ? ' ›' : ''}
           </button>
           {l.gap_before && (
-            <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 9px', borderRadius: 20, background: soft, color: '#E65100', fontSize: 10.5, fontWeight: 800 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 9px', borderRadius: 20, background: soft, color: '#E65100', fontSize: 11.5, fontWeight: 800 }}>
               Cargas sin registrar antes
             </span>
           )}
@@ -121,14 +133,14 @@ export default function FuelHistoryRow({
       )}
       {fullOpen && (
         <div style={{ marginTop: 10, paddingTop: 10, borderTop: line }}>
-          <div style={{ fontSize: 10.5, fontWeight: 700, color: sub, marginBottom: 7 }}>¿Cómo fue esta carga?</div>
+          <div style={{ fontSize: 11.5, fontWeight: 700, color: sub, marginBottom: 7 }}>¿Cómo fue esta carga?</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
             {[...TANK_STATES, { v: null, t: 'No sé' }].map(o => (
               <button key={String(o.v)} disabled={busy} onClick={() => onSetState(o.v)}
                 style={{ ...opt(state === o.v), opacity: busy ? .6 : 1 }}>{o.t}</button>
             ))}
           </div>
-          <div style={{ fontSize: 10.5, fontWeight: 700, color: sub, margin: '10px 0 7px' }}>¿Cargaste en otro lado sin registrarlo antes de esta carga?</div>
+          <div style={{ fontSize: 11.5, fontWeight: 700, color: sub, margin: '10px 0 7px' }}>¿Cargaste en otro lado sin registrarlo antes de esta carga?</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
             {[{ v: true, t: 'Sí, reinicia la medición' }, { v: false, t: 'No' }].map(o => (
               <button key={String(o.v)} disabled={busy} onClick={() => onSetGap(o.v)}
@@ -140,7 +152,7 @@ export default function FuelHistoryRow({
 
       {editOpen && (
         <div style={{ marginTop: 10, paddingTop: 10, borderTop: line }}>
-          <div style={{ fontSize: 10.5, fontWeight: 700, color: sub, marginBottom: 7 }}>¿A qué vehículo pertenece esta carga?</div>
+          <div style={{ fontSize: 11.5, fontWeight: 700, color: sub, marginBottom: 7 }}>¿A qué vehículo pertenece esta carga?</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
             {vehicles.map(x => (
               <button key={x.id} disabled={busy} onClick={() => onReassign(x.id)} style={{

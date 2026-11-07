@@ -228,7 +228,7 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
   // borrar un registro manual (doble tap — un manual equivocado
   // envenena la telemetría y debe poder corregirse)
   const delLog = async (l) => {
-    if (delLogArmed !== l.id) { setDelLogArmed(l.id); setTimeout(() => setDelLogArmed(x => (x === l.id ? null : x)), 2500); return; }
+    if (delLogArmed !== l.id) { setDelLogArmed(l.id); setTimeout(() => setDelLogArmed(x => (x === l.id ? null : x)), 8000); return; }
     setDelLogArmed(null);
     const { error } = await deleteMyFuelLog(l.id);
     if (error) { fire('No se pudo borrar: ' + (error.message || 'error'), 'error'); return; }
@@ -315,9 +315,9 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 8 }}>
           {insights.map(t => (
             <div key={t.k} style={{ background: cardBg, borderRadius: 17, padding: '12px 14px' }}>
-              <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', color: sub }}>{t.label}</div>
+              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', color: sub }}>{t.label}</div>
               <div style={{ fontSize: 15.5, fontWeight: 800, marginTop: 5, color: t.warn ? '#E65100' : ink }}>{t.value}</div>
-              <div style={{ fontSize: 10.5, color: t.warn ? '#E65100' : sub, fontWeight: 600, marginTop: 3 }}>{t.note}</div>
+              <div style={{ fontSize: 11.5, color: t.warn ? '#E65100' : sub, fontWeight: 600, marginTop: 3 }}>{t.note}</div>
             </div>
           ))}
         </div>
@@ -340,7 +340,7 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
           lleno a lleno, con el promedio ponderado punteado (≥2 ventanas) */}
       {trendPoints.length >= 2 && (
         <div style={{ background: cardBg, borderRadius: 17, padding: '12px 14px 8px', marginTop: 10 }}>
-          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', color: sub, marginBottom: 6 }}>{method === 'approx' ? 'Rendimiento aproximado por tramo' : 'Rendimiento por llenado'}</div>
+          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', color: sub, marginBottom: 6 }}>{method === 'approx' ? 'Rendimiento aproximado por tramo' : 'Rendimiento por llenado'}</div>
           <TrendChart points={trendPoints} avg={summary.kmPerGal}
             dark={dark} ink={ink} sub={sub} surface={dark ? '#2A2A30' : '#F5F5F7'} />
         </div>
@@ -350,7 +350,7 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
           (tap en una barra = cargas y galones); con 1 mes, fila simple */}
       {months.length > 0 && (
         <div style={{ background: cardBg, borderRadius: 17, padding: '12px 14px 8px', marginTop: 10 }}>
-          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', color: sub, marginBottom: 8 }}>Consumo por mes</div>
+          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', color: sub, marginBottom: 8 }}>Consumo por mes</div>
           {months.length >= 2 ? (
             <MonthBars months={[...months].reverse()} dark={dark} ink={ink} sub={sub} />
           ) : months.map(m => (
@@ -406,7 +406,7 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
         </div>
       )}
 
-      {loads === null && !loadErr && (
+      {histOpen && loads === null && !loadErr && (
         <div style={{ fontSize: 12, color: sub, fontWeight: 600 }}>Cargando…</div>
       )}
       {loadErr && (
@@ -444,14 +444,14 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
             canMarkFull={l.source === 'manual' || canEdit(l)}
             editOpen={editingId === l.id} onToggleEdit={() => { setEditingId(editingId === l.id ? null : l.id); setFullOpenId(null); }}
             onReassign={(vid) => reassign(l, vid)} busy={busyId === l.id}
-            delArmed={delLogArmed === l.id} onDel={() => delLog(l)}
+            delArmed={delLogArmed === l.id} onDel={() => delLog(l)} onDelCancel={() => setDelLogArmed(null)}
             fullOpen={fullOpenId === l.id} onToggleFullOpen={() => { setFullOpenId(fullOpenId === l.id ? null : l.id); setEditingId(null); }}
             onSetState={(v) => setState(l, v)} onSetGap={(v) => setGap(l, v)} />
         );
       })}
 
       {histOpen && Array.isArray(loads) && loads.length > 0 && (
-        <div style={{ fontSize: 10.5, color: sub, fontWeight: 600, lineHeight: 1.5, marginTop: 4 }}>
+        <div style={{ fontSize: 11.5, color: sub, fontWeight: 600, lineHeight: 1.5, marginTop: 4 }}>
           ¿Una carga quedó en el vehículo equivocado o con el tanque mal marcado? Tócale el
           lápiz o la pastilla del tanque y corrígela (hasta {editableDays} días).
         </div>

@@ -17,23 +17,31 @@ export const dpiMask = {
   format: v => [v.slice(0, 4), v.slice(4, 9), v.slice(9, 13)].filter(Boolean).join(' '),
 };
 
-// Placa GT: 1 letra + 3 números + 3 letras → "P 123 ABC".
+// Placa GT: 1–2 letras + 3 números + 3 letras → "P 123 ABC" / "CD 123 ABC".
+// UX-46 (7-nov-2026): antes solo aceptaba 1 letra de prefijo y se tragaba
+// en silencio CD/CC/MI/TC (cuerpo diplomático, consular, misión, taxi).
 // Los espacios son SOLO visuales: en estado y BD la placa va sin espacios.
 // clean() acepta caracteres solo si encajan en la posición que toca,
 // así el teclado puede escribir de corrido sin separadores.
+const PLATE_RE = /^([A-Z]{1,2})(\d{3})([A-Z]{3})$/;
 export const plateMask = {
   clean: v => {
     let out = '';
     for (const ch of v.toUpperCase().replace(/[^A-Z0-9]/g, '')) {
-      const i = out.length;
-      if (i === 0 && /[A-Z]/.test(ch)) out += ch;
-      else if (i >= 1 && i <= 3 && /[0-9]/.test(ch)) out += ch;
-      else if (i >= 4 && i <= 6 && /[A-Z]/.test(ch)) out += ch;
+      const pre = (out.match(/^[A-Z]+/) || [''])[0].length; // letras de prefijo ya escritas
+      const rest = out.length - pre;                           // dígitos + letras finales
+      if (rest === 0 && pre < 2 && /[A-Z]/.test(ch)) out += ch;
+      else if (pre >= 1 && rest < 3 && /[0-9]/.test(ch)) out += ch;
+      else if (pre >= 1 && rest >= 3 && rest < 6 && /[A-Z]/.test(ch)) out += ch;
     }
     return out;
   },
-  format: v => [v.slice(0, 1), v.slice(1, 4), v.slice(4, 7)].filter(Boolean).join(' '),
-  complete: v => v.length === 7,
+  format: v => {
+    const pre = (v.match(/^[A-Z]+/) || [''])[0];
+    const rest = v.slice(pre.length);
+    return [pre, rest.slice(0, 3), rest.slice(3, 6)].filter(Boolean).join(' ');
+  },
+  complete: v => PLATE_RE.test(v),
 };
 
 // Nombre propio: mayúscula al inicio de cada palabra (refuerzo en JS de

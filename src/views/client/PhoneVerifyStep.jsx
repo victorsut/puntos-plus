@@ -88,11 +88,11 @@ export default function PhoneVerifyStep({ phone, dark, onVerified, onBack }) {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 14 }}>
         <button onClick={onBack} disabled={busy}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'DM Sans'", fontSize: 12, fontWeight: 700, color: '#9E9E9E', padding: 4 }}>
+          style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'DM Sans'", fontSize: 13, fontWeight: 700, color: '#6E6E73', padding: '12px 6px', minHeight: 44, marginLeft: -6 }}>
           Corregir mi número
         </button>
         <button onClick={resend} disabled={busy || cooldown > 0}
-          style={{ background: 'none', border: 'none', cursor: cooldown ? 'default' : 'pointer', fontFamily: "'DM Sans'", fontSize: 12, fontWeight: 700, color: cooldown ? '#9E9E9E' : BRAND_ORANGE, padding: 4 }}>
+          style={{ background: 'none', border: 'none', cursor: cooldown ? 'default' : 'pointer', fontFamily: "'DM Sans'", fontSize: 13, fontWeight: 700, color: cooldown ? '#6E6E73' : BRAND_ORANGE, padding: '12px 6px', minHeight: 44, marginRight: -6 }}>
           {cooldown > 0 ? `Reenviar en ${cooldown}s` : 'Reenviar código'}
         </button>
       </div>

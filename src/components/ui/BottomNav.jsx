@@ -62,7 +62,7 @@ export default function BottomNav({ items, current, onSelect, view, tierName, da
                 </svg>
               </div>
               <span style={{
-                fontFamily: "'DM Sans'", fontSize: 10.5, fontWeight: 700,
+                fontFamily: "'DM Sans'", fontSize: 11, fontWeight: 700,
                 color: qrActive ? BRAND_ORANGE : inactiveColor,
               }}>
                 Código QR
@@ -78,7 +78,7 @@ export default function BottomNav({ items, current, onSelect, view, tierName, da
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
             padding: '4px 0', background: 'none', border: 'none',
             color: current === n.id ? activeColor : inactiveColor,
-            cursor: 'pointer', fontFamily: "'DM Sans'", fontSize: 10.5,
+            cursor: 'pointer', fontFamily: "'DM Sans'", fontSize: 11,
             fontWeight: 700,
           }}>
             {n.icon}

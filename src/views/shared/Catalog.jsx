@@ -115,7 +115,7 @@ export default function Catalog(ctx) {
                 position: 'absolute', top: 3, right: 3,
                 minWidth: 16, height: 16, borderRadius: 8, padding: '0 4px',
                 background: bento.red, color: '#fff',
-                fontSize: 9.5, fontWeight: 800, lineHeight: '16px',
+                fontSize: 10, fontWeight: 800, lineHeight: '16px',
                 fontFamily: "'DM Sans'", boxSizing: 'border-box',
               }}>
                 {pendingCount}
@@ -132,7 +132,7 @@ export default function Catalog(ctx) {
           const on = catF === c;
           return (
             <button key={c} onClick={() => setCatF(c)} style={{
-              padding: '8px 14px', borderRadius: 12, border: 'none', cursor: 'pointer',
+              padding: '10px 14px', minHeight: 38, borderRadius: 12, border: 'none', cursor: 'pointer',
               background: on ? BRAND_ORANGE : (dark ? 'rgba(255,255,255,.08)' : '#fff'),
               color: on ? '#fff' : (dark ? 'rgba(255,255,255,.75)' : '#3A3A3C'),
               fontFamily: "'DM Sans'", fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap',
@@ -196,13 +196,13 @@ export default function Catalog(ctx) {
                   display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 6,
                   padding: '3px 9px', borderRadius: 8,
                   background: dark ? 'rgba(255,255,255,.12)' : '#0D0D0D', color: '#fff',
-                  fontSize: 9, fontWeight: 800, letterSpacing: .4,
+                  fontSize: 10, fontWeight: 800, letterSpacing: .4,
                 }}>
                   <Lock size={10} /> DESDE {r.minTier}
                 </div>
               )}
               {!lockedR && t.redeemDisc > 0 && cost < r.pts && (
-                <div style={{ fontSize: 10, color: dark ? '#90CAF9' : bento.blue, fontWeight: 700, marginTop: 2 }}>
+                <div style={{ fontSize: 11, color: dark ? '#90CAF9' : bento.blue, fontWeight: 700, marginTop: 2 }}>
                   -{Math.round(t.redeemDisc * 100)}% ({r.pts} pts)
                 </div>
               )}
@@ -211,7 +211,7 @@ export default function Catalog(ctx) {
               {(() => {
                 const locNames = rewardLocationNames(r, stations, stores);
                 return locNames && (
-                  <div style={{ fontSize: 9.5, color: subTxt, fontWeight: 700, marginTop: 4, lineHeight: 1.4 }}>
+                  <div style={{ fontSize: 10.5, color: subTxt, fontWeight: 700, marginTop: 4, lineHeight: 1.4 }}>
                     Solo en: {locNames.join(' · ')}
                   </div>
                 );

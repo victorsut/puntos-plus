@@ -54,7 +54,9 @@ export default function PromoBentoTile({ activePromos, promoIdx, setPromoIdx, on
         </div>
       ) : (
         <>
-          {activePromos.map((p, i) => (
+          {/* UX-39 (7-nov-2026): solo la actual y la siguiente (antes se
+              descargaban TODAS las imágenes 900×1200 al abrir el Inicio) */}
+          {activePromos.map((p, i) => (i === promoIdx || i === (promoIdx + 1) % activePromos.length) && (
             <PromoCard
               key={p.id}
               promo={p}

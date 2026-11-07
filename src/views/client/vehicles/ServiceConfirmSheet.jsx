@@ -92,7 +92,7 @@ export default function ServiceConfirmSheet({ vehicle: v, dark, fire, onClose, o
     fontFamily: "'DM Sans'", fontSize: 14, fontWeight: 600, outline: 'none',
   };
   const lbl = { display: 'block', fontSize: 11, fontWeight: 800, color: sub, textTransform: 'uppercase', letterSpacing: 1, margin: '16px 0 7px' };
-  const small = { fontSize: 10, fontWeight: 700, color: sub, marginBottom: 5 };
+  const small = { fontSize: 11, fontWeight: 700, color: sub, marginBottom: 5 };
   const btn = (primary) => ({
     flex: primary ? 1.6 : 1, padding: 15, borderRadius: 15, border: 'none', cursor: 'pointer',
     background: primary ? BRAND_ORANGE : fieldBg, color: primary ? '#fff' : ink,
@@ -159,7 +159,7 @@ export default function ServiceConfirmSheet({ vehicle: v, dark, fire, onClose, o
             </div>
           </div>
           {kmErr && (
-            <div style={{ fontSize: 10.5, color: '#E65100', fontWeight: 700, marginTop: 6, lineHeight: 1.4 }}>{kmErr}</div>
+            <div style={{ fontSize: 11.5, color: '#E65100', fontWeight: 700, marginTop: 6, lineHeight: 1.4 }}>{kmErr}</div>
           )}
 
           <label style={lbl}>Próximo servicio</label>

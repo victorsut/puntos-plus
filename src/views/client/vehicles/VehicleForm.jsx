@@ -179,7 +179,7 @@ export default function VehicleForm({ vehicle, dark, fire, onClose, onSaved, onD
   const save = async (close) => {
     if (saving) return;
     const rawPlate = plateMask.clean(f.plate);
-    if (rawPlate && rawPlate.length !== 7) { fire('La placa debe estar completa (L 123 ABC) o vacía', 'warn'); return; }
+    if (rawPlate && !plateMask.complete(rawPlate)) { fire('Completa la placa (P 123 ABC) o déjala vacía', 'warn'); return; }
     setSaving(true);
     const { data, error } = await saveMyVehicle({
       id: vehicle?.id || null,
@@ -272,7 +272,7 @@ export default function VehicleForm({ vehicle, dark, fire, onClose, onSaved, onD
               );
             })()}
           </div>
-          <div style={{ fontSize: 10.5, color: sub, fontWeight: 600, marginTop: 6 }}>
+          <div style={{ fontSize: 11.5, color: sub, fontWeight: 600, marginTop: 6 }}>
             La ficha multicolor abre el selector para elegir cualquier tono.
           </div>
 
@@ -322,11 +322,18 @@ export default function VehicleForm({ vehicle, dark, fire, onClose, onSaved, onD
   {/* Placa + kilometraje */}
           <div style={{ display: 'flex', gap: 10 }}>
             <div style={{ flex: 1 }}>
-              <label style={lbl}>Placa</label>
+              <label style={lbl}>Placa <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}>(opcional)</span></label>
               <input value={plateMask.format(f.plate)}
                 onChange={e => set('plate', plateMask.clean(e.target.value))}
                 placeholder="P 123 ABC" autoCapitalize="characters"
-                style={{ ...input, fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1 }} />
+                aria-invalid={!!f.plate && !plateMask.complete(f.plate)}
+                style={{ ...input, fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1, borderColor: f.plate && !plateMask.complete(f.plate) ? '#E65100' : undefined }} />
+              {/* UX-46: error inline con ejemplo (antes solo un toast al guardar) */}
+              {!!f.plate && !plateMask.complete(f.plate) && (
+                <div style={{ fontSize: 11.5, color: '#E65100', fontWeight: 700, marginTop: 5, lineHeight: 1.4 }}>
+                  Falta completarla: letras, 3 números y 3 letras (ej. P 123 ABC o CD 123 ABC).
+                </div>
+              )}
             </div>
             <div style={{ flex: 1 }}>
               <label style={lbl}>Kilometraje</label>
@@ -375,13 +382,13 @@ export default function VehicleForm({ vehicle, dark, fire, onClose, onSaved, onD
           <label style={lbl}>Próximo servicio</label>
           <div style={{ display: 'flex', gap: 10 }}>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: sub, marginBottom: 5 }}>Por fecha</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: sub, marginBottom: 5 }}>Por fecha</div>
               <input type="date" value={f.next_service}
                 onChange={e => set('next_service', e.target.value)}
                 style={{ ...input, colorScheme: dark ? 'dark' : 'light' }} />
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: sub, marginBottom: 5 }}>O al llegar a (km)</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: sub, marginBottom: 5 }}>O al llegar a (km)</div>
               <input value={f.next_service_km} inputMode="numeric"
                 onChange={e => set('next_service_km', e.target.value.replace(/[^0-9]/g, '').slice(0, 7))}
                 placeholder="50000" style={{ ...input, fontFamily: "'JetBrains Mono', monospace" }} />
@@ -435,7 +442,7 @@ export default function VehicleForm({ vehicle, dark, fire, onClose, onSaved, onD
             marginTop: 26, padding: '14px 16px', borderRadius: 16,
             border: '1.5px solid rgba(198,40,40,.35)', background: dark ? 'rgba(198,40,40,.08)' : '#FFF5F5',
           }}>
-            <div style={{ fontSize: 10.5, fontWeight: 900, letterSpacing: 1.5, color: '#C62828', textTransform: 'uppercase' }}>Zona de riesgo</div>
+            <div style={{ fontSize: 11.5, fontWeight: 900, letterSpacing: 1.5, color: '#C62828', textTransform: 'uppercase' }}>Zona de riesgo</div>
             {delStep === 0 ? (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 8 }}>
                 <div style={{ fontSize: 12, color: sub, lineHeight: 1.5 }}>Eliminar {vName} borra sus datos y su historial de servicios. No se puede deshacer.</div>

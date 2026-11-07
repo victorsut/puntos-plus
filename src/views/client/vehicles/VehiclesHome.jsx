@@ -264,8 +264,9 @@ export default function VehiclesHome({ ctx, vehicles, setVehicles }) {
                           <button aria-label="Personalizar" onClick={() => setForm({ vehicle: veh, mode: 'look' })} style={{
                             width: 26, height: 26, borderRadius: 9, border: 'none', cursor: 'pointer',
                             margin: '-3px 0', background: dark ? 'rgba(255,255,255,.12)' : '#0D0D0D', color: '#fff',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, position: 'relative',
                           }}>
+                            <span aria-hidden style={{ position: 'absolute', inset: -7 }} />
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                               <path d="M9.06 11.9 17.13 3.84a2.85 2.85 0 1 1 4.03 4.03L13.1 15.93" />
                               <path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-2.5 1.52-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02Z" />
@@ -309,10 +310,10 @@ export default function VehiclesHome({ ctx, vehicles, setVehicles }) {
             <div style={{ display: 'flex', justifyContent: 'center', gap: 6, margin: '10px 0 2px' }}>
               {vehicles.map((_, i) => (
                 <button key={i} onClick={() => swipe.go(i)} aria-label={`Vehículo ${i + 1}`} style={{
-                  width: i === idx ? 20 : 7, height: 7, borderRadius: 4, border: 'none', padding: 0, cursor: 'pointer',
+                  width: i === idx ? 20 : 7, height: 7, borderRadius: 4, border: 'none', padding: 0, cursor: 'pointer', position: 'relative',
                   background: i === idx ? BRAND_ORANGE : (dark ? 'rgba(255,255,255,.25)' : '#D5D5D8'),
                   transition: 'width .25s ease',
-                }} />
+                }} ><span aria-hidden style={{ position: 'absolute', inset: -9 }} /></button>
               ))}
             </div>
           )}
