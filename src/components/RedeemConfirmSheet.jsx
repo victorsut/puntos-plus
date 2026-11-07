@@ -115,6 +115,12 @@ export default function RedeemConfirmSheet({ data, me, dark, closing, stations, 
           ))}
         </div>
 
+        {/* UX-17: qué pasa al confirmar y dónde se entrega */}
+        <div style={{ fontSize: 12, fontWeight: 600, lineHeight: 1.55, color: dark ? 'rgba(255,255,255,.65)' : '#6E6E73', textAlign: 'center', margin: '-6px 4px 16px' }}>
+          Al confirmar se descuentan los puntos y aparece tu <strong style={{ color: dark ? '#fff' : '#0D0D0D' }}>código QR</strong>.
+          El premio se entrega en la estación mostrando ese código; también queda en Canjes → pendientes.
+        </div>
+
         <div style={{ display: 'flex', gap: 12 }}>
           <button onClick={guardedClose} disabled={busy} style={{
             flex: 1, padding: 16, borderRadius: 14, border: 'none',

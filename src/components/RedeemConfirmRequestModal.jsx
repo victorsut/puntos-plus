@@ -5,11 +5,32 @@
 // CTA BRAND_ORANGE. Extraído de App.jsx (división etapa 1, 12-ago-2026)
 // sin cambios de lógica: la respuesta viaja por RPC con la sesión del
 // miembro (SEC.C.3, respond_redemption_confirm).
+import { useState } from 'react';
 import RewardIcon from './ui/RewardIcon';
 import { bento, BRAND_ORANGE, CAT_COLORS } from '../constants/styles';
 import { respondRedemptionConfirm } from '../services';
+import useBackLayer from '../hooks/useBackLayer';
 
 export default function RedeemConfirmRequestModal({ pending, dark, fire, onClose, onConfirmed }) {
+  // Una sola respuesta por solicitud (doble toque / volver + toque)
+  const [busy, setBusy] = useState(false);
+  const respond = async (ok) => {
+    if (busy) return;
+    setBusy(true);
+    // SEC.C.3: la respuesta viaja por RPC con la sesión del miembro.
+    const res = await respondRedemptionConfirm(pending.redemptionId, ok);
+    onClose();
+    if (res.error) { fire(res.error, 'warn'); return; }
+    if (!ok) { fire('Canje cancelado', 'info'); return; }
+    fire('¡Canje confirmado!', 'success');
+    // App: cierra el QR del premio si quedó abierto (pedido del
+    // dueño 29-jul) y recarga los canjes cuando el POS entregue.
+    onConfirmed();
+  };
+  // UX-15 (7-nov-2026): "volver" ya no SALE de la app con la solicitud del
+  // POS en pantalla: equivale a Cancelar (el operador puede volver a
+  // pedirla; dejarla sin respuesta lo tendría esperando el timeout).
+  useBackLayer(true, () => respond(false));
   return (
     <div style={{
       position: 'fixed', inset: 0, background: 'rgba(0,0,0,.65)',
@@ -59,31 +80,17 @@ export default function RedeemConfirmRequestModal({ pending, dark, fire, onClose
 
         {/* Botones — acción sólida naranja, cancelar flat */}
         <div style={{ display: 'flex', gap: 12 }}>
-          <button onClick={async () => {
-            // SEC.C.3: la respuesta viaja por RPC con la sesión del miembro.
-            const res = await respondRedemptionConfirm(pending.redemptionId, false);
-            onClose();
-            if (res.error) fire(res.error, 'warn');
-            else fire('Canje cancelado', 'info');
-          }} style={{
+          <button onClick={() => respond(false)} disabled={busy} style={{
             flex: 1, padding: 16, borderRadius: 14, border: 'none',
             background: dark ? 'rgba(255,255,255,.08)' : '#F5F5F7',
-            color: dark ? '#ccc' : '#424242',
-            fontFamily: "'DM Sans'", fontSize: 14, fontWeight: 700, cursor: 'pointer',
+            color: dark ? '#ccc' : '#424242', opacity: busy ? .5 : 1,
+            fontFamily: "'DM Sans'", fontSize: 14, fontWeight: 700, cursor: busy ? 'default' : 'pointer',
           }}>Cancelar</button>
-          <button onClick={async () => {
-            const res = await respondRedemptionConfirm(pending.redemptionId, true);
-            onClose();
-            if (res.error) { fire(res.error, 'warn'); return; }
-            fire('¡Canje confirmado!', 'success');
-            // App: cierra el QR del premio si quedó abierto (pedido del
-            // dueño 29-jul) y recarga los canjes cuando el POS entregue.
-            onConfirmed();
-          }} style={{
+          <button onClick={() => respond(true)} disabled={busy} aria-busy={busy} style={{
             flex: 2, padding: 16, borderRadius: 14, border: 'none',
-            background: BRAND_ORANGE, color: '#fff',
-            fontFamily: "'DM Sans'", fontSize: 15, fontWeight: 800, cursor: 'pointer',
-          }}>Confirmar</button>
+            background: BRAND_ORANGE, color: '#fff', opacity: busy ? .75 : 1,
+            fontFamily: "'DM Sans'", fontSize: 15, fontWeight: 800, cursor: busy ? 'default' : 'pointer',
+          }}>{busy ? 'Enviando…' : 'Confirmar'}</button>
         </div>
       </div>
     </div>

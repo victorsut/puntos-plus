@@ -13,6 +13,7 @@ import { Clock, Lock } from '../../components/ui/Icons';
 import { meetsMinTier, tierRank } from '../../lib/tierSystem';
 import { originFromEvent } from '../../lib/motionOrigin';
 import { rewardLocationNames } from '../../lib/rewardLocations';
+import RewardInfoSheet from '../../components/RewardInfoSheet';
 
 export default function Catalog(ctx) {
   const { rewards, me, gT, cfg, cTier, catF, setCatF, redeem, setRedeemConfirm, client = true, redeemedList, activityLog, dark: modeDark, showQR, catPendingSignal, rewardQrCloseSignal, stations = [], stores = [], sbLoading = false } = ctx;
@@ -49,6 +50,9 @@ export default function Catalog(ctx) {
   // Canjes PENDIENTES de usar (reloj arriba-derecha → HistorySheet ya
   // filtrado, mismo patrón del Historial de Canjes).
   const [pendSheet, setPendSheet] = useState(null); // { origin } | null
+  // UX-19 (7-nov-2026): ficha de solo lectura de un premio que todavía no
+  // se puede canjear (puntos insuficientes o nivel mínimo).
+  const [infoReward, setInfoReward] = useState(null); // { reward, cost, locked }
 
   // Deep-link de notificación de premio (type 'reward'): la señal del
   // ctx abre los pendientes sin tap (origin null → animación centrada).
@@ -162,14 +166,16 @@ export default function Catalog(ctx) {
               </div>
             )}
             <div className="pp-tile" data-tour={i === 0 ? "cat-reward" : undefined} onClick={() => {
-              if (!client || !canAfford) return;
+              if (!client) return;
               if (ctx.actionBusy) return; // UX-03: hay un canje/compra en curso
+              // UX-19: lo que no se puede canjear se puede LEER
+              if (!canAfford) { if (me) setInfoReward({ reward: r, cost, locked: lockedR }); return; }
               if (setRedeemConfirm) setRedeemConfirm({ reward: r, cost });
               else redeem(r);
             }} style={{
               animationDelay: `${Math.min(i, 12) * 40}ms`,
               background: surface, borderRadius: 20, padding: '18px 14px 16px', textAlign: 'center',
-              cursor: client && canAfford ? 'pointer' : 'default',
+              cursor: client ? 'pointer' : 'default',
               opacity: client && !canAfford ? .55 : 1,
             }}>
               <div style={{
@@ -231,6 +237,19 @@ export default function Catalog(ctx) {
         </div>
       )}
 
+      {/* UX-19: ficha del premio bloqueado o inalcanzable */}
+      {infoReward && client && me && (
+        <RewardInfoSheet
+          data={infoReward}
+          me={me}
+          cfg={cfg}
+          dark={dark}
+          stations={stations}
+          stores={stores}
+          onClose={() => setInfoReward(null)}
+        />
+      )}
+
       {/* Canjes pendientes de usar (HistorySheet ya filtrado) */}
       {pendSheet && (
         <HistorySheet
@@ -247,6 +266,7 @@ export default function Catalog(ctx) {
           dark={dark}
           qrOverlayOpen={showQR}
           rewardQrCloseSignal={rewardQrCloseSignal}
+          rewards={rewards} stations={stations} stores={stores}
         />
       )}
     </div>

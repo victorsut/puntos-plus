@@ -18,6 +18,7 @@ import { PeriodRow, TypeFilterButton, periodLabel } from './history/HistoryFilte
 import RewardQrSheet from './RewardQrSheet';
 import useBackLayer from '../../hooks/useBackLayer';
 import { stripEmojis } from '../../lib/text';
+import { rewardLocationNames } from '../../lib/rewardLocations';
 
 const CLOSE_MS = 200; // duración de ppGrowOut (+ margen) antes de desmontar
 
@@ -71,8 +72,14 @@ const fmtDay = (iso) => iso && iso.length === 10
 // por nivel — homeColors); sin él cae a los tokens teal/orange de ORO.
 // `accentInk` = tinta sobre el acento (BLACK usa superficies claras u
 // oro con tinta oscura — referencia nivel black).
-export default function HistorySheet({ type, origin, tint, accent, accentInk, onClose, acts, redeemed, tierName, initialPending = false, dark = tierName === 'BLACK', qrOverlayOpen = false, rewardQrCloseSignal = 0 }) {
+export default function HistorySheet({ type, origin, tint, accent, accentInk, onClose, acts, redeemed, tierName, initialPending = false, dark = tierName === 'BLACK', qrOverlayOpen = false, rewardQrCloseSignal = 0, rewards = [], stations = [], stores = [] }) {
   const isCompras = type === 'compras';
+  // UX-18 (7-nov-2026): dónde es válido un canje (D17) — se resuelve por
+  // rewardId contra el catálogo; null = todas las estaciones.
+  const locsFor = (rd) => {
+    const rw = rd?.rewardId ? rewards.find(r => r.id === rd.rewardId) : null;
+    return rw ? rewardLocationNames(rw, stations, stores) : null;
+  };
   const todayGT = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' });
 
   // Base del tipo, SIN filtro de período — de acá se derivan los
@@ -344,6 +351,14 @@ export default function HistorySheet({ type, origin, tint, accent, accentInk, on
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: TH.txt, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stripEmojis(rd.reward?.name) || 'Premio'}</div>
                   <div style={{ fontSize: 10, color: TH.sub, ...sMono, marginTop: 2 }}>{fmtDay(itemDay(rd.date))} · {rd.code}</div>
+                  {!rd.collected && !expired && (() => {
+                    const locs = locsFor(rd);
+                    return locs && (
+                      <div style={{ fontSize: 10.5, fontWeight: 700, color: dark ? '#FFD54F' : '#B58000', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        Válido en: {locs.join(' · ')}
+                      </div>
+                    );
+                  })()}
                 </div>
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: dark ? '#FF8A80' : bento.red }}>-{rd.cost} pts</div>
@@ -398,6 +413,7 @@ export default function HistorySheet({ type, origin, tint, accent, accentInk, on
         dark={dark}
         TH={TH}
         dateLabel={qrItem ? fmtDay(itemDay(qrItem.date)) : ''}
+        locations={qrItem ? locsFor(qrItem) : null}
       />
     </div>
   );

@@ -33,6 +33,7 @@ export default function useMemberRealtime({
       setRedeemedList(rows.map(rd => ({
         id: rd.id,
         memberId: rd.member_id,
+        rewardId: rd.reward_id || null, // UX-18: para resolver dónde es válido (D17)
         reward: { name: rd.reward_name || 'Premio', icon: rd.reward_icon || '🎁', cat: rd.reward_category || '' },
         cost: rd.points_spent,
         date: utcToLocal(rd.created_at) || '',

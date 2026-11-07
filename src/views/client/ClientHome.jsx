@@ -34,6 +34,7 @@ export default function ClientHome(ctx) {
     activityLog, redeemedList,
     setCScr, setNavOrigin, dark, chosenDark, setVehicleFocus,
     myNotifs, markNotifsRead, clearNotifs, rewardQrCloseSignal,
+    rewards, stores, // UX-18: "Válido en" de los canjes pendientes
     features } = ctx; // beta de secciones (16-oct): cuadro Vehículo PRÓXIMAMENTE si no está habilitada
 
   // FIX (11-ago): el guard va ANTES de todos los hooks (Rules of Hooks).
@@ -238,6 +239,7 @@ export default function ClientHome(ctx) {
           dark={dark}
           qrOverlayOpen={showQR}
           rewardQrCloseSignal={rewardQrCloseSignal}
+          rewards={rewards} stations={stations} stores={stores}
         />
       )}
       {/* Stations modal */}

@@ -9,6 +9,7 @@
 import { useState, useCallback } from 'react';
 import { bento, BRAND_ORANGE } from '../constants/styles';
 import { Check, Clock } from './ui/Icons';
+import useBackLayer from '../hooks/useBackLayer';
 
 export default function SurveyResultModal({ result, onClose, dark }) {
   const [closing, setClosing] = useState(false);
@@ -20,6 +21,8 @@ export default function SurveyResultModal({ result, onClose, dark }) {
       return true;
     });
   }, [onClose]);
+  // UX-15 (7-nov-2026): "volver" cierra el modal en vez de SALIR de la app (TWA)
+  useBackLayer(true, close);
 
   const ok = result.type === 'success';
   const TITLES = { early: 'Encuesta no completada', retry: 'Tu encuesta quedó en espera', failed: 'No pudimos registrar tu encuesta' };

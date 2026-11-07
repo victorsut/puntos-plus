@@ -2,6 +2,8 @@
 // (OpRatingModal) con las tres preguntas del vehículo: carga asignada a,
 // kilómetros recorridos y ¿llenaste el tanque? (22-sep-2026).
 //   ?dark=1 · ?km=1 (con km menor a los últimos → aviso)
+//   ?back=1 (UX-15: dispara history.back() a los 900 ms → el modal debe
+//   cerrarse y escribir "[close]" en consola)
 // Los vehículos llegan por window.__PP_MOCK_VEHICLES (plugin del config
 // del arnés) — sin sesión de Supabase.
 // Uso: npx vite --config tools/harness/vite.harness.config.js
@@ -25,12 +27,13 @@ function Harness() {
         dark={dark} sbConnected memberId="m1" fire={(m) => console.log('[toast]', m)}
         data={{ purchaseId: 'p1', operatorId: 'o1', operatorName: 'Juan Pérez', stationName: 'Turkaj I', points: 35, amount: 320 }}
         cfg={{ surveyDaily: 5, surveyPts: 3 }} mySurveyCount={0}
-        surveyPending={null} setSurveyPending={() => {}} onClose={() => {}}
+        surveyPending={null} setSurveyPending={() => {}} onClose={() => console.log('[close] modal cerrado')}
       />
     </div>
   );
 }
 createRoot(document.getElementById('root')).render(<Harness />);
+if (q.get('back') === '1') setTimeout(() => { console.log('[harness] history.back()'); history.back(); }, 900);
 if (q.get('km') === '1') setTimeout(() => {
   const inp = document.querySelector('input[inputmode="numeric"]');
   const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;

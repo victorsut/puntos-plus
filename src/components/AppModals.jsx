@@ -23,6 +23,9 @@ import ClientQrSheet from './ClientQrSheet';
 import ClientTourGate from './tour/ClientTourGate';
 import OpRatingModal from './OpRatingModal';
 import SurveyResultModal from './SurveyResultModal';
+import RewardQrSheet from '../views/client/RewardQrSheet';
+import useBackLayer from '../hooks/useBackLayer';
+import { rewardLocationNames } from '../lib/rewardLocations';
 import { homeColors } from '../constants/styles';
 import { markRatingSeen } from '../lib/ratingSeen';
 
@@ -36,7 +39,7 @@ export default function AppModals({
 }) {
   const {
     me, isC, dark, fire, cTier, gT, cfg,
-    stations, stores, redeem, addPurchase,
+    stations, stores, rewards, redeem, addPurchase,
     raffleCal, setRaffleCal,
     pendingRedeemConfirm, setPendingRedeemConfirm,
     redeemConfirm, setRedeemConfirm,
@@ -47,6 +50,25 @@ export default function AppModals({
   } = ctx;
   // Paleta del cuadro Encuesta según el nivel (paso 2 del modal de calificación)
   const hp = me ? homeColors(cTier.name) : null;
+
+  // UX-17 (7-nov-2026): recién hecho el canje se abre su QR acá mismo —
+  // antes solo había un toast y el código vivía detrás del reloj del
+  // catálogo o de la fila "VER QR ›" del historial.
+  const [newQr, setNewQr] = useState(null);
+  const [newQrClosing, setNewQrClosing] = useState(false);
+  const closeNewQr = () => {
+    if (newQrClosing) return;
+    setNewQrClosing(true);
+    setTimeout(() => { setNewQr(null); setNewQrClosing(false); }, 220);
+  };
+  useBackLayer(!!newQr, closeNewQr);
+  // Si abre su Código QR principal, no encimar dos códigos (regla 25-jul)
+  useEffect(() => { if (showQR) { setNewQr(null); setNewQrClosing(false); } }, [showQR]);
+  const newQrLocations = (() => {
+    if (!newQr) return null;
+    const rw = (rewards || []).find(r => r.id === newQr.rewardId);
+    return rw ? rewardLocationNames(rw, stations, stores) : null;
+  })();
 
   // R1b.4 Rifa — modal de ganador: si el sorteo (draw_due_raffles) me
   // marcó ganador de una rifa que aún no he visto, felicitar UNA vez.
@@ -105,7 +127,25 @@ export default function AppModals({
           // UX-03: la hoja queda ABIERTA (botones deshabilitados) mientras
           // la RPC viaja y cierra al terminar — antes cerraba al instante y
           // el catálogo seguía tocable durante el canje.
-          onConfirm={async (reward) => { await redeem(reward); closeRedeemConfirm(); }}
+          onConfirm={async (reward) => {
+            const entry = await redeem(reward);
+            closeRedeemConfirm();
+            // UX-17: el QR del canje nuevo entra cuando la hoja terminó de irse
+            if (entry && entry.code) setTimeout(() => setNewQr(entry), 240);
+          }}
+        />
+      )}
+
+      {/* ── UX-17: QR del canje recién hecho (portal al body, UX-16) ── */}
+      {newQr && isC && me && (
+        <RewardQrSheet
+          item={newQr}
+          closing={newQrClosing}
+          onClose={closeNewQr}
+          dark={dark}
+          dateLabel="Hoy"
+          locations={newQrLocations}
+          fresh
         />
       )}
 

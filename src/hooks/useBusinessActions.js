@@ -270,7 +270,8 @@ export default function useBusinessActions({
   // operador escanea → update confirm_status='pending' → cliente confirma.
   //
   // r.id debe ser el UUID del reward en Supabase (no el campo "id" local).
-  // Devuelve true si el canje se completó (las hojas cierran al terminar).
+  // Devuelve el canje nuevo ({ id, code, reward, cost… }) si se completó
+  // (UX-17: AppModals abre su QR) o false si no.
   const redeem = useCallback(async (r) => {
     if (!me?.id) return false;
     if (!sb || !sbConnected || offline()) { fire(OFFLINE_MSG); return false; }
@@ -295,6 +296,7 @@ export default function useBusinessActions({
       const newEntry = {
         id: redemption_id,
         memberId: me.id,
+        rewardId: r.id, // UX-18
         reward: { name: reward_name, icon: reward_icon, cat: r.cat },
         cost, date: today, code, collected: false,
       };
@@ -305,8 +307,10 @@ export default function useBusinessActions({
         ? { ...c, points: c.points - cost, redeemed: (c.redeemed || 0) + 1 }
         : c));
       setRedeemedList(p => [newEntry, ...p]);
-      fire(`🎉 ¡Canjeaste ${reward_name} por ${cost} pts!`);
-      return true;
+      // UX-17: la hoja raíz abre el QR del canje al instante (AppModals);
+      // el toast solo confirma y dice dónde queda guardado.
+      fire(`🎉 ¡Canjeaste ${reward_name}! Tu código queda en Canjes → pendientes.`);
+      return newEntry;
     } finally {
       unlock();
     }

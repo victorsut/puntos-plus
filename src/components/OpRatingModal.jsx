@@ -10,6 +10,7 @@
 // visible — al volver de Shell, el handler de visibilidad otorga los
 // puntos o cancela, y este modal se cierra solo.
 import { useState, useEffect, useRef, useCallback } from 'react';
+import useBackLayer from '../hooks/useBackLayer';
 import { sb } from '../lib/supabaseClient';
 import { bento, BRAND_ORANGE } from '../constants/styles';
 import { SHELL_SURVEYS } from '../constants/config';
@@ -91,6 +92,8 @@ export default function OpRatingModal({
       return true;
     });
   }, [onClose, flushVehicle]);
+  // UX-15 (7-nov-2026): "volver" cierra el modal en vez de SALIR de la app (TWA)
+  useBackLayer(true, close);
 
   // Encuesta de la estación de ESTA compra (llave: stations.name)
   const surveyTarget = SHELL_SURVEYS.find(s => s.name === data.stationName);

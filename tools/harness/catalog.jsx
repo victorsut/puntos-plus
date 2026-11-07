@@ -3,6 +3,8 @@
 //   ?dark=1  ·  ?scroll=N (desplaza la lista de premios)
 //   ?recal=1&tier=ORO|PLATINO|BLACK  catálogo recalibrado (19-sep) con premios
 //            de nivel mínimo: los bloqueados van AL FINAL de la lista
+//   ?tap=<texto>  toca el premio cuyo nombre contiene ese texto (UX-19: si no
+//            se puede canjear abre la ficha de solo lectura)
 // Uso: npx vite --config tools/harness/vite.harness.config.js
 //      http://localhost:3100/tools/harness/catalog.html?scroll=600
 import { useState } from 'react';
@@ -26,18 +28,21 @@ const recal = [
   ['Vale Q25 Combustible', 250, 'combustible', null], ['Lavado VIP + Shampoo Cera', 250, 'servicio', null],
   ['Cambio de aceite', 900, 'servicio', 'PLATINO'], ['Vale Q50 Combustible', 500, 'combustible', null],
   ['Vale Q100 Combustible', 1000, 'combustible', null],
-].map(([name, pts, cat, minTier], i) => ({ id: 'c' + i, name, pts, cat, minTier, icon: '🎁', active: true }));
+].map(([name, pts, cat, minTier], i) => ({ id: 'c' + i, name, pts, cat, minTier, icon: '🎁', active: true,
+  description: i % 2 ? 'Incluye aspirado, lavado exterior con shampoo y cera, y limpieza de tablero.' : null,
+  station_ids: i === 1 ? ['s2'] : null }));
 
 function Harness() {
   const [catF, setCatF] = useState('todos');
   const ctx = {
     rewards: q.get('recal') ? recal : rewards, me: { id: 'me', points: 300, gallons: 20 }, gT: () => ({ name: tierQ, redeemDisc: 0 }),
-    cfg: { qPerPt: 10 }, cTier: { name: tierQ }, catF, setCatF,
+    cfg: { qPerPt: 10, pointValue: 0.1, tiers: { oro: { gal: 0 }, platino: { gal: 150 }, black: { gal: 500 } } }, cTier: { name: tierQ }, catF, setCatF,
     redeem: () => {}, setRedeemConfirm: () => {}, client: true, redeemedList: [], activityLog: [],
-    dark, showQR: false, stations: [], stores: [],
+    dark, showQR: false, stations: [{ id: 's2', name: 'Turkaj II' }], stores: [],
   };
   return <Catalog {...ctx} />;
 }
 document.body.style.background = dark ? '#0B0B0D' : '#F7F7F9';
+if (q.get('tap')) setTimeout(() => { [...document.querySelectorAll('.pp-tile')].find(el => el.textContent.includes(q.get('tap')))?.click(); }, 700);
 if (q.get('scroll')) setTimeout(() => { const el = document.querySelector('#root > div > div'); if (el) el.scrollTop = +q.get('scroll'); }, 600);
 createRoot(document.getElementById('root')).render(<div style={{ width: 390 }}><Harness /></div>);
