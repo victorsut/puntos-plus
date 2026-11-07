@@ -1233,9 +1233,10 @@ Sin cambios respecto a v2.1. Ver versiones anteriores del documento para detalle
     compatibilidad en `list_my_vehicles` cuando ya no queden PWA con el
     placeholder cacheado; (3) `OpRaffle` (vista del operador) sigue vendiendo
     boletos a cualquier socio aunque la Rifa esté cerrada para él —
-    compuertar si la beta se alarga; (4) Fernando Morales tiene 1 boleto de
-    octubre y no está en la beta de Rifa (decisión del dueño); (5) verificar
-    E3i en campo con el primer socio que cierre un tramo.
+    compuertar si la beta se alarga; (4) ~~Fernando Morales tiene 1 boleto de
+    octubre y no está en la beta de Rifa~~ — RESUELTO 7-nov: el dueño decidió
+    MANTENERLO FUERA de la beta de Rifa; (5) verificar E3i en campo con el
+    primer socio que cierre un tramo.
 - **F8 — Puntos Plus Business:** el spike (D5) se cerró con GO comercial el 4-sep-2026 (empresas interesadas). Diseño técnico v0.3 acordado en `docs/PUNTOS-PLUS-BUSINESS.md` (v0.2 el 4-sep; ajustes B19-B27 el 5-sep): modelo de datos con DOS libros por empresa (dinero y puntos), rol `flota`, vales como canjes compatibles con la API de PROPER (cobro único al emitir; la entrega es el consumo de combustible: galones, telemetría y puntos por galón a la empresa), canjes y premios con puntos sin vencimiento, apartado "Mi flota" en la app, catálogo corporativo asignable a colaboradores (puntos→combustible fuera del saldo), facturación al depósito o por corte a la hora acordada con control de % facturado / por facturar, premios facturados a CF o al NIT de la empresa, reglas de NIT para que la app normal sea solo de particulares, métricas; 7 etapas, 183-254 hs. EN PAUSA hasta definir los premios (B18) y los niveles de empresa (B23); nada construido.
 - **F9 — Reportería enriquecida (opcional):** 40-55 hs. **🟡 PARCIAL (v4.0):**
   el grupo **Análisis** del admin (13-ago) cubrió el grueso — 4 vistas de
@@ -2093,6 +2094,14 @@ pantalla completa van por portal al body, nunca dentro de un contenedor fixed.
 
 **Validaciones del dueño en celular (16-oct):** motos de la Tanda 10,
 tutorial interactivo ("queda listo"), telemetría E3h y compra de boletos.
+
+**Decisiones del dueño (7-nov-2026):** (1) Puntos Plus Business sigue EN
+CONSTRUCCIÓN de su lado — permanece pendiente, sin arrancar B-E1; (2)
+Fernando Morales se MANTIENE FUERA de la beta de Rifa aunque tenga 1 boleto
+de octubre; (3) GO-LIVE sigue pendiente: se continúa perfeccionando la
+aplicación antes del lanzamiento oficial (interruptores apagados); (4) la
+tarjeta física queda como proyecto a FUTURO que puede realizarse u omitirse
+(F4/F7b siguen en pausa; nada que construir).
 
 **Estado al 7-nov (verificado en la base):** degradación, verificación de
 teléfono y precios automáticos de PROPER APAGADOS; llave API "Pruebas"

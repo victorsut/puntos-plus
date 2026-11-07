@@ -319,9 +319,12 @@ WiFi por estación viven ahí.
 
 - **Decisiones del dueño:** (1) Puntos Plus Business — traer el plan completo
   (se compara contra el doc v0.4b antes de construir) o arrancar B-E1 con
-  `ptsPerGal` provisional; (2) Fernando Morales en la beta de Rifa (tiene 1
-  boleto de octubre); (3) rollout de Vehículos y Rifa (interruptor "para
-  todos"); (4) Sign in with Apple para la versión de App Store.
+  `ptsPerGal` provisional — el 7-nov el dueño indicó que SIGUE en
+  construcción, pendiente; (2) ~~Fernando Morales en la beta de Rifa~~ —
+  resuelto 7-nov: se mantiene FUERA; (3) rollout de Vehículos y Rifa
+  (interruptor "para todos"); (4) Sign in with Apple para la versión de App
+  Store. Tarjeta física: proyecto a futuro que puede realizarse u omitirse
+  (7-nov).
 - **GO-LIVE (≈4-8 hs):** encender degradación (`set_degradation_enabled`),
   encender `phone_verification` (requiere Twilio), desactivar la llave API
   "Pruebas" (Admin → API externa), limpiar operadores espejo (PROPER 351,
