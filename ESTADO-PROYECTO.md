@@ -329,6 +329,9 @@ WiFi por estación viven ahí.
 - **Plan a futuro:** formalizar el dominio **puntosplus.com.gt** (D39:
   Vercel + redirección, OAuth/Supabase Auth, manifest/assetlinks, base URL
   de la API para PROPER con documento de novedades).
+- **Perfeccionamiento del socio (antes del GO-LIVE, 7-nov):** checklist
+  `docs/REVISION-UX-SOCIO.md` — 9 críticos (bloque A), 16 importantes (B),
+  22 de pulido (C); ≈38-54 hs. Capturas móviles con `tools/harness/shot.cjs`.
 - **GO-LIVE (≈4-8 hs):** encender degradación (`set_degradation_enabled`),
   encender `phone_verification` (requiere Twilio), desactivar la llave API
   "Pruebas" (Admin → API externa), limpiar operadores espejo (PROPER 351,
