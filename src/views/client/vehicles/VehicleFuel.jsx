@@ -16,7 +16,7 @@
 // set_my_fuel_load_state / set_my_fuel_load_gap (E3h). Si la migración
 // no está ejecutada, la sección no aparece (la app no rompe — precedente E2).
 import { useEffect, useMemo, useState } from 'react';
-import { BRAND_ORANGE } from '../../../constants/styles';
+import { BRAND_ORANGE, bento } from '../../../constants/styles';
 import { VEHICLE_TYPES } from '../../../components/ui/VehicleIcons';
 import { assignPurchaseVehicle, deleteMyFuelLog, listMyFuelHistory, listMyVehicleEvents, setMyFuelLoadState, setMyFuelLoadGap } from '../../../services/vehicleService';
 import { fuelSummary, serverSummary, isFullLoad, isInferredFull, tankStateParams, APPROX_LOADS } from '../../../lib/fuelEconomy';
@@ -289,7 +289,27 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
           título y los indicadores: el bloque completo (sugerencia, gráficas,
           botones) es más alto que la pantalla y tapaba la tarjeta del paso */}
       <div data-tour="veh-fuel">
-        <div style={lbl}>Rendimiento y consumo</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={lbl}>Rendimiento y consumo</div>
+          {/* UX-23 (dueño, 7-nov): la explicación va detrás de un "?" rojo,
+              discreto, junto al título — no como enlace entre los bloques */}
+          <button onClick={() => setShowHow(h => !h)} aria-expanded={showHow} aria-label="¿Cómo se calcula?" style={{
+            width: 18, height: 18, borderRadius: 9, border: `1.5px solid ${bento.red}`, padding: 0, cursor: 'pointer',
+            background: showHow ? bento.red : 'transparent', color: showHow ? '#fff' : bento.red,
+            fontFamily: "'DM Sans'", fontSize: 11.5, fontWeight: 800, lineHeight: '15px',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          }}>?</button>
+        </div>
+        {showHow && (
+          <div style={{ background: cardBg, borderRadius: 15, padding: '12px 14px', marginTop: 8, fontSize: 11.5, color: ink, fontWeight: 600, lineHeight: 1.6 }}>
+            <b>Medido de lleno a lleno:</b> entre dos cargas con "Tanque lleno" y km recorridos, dividimos los
+            km entre todo el combustible que cargaste en medio. Lo mismo entre dos "Llegué en reserva".<br />
+            <b>Cálculo aproximado:</b> si nunca llenás ni llegás a reserva, cada {APPROX_LOADS} cargas con km
+            dan un tramo aproximado.<br />
+            <b>No contada:</b> una medición muy fuera de lo normal se aparta — casi siempre faltó registrar una carga.<br />
+            <b>Lleno deducido:</b> si no respondiste y cargaste casi todo el tanque, lo tomamos como lleno.
+          </div>
+        )}
 
         {/* Indicadores del vehículo activo */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 8 }}>
@@ -313,24 +333,6 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
             Con dos referencias iguales medimos tu rendimiento exacto; mientras, ves un aproximado
             (cada {APPROX_LOADS} cargas con km forman un tramo).
           </div>
-        </div>
-      )}
-
-      {/* UX-23: cómo se calcula, en lenguaje llano (expandible) */}
-      <button onClick={() => setShowHow(h => !h)} aria-expanded={showHow} style={{
-        display: 'block', margin: '10px auto 0', padding: '6px 10px', border: 'none', background: 'none', cursor: 'pointer',
-        fontFamily: "'DM Sans'", fontSize: 11.5, fontWeight: 800, color: BRAND_ORANGE,
-      }}>
-        {showHow ? 'Ocultar ▴' : '¿Cómo se calcula? ▾'}
-      </button>
-      {showHow && (
-        <div style={{ background: cardBg, borderRadius: 15, padding: '12px 14px', marginTop: 4, fontSize: 11.5, color: ink, fontWeight: 600, lineHeight: 1.6 }}>
-          <b>Medido de lleno a lleno:</b> entre dos cargas con "Tanque lleno" y km recorridos, dividimos los
-          km entre todo el combustible que cargaste en medio. Lo mismo entre dos "Llegué en reserva".<br />
-          <b>Cálculo aproximado:</b> si nunca llenás ni llegás a reserva, cada {APPROX_LOADS} cargas con km
-          dan un tramo aproximado.<br />
-          <b>No contada:</b> una medición muy fuera de lo normal se aparta — casi siempre faltó registrar una carga.<br />
-          <b>Lleno deducido:</b> si no respondiste y cargaste casi todo el tanque, lo tomamos como lleno.
         </div>
       )}
 

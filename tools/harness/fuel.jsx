@@ -103,7 +103,7 @@ const events = [
 function Harness() {
   useEffect(() => {
     if (q.get('hist') === '1') setTimeout(() => { [...document.querySelectorAll('button')].find(b => b.textContent.startsWith('Historial del vehículo'))?.click(); }, 150);
-    if (q.get('how') === '1') setTimeout(() => { [...document.querySelectorAll('button')].find(b => b.textContent.startsWith('¿Cómo se calcula?'))?.click(); }, 150);
+    if (q.get('how') === '1') setTimeout(() => { document.querySelector('[aria-label="¿Cómo se calcula?"]')?.click(); }, 150);
     if (q.get('reg') === '1') setTimeout(() => { [...document.querySelectorAll('button')].find(b => b.textContent.trim() === '+ Registrar consumo')?.click(); }, 150);
   }, []);
   return (

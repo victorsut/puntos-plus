@@ -309,7 +309,9 @@ export default function useBusinessActions({
       setRedeemedList(p => [newEntry, ...p]);
       // UX-17: la hoja raíz abre el QR del canje al instante (AppModals);
       // el toast solo confirma y dice dónde queda guardado.
-      fire(`🎉 ¡Canjeaste ${reward_name}! Tu código queda en Canjes → pendientes.`);
+      // UX-17 (dueño, 7-nov): el QR del canje se abre de una vez, así que
+      // no hay toast encima; solo si no llegó código (no habrá QR) se avisa.
+      if (!newEntry.code) fire(`🎉 ¡Canjeaste ${reward_name}! Tu código queda en Canjes → pendientes.`);
       return newEntry;
     } finally {
       unlock();

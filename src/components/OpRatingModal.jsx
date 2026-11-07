@@ -34,7 +34,11 @@ export default function OpRatingModal({
   surveyPending, setSurveyPending,
 }) {
   const [saving, setSaving] = useState(false);
-  const [step, setStep] = useState('rate'); // 'rate' | 'vehicle' (UX-22) | 'survey'
+  const [step, setStep] = useState('rate'); // 'rate' | 'survey'
+  // UX-22 (dueño, 7-nov): con vehículos, la estrella SELECCIONA (no envía)
+  // y los datos de la carga van DEBAJO de las estrellas en el mismo modal;
+  // un solo botón "Enviar" manda todo. Sin vehículos, la estrella envía.
+  const [stars, setStars] = useState(0);
   const [closing, setClosing] = useState(false);
   const launchedRef = useRef(false);
 
@@ -112,20 +116,12 @@ export default function OpRatingModal({
       else fire(`¡Gracias! Calificación enviada: ${starCount}/5`, 'success');
     }
     setSaving(false);
-    // UX-22 (7-nov-2026): con vehículos, las preguntas de la carga van en
-    // un paso PROPIO después de las estrellas — antes el bloque entraba
-    // ENCIMA de las estrellas al llegar listMyVehicles (se movían bajo el
-    // dedo) y quien calificaba primero ya no podía indicar vehículo/km.
-    if (vehOpts) setStep('vehicle');
-    else if (canInvite) setStep('survey');
-    else close();
-  }, [saving, sbConnected, data.operatorId, memberId, fire, canInvite, close, flushVehicle, vehOpts]);
-  // Paso "Datos de la carga": guardar y seguir (encuesta o cierre)
-  const finishVehicle = useCallback(() => {
-    flushVehicle();
     if (canInvite) setStep('survey');
     else close();
-  }, [flushVehicle, canInvite, close]);
+  }, [saving, sbConnected, data.operatorId, memberId, fire, canInvite, close, flushVehicle]);
+  // Toque en una estrella: con vehículos solo selecciona (envía "Enviar");
+  // sin vehículos envía de una vez, como siempre.
+  const tapStar = (n) => { if (vehOpts) setStars(n); else submitRating(n); };
 
   const startSurvey = () => {
     if (!surveyTarget || surveyPending) return;
@@ -228,48 +224,33 @@ export default function OpRatingModal({
               </div>
             )}
 
-            {/* Stars — tap to rate and auto-submit */}
+            {/* Stars — sin vehículos: tocar envía; con vehículos: selecciona */}
             <div style={{ fontSize: 13.5, fontWeight: 700, color: dark ? '#E0E0E0' : '#424242', marginBottom: 12 }}>
               Calificá la atención
             </div>
             <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 18 }}>
               {[1, 2, 3, 4, 5].map(s => (
-                <button key={s} onClick={() => submitRating(s)} aria-label={`${s} estrellas`} style={{
+                <button key={s} onClick={() => tapStar(s)} aria-label={`${s} estrellas`} aria-pressed={vehOpts ? s <= stars : undefined} style={{
                   background: 'none', border: 'none', cursor: 'pointer',
                   color: bento.amber, padding: 2, lineHeight: 0,
-                  transition: 'transform .1s',
+                  opacity: stars && s > stars ? .4 : 1,
+                  transform: stars && s <= stars ? 'scale(1.08)' : 'none',
+                  transition: 'transform .1s, opacity .15s',
                 }}>
-                  <StarRate size={36} />
+                  <StarRate size={36} filled={s <= stars} />
                 </button>
               ))}
             </div>
 
-            {/* Skip */}
-            <button onClick={close} style={{
-              width: '100%', padding: 12, borderRadius: 14,
-              background: 'none', border: 'none',
-              fontFamily: "'DM Sans'", fontSize: 13, fontWeight: 600,
-              color: '#9E9E9E', cursor: 'pointer',
-            }}>
-              Omitir
-            </button>
-          </>
-        ) : step === 'vehicle' ? (
-          <>
-            {/* UX-22 — Paso "Datos de la carga" (F6 E2): ¿a cuál vehículo va
-                esta carga? chips + km recorridos + ¿cómo fue la carga?; se
-                envía al guardar (u omitir, sin cambios) */}
-            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: BRAND_ORANGE, marginBottom: 4 }}>
-              Datos de la carga
-            </div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: dark ? '#fff' : '#0D0D0D', marginBottom: 4 }}>
-              ¡Gracias por calificar!
-            </div>
-            <div style={{ fontSize: 12.5, fontWeight: 600, color: subTxt, lineHeight: 1.5, marginBottom: 14 }}>
-              Contanos de esta carga para medir el rendimiento de tu vehículo.
-            </div>
+            {/* UX-22 — Datos de la carga (F6 E2), DEBAJO de las estrellas para
+                que no se muevan cuando llega listMyVehicles: ¿a cuál vehículo
+                va esta carga? chips + km recorridos + ¿cómo fue la carga?; se
+                envía junto con las estrellas (u omitir, sin cambios) */}
             {vehOpts && (
-              <div style={{ textAlign: 'left', marginBottom: 16 }}>
+              <div style={{ textAlign: 'left', marginBottom: 16, paddingTop: 14, borderTop: `1px solid ${dark ? 'rgba(255,255,255,.08)' : '#EEEEF0'}` }}>
+                <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: BRAND_ORANGE, marginBottom: 10 }}>
+                  Datos de la carga <span style={{ color: '#9E9E9E', letterSpacing: 0, textTransform: 'none', fontWeight: 600 }}>· opcional</span>
+                </div>
                 {/* Tres preguntas con el MISMO rótulo (dueño, 22-sep): que el
                     socio entienda que son cosas por contestar */}
                 <div style={qLabel}>Carga asignada a</div>
@@ -347,15 +328,20 @@ export default function OpRatingModal({
                 </button>
               </div>
             )}
-            <button onClick={finishVehicle} disabled={!!kmErr} style={{
-              width: '100%', padding: 15, borderRadius: 14, border: 'none',
-              background: BRAND_ORANGE, color: '#fff', opacity: kmErr ? .5 : 1,
-              fontFamily: "'DM Sans'", fontSize: 15, fontWeight: 800, cursor: kmErr ? 'default' : 'pointer',
-            }}>
-              Guardar
-            </button>
-            <button onClick={() => { vehSent.current = true; close(); }} style={{
-              width: '100%', marginTop: 6, padding: 12, borderRadius: 14,
+            {/* Con vehículos: un solo botón manda estrellas + carga */}
+            {vehOpts && (
+              <button onClick={() => submitRating(stars)} disabled={!stars || !!kmErr} style={{
+                width: '100%', padding: 15, borderRadius: 14, border: 'none',
+                background: BRAND_ORANGE, color: '#fff', opacity: !stars || kmErr ? .45 : 1,
+                fontFamily: "'DM Sans'", fontSize: 15, fontWeight: 800, cursor: !stars || kmErr ? 'default' : 'pointer',
+              }}>
+                {stars ? 'Enviar' : 'Elegí las estrellas'}
+              </button>
+            )}
+
+            {/* Skip */}
+            <button onClick={close} style={{
+              width: '100%', marginTop: vehOpts ? 6 : 0, padding: 12, borderRadius: 14,
               background: 'none', border: 'none',
               fontFamily: "'DM Sans'", fontSize: 13, fontWeight: 600,
               color: '#9E9E9E', cursor: 'pointer',

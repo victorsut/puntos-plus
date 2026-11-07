@@ -2,8 +2,8 @@
 // (OpRatingModal) con las tres preguntas del vehículo: carga asignada a,
 // kilómetros recorridos y ¿llenaste el tanque? (22-sep-2026).
 //   ?dark=1 · ?km=1 (con km menor a los últimos → aviso)
-//   ?star=N (UX-22: toca N estrellas → con vehículos pasa al paso "Datos de
-//   la carga"; la RPC de calificación falla sin sesión y solo se loguea)
+//   ?star=N (UX-22: toca N estrellas → con vehículos solo SELECCIONA y se
+//   habilita "Enviar" bajo los datos de la carga; sin vehículos envía)
 //   ?back=1 (UX-15: dispara history.back() a los 900 ms → el modal debe
 //   cerrarse y escribir "[close]" en consola)
 // Los vehículos llegan por window.__PP_MOCK_VEHICLES (plugin del config
