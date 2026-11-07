@@ -23,7 +23,7 @@
 | B — Importantes | Confusión, mensajes técnicos, modales que no se cierran, datos viejos | 16 | 16-22 hs |
 | C — Pulido | Legibilidad, blancos táctiles, voz (tú/vos), tildes, detalles | 22 | 12-18 hs |
 
-Orden propuesto: A completo → B → C. **Estado 7-nov-2026: los tres bloques están implementados y en producción**; falta la validación del dueño en celular de B y C (A ya validado).
+Orden propuesto: A completo → B → C. **Estado 7-nov-2026 (noche): los tres bloques están implementados, en producción y VALIDADOS por el dueño en celular** (ajustes posteriores: `60576cf` y `ffa2bf1`).
 
 ---
 
@@ -64,7 +64,7 @@ Orden propuesto: A completo → B → C. **Estado 7-nov-2026: los tres bloques e
 
 ## Bloque C — Pulido
 
-> ✅ BLOQUE C COMPLETO (UX-26…47) el 7-nov-2026 en dos lotes (`1e6ff82` UX-26/27/32/33/35/36/37/38/40/41/43/44/45 · `b0d7552` UX-28/29/30/31/34/39/42/46/47); pendiente de validación del dueño en celular. **Decisión del dueño (UX-35): voz única "tú"** — inventario con `scratchpad/voseo.cjs` (73 líneas corregidas; quedan solo falsos positivos: topónimos, "estás", futuros). Sin migraciones. Piezas nuevas: `lib/openExternal.js`, `hooks/useOnline.js` + `ui/OfflineChip`, `ui/PushPromptCard` (permiso push con contexto, snooze 7 días en `pp_push_later`), `TERMS_UPDATED` en config, `plateMask` con prefijo de 1–2 letras. Arneses: `tiercard.html` (tarjeta de nivel ORO/PLATINO/BLACK + PushPromptCard), `fuel.html?hist=1&del=1`. UX-42 ya había quedado resuelto con los esqueletos de UX-11.
+> ✅ BLOQUE C COMPLETO (UX-26…47) el 7-nov-2026 en dos lotes (`1e6ff82` UX-26/27/32/33/35/36/37/38/40/41/43/44/45 · `b0d7552` UX-28/29/30/31/34/39/42/46/47); validado por el dueño en celular el 7-nov (ajuste posterior: PLATINO blanco en modo oscuro, `ffa2bf1`). **Decisión del dueño (UX-35): voz única "tú"** — inventario con `scratchpad/voseo.cjs` (73 líneas corregidas; quedan solo falsos positivos: topónimos, "estás", futuros). Sin migraciones. Piezas nuevas: `lib/openExternal.js`, `hooks/useOnline.js` + `ui/OfflineChip`, `ui/PushPromptCard` (permiso push con contexto, snooze 7 días en `pp_push_later`), `TERMS_UPDATED` en config, `plateMask` con prefijo de 1–2 letras. Arneses: `tiercard.html` (tarjeta de nivel ORO/PLATINO/BLACK + PushPromptCard), `fuel.html?hist=1&del=1`. UX-42 ya había quedado resuelto con los esqueletos de UX-11.
 
 - [x] **UX-26 · Banner "Nueva versión disponible" tapa la barra inferior y el botón QR.** `UpdateAvailable.jsx:24-32` (`bottom: 16`, z 10000) sobre la `BottomNav`; sin botón "Después"; "Recargar" a mitad del registro borra el formulario. Arreglo: `bottom: calc(72px + env(safe-area-inset-bottom))` y botón "Después".
 - [x] **UX-27 · Service worker: navegación network-first sin tiempo límite y actualización en espera sin aviso.** `public/sw.js:97-103` (Lie-Fi: espera el timeout del navegador antes del shell cacheado); `swRegistration.js:162-178` no detecta `registration.waiting` al registrar. Sin chip "Sin conexión" (`navigator.onLine` no se usa). Arreglo: `Promise.race` con ~4 s hacia caché; avisar si ya hay worker en espera; chip offline en el inicio.

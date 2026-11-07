@@ -296,6 +296,10 @@ Esta sección documenta las decisiones tomadas durante las conversaciones de pla
 **Decisión:** el dueño adquirió el dominio **puntosplus.com.gt**; parte del plan de perfeccionamiento previo al lanzamiento es FORMALIZAR el dominio y servir la app desde él (hoy `puntosplus.vercel.app`). Se anota como PLAN A FUTURO, sin fecha.
 **Alcance previsto de la migración (aditiva, sin tocar lógica):** dominio en Vercel (+ redirección permanente desde `puntosplus.vercel.app`), URLs de redirección de Google OAuth y de Supabase Auth, `manifest.json`/`id`/`scope` y `assetlinks.json` del TWA (track TIENDAS), base URL de la API para PROPER (documento de novedades; la URL vieja sigue respondiendo), enlaces en push/correos/QR y en `CLAUDE.md`/`ESTADO-PROYECTO.md`. Las sesiones y suscripciones push NO se pierden si el dominio viejo redirige; se verifica en la PWA instalada.
 
+### D40 — Voz única "tú" en toda la app del socio (7-nov-2026)
+**Decisión:** la app habla de "tú" (Inicia, Toca, Puedes, Tienes…), nunca de "vos" (Iniciá, Tocá, Podés, Tenés…). Hasta el 7-nov convivían ambas: el tutorial y el Inicio tuteaban; login, registro, modales y vehículos voseaban (UX-35). Se corrigieron 73 textos con un inventario automático de imperativos voseantes; los mensajes del backend (RPCs) y de Twilio se van alineando al tocarlos.
+**Regla:** todo texto nuevo del cliente va en "tú". Los falsos positivos conocidos del inventario son topónimos (Sololá, Quiché…), "estás/estés" (igual en ambas voces) y futuros ("se asignará").
+
 ### D36 — Caso ángel macario: cerrado sin ajuste (17-jul-2026)
 **Decisión:** los 71 puntos quedan tal cual (no se ajustan a 50 ni se crea entrada retroactiva). El caso se habló directamente con el cliente y se da por concluido. No se investiga retroactivamente a otros miembros.
 **Motivo:** el trigger strict de FB.9 ya garantiza que ninguna mutación futura pase sin auditoría; el valor de la corrección retroactiva no justifica su costo relacional/operativo. Cierra las decisiones FB.5/FB.6 → **FB queda CERRADA**.
@@ -2137,6 +2141,38 @@ facturas de socios de prueba desde el 16-oct); operadores espejo de prueba
 activos; rifa de octubre sorteada el 1-nov (ganó Ezer, está en la beta);
 rifa de noviembre creada; beta de Rifa de Emanuel vencida el 1-nov como se
 acordó.
+
+**7-nov · REVISIÓN UX DEL SOCIO: LOS 47 PUNTOS IMPLEMENTADOS Y VALIDADOS**
+(`docs/REVISION-UX-SOCIO.md`; commits `55a8302`…`ffa2bf1`; migración
+`20261107_ux07_km_servicio_assert.sql` ejecutada por el dueño). **Bloque A
+(críticos):** detección de WebView con "Abrir en Chrome", registro sin alta
+fantasma, candado contra el doble toque en canje y rifa, encuesta que
+conserva el crédito y reintenta sola, modal de calificación con scroll y en
+la raíz (se ve desde cualquier pestaña), km del servicio validado (cliente +
+servidor), rendimiento con Reintentar, errores de red traducidos en
+`rpcCore`. **Bloque B (importantes):** boot del cliente sin descargar
+miembros ni calificaciones + esqueletos, isotipo pre-intro, sesión vencida
+que avisa, "Conectando con Google…", refresco al volver al frente,
+"volver" cierra los modales (TWA), QR del premio por portal + se abre al
+canjear + "Válido en", ficha de premios bloqueados, rifa sin publicar sin
+"Q0", diciembre visible en enero, calificación y datos de la carga en UN
+modal (estrella selecciona + Enviar; ajuste del dueño), glosario llano del
+rendimiento tras un "?" rojo, telemetría con Reintentar, acceso beta sin red
+con caché y Reintentar. **Bloque C (pulido):** **D40 voz única "tú"**,
+tildes, mensajes, cifras con formato, contraste, viewport con zoom + zona
+segura, 100dvh, Términos con fecha única, banner de actualización con
+"Después", SW con límite de 4 s hacia caché + worker en espera + chip "Sin
+conexión", enlaces externos a prueba de webviews, campos de fecha/dirección
+como botones, permiso push con contexto (`PushPromptCard`), formularios con
+autollenado y Enter, blancos táctiles de 44 px, textos mínimos de 10–11.5 px,
+tarjeta PLATINO con tinta oscura en modo claro (blanca en oscuro, ajuste del
+dueño), promos ligeras, placa con prefijo de 1–2 letras, borrado de registro
+manual con Sí/No. Arneses nuevos en `tools/harness/` (`shot.cjs`,
+`survey`, `service`, `tiercard`, parámetros `?tap/qr/bar/back/star/nopub/
+dec/stale/how/gate/del`). Validado por el dueño en celular (A, B y C).
+Deuda menor: `GoogleProfile.jsx` 507 líneas (legado). **Deseo del dueño
+anotado:** ver las estadísticas de la ÚLTIMA carga sin desplegar el
+historial del vehículo (sin fecha).
 
 ### Versión 4.5 — 21 de septiembre de 2026
 

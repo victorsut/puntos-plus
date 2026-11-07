@@ -1,11 +1,11 @@
 # Puntos Plus — Referencia Técnica del Proyecto
-## Última actualización: 7 de noviembre de 2026 (reconciliada contra el repo y la base de datos; cubre los cierres del 21-sep al 16-oct-2026)
+## Última actualización: 7 de noviembre de 2026, noche (reconciliada contra el repo y la base de datos; incluye la revisión UX del socio A/B/C cerrada y validada ese día)
 
 > **Este documento es solo REFERENCIA TÉCNICA** (stack, estructura, schema,
 > RPCs, endpoints, variables de entorno, accesos, reglas de negocio vigentes).
 > Se reconcilia con la realidad del repo cuando cambia algo estructural.
 >
-> **El plan maestro (fases, decisiones D1–D37, track de seguridad SEC, deuda
+> **El plan maestro (fases, decisiones D1–D40, track de seguridad SEC, deuda
 > técnica y changelog) vive en [`ROADMAP.md`](./ROADMAP.md).** Las reglas
 > operativas para trabajar el código están en [`CLAUDE.md`](./CLAUDE.md).
 > La API pública para el POS de PROPER está documentada en
@@ -302,10 +302,16 @@ WiFi por estación viven ahí.
 
 ## 11. Verificación visual y herramientas
 
-- `tools/harness/`: páginas Vite (`home-tile`, `raffle`, `history`, `catalog`, `d24`, `d4`, `fuel` (+`?approx=1|2`), `tour` (`?step=N`), `rating`, `soon`) que montan
-  componentes del cliente con datos simulados. Servidor:
-  `npx vite --config tools/harness/vite.harness.config.js` (puerto 3100) y
-  captura con Edge headless (`msedge --headless=new --screenshot=… --window-size=390,900 --virtual-time-budget=15000 <url>`).
+- `tools/harness/`: páginas Vite (`home-tile`, `raffle` (+`?nopub=1|dec=1`),
+  `history` (+`?qr=1&bar=1`), `catalog` (+`?tap=`), `redeem`, `d24`, `d4`,
+  `fuel` (+`?approx=1|2|err=1|stale=1|how=1|hist=1&del=1`), `tour` (`?step=N`),
+  `rating` (+`?star=N|back=1`), `soon` (+`?gate=1`), `survey`, `service`,
+  `tiercard` (+`?dark=1`)) que montan componentes del cliente con datos
+  simulados. Servidor: `npx vite --config tools/harness/vite.harness.config.js`
+  (puerto 3100). Captura: `node tools/harness/shot.cjs --out <dir> [--wait=ms]
+  [--scroll=N] nombre=ruta?query` (Edge headless por CDP con viewport móvil
+  REAL de 390×844 y volcado de `console.log` como `[page:log]`; el
+  `--window-size` pequeño de Edge ≥157 se ignora, por eso ya no se usa).
 - `tools/artes/`: pipeline de calco de las 53 artes de vehículos (motor de
   trazado `trace-mix` con flags `lightKeep`/`specialClasses`/`passes` para
   referencias planas, comparador ref-vs-arte, analizador de manchas,
@@ -329,9 +335,12 @@ WiFi por estación viven ahí.
 - **Plan a futuro:** formalizar el dominio **puntosplus.com.gt** (D39:
   Vercel + redirección, OAuth/Supabase Auth, manifest/assetlinks, base URL
   de la API para PROPER con documento de novedades).
-- **Perfeccionamiento del socio (antes del GO-LIVE, 7-nov):** checklist
-  `docs/REVISION-UX-SOCIO.md` — 9 críticos (bloque A), 16 importantes (B),
-  22 de pulido (C); ≈38-54 hs. Capturas móviles con `tools/harness/shot.cjs`.
+- ~~**Perfeccionamiento del socio (antes del GO-LIVE)**~~ ✅ **CERRADO
+  7-nov-2026:** los 47 puntos de `docs/REVISION-UX-SOCIO.md` (A/B/C)
+  implementados (`55a8302`…`ffa2bf1`) y validados por el dueño en celular;
+  decisión **D40 voz única "tú"**. Quedan anotados: ver las estadísticas de la
+  ÚLTIMA carga sin desplegar el historial (deseo del dueño, sin fecha) y
+  dividir `GoogleProfile.jsx` (507 líneas) al tocar esa pantalla.
 - **GO-LIVE (≈4-8 hs):** encender degradación (`set_degradation_enabled`),
   encender `phone_verification` (requiere Twilio), desactivar la llave API
   "Pruebas" (Admin → API externa), limpiar operadores espejo (PROPER 351,
