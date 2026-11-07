@@ -133,10 +133,15 @@ export default function OpRatingModal({
       padding: 20,
       animation: closing ? 'fadeUpOut .2s ease forwards' : 'fadeUp .3s ease',
     }}>
+      {/* UX-05 (7-nov-2026): con el bloque de vehículo el panel superaba la
+          pantalla de un Android chico y, con el teclado abierto para los km,
+          quedaba inusable → alto máximo + scroll interno. */}
       <div style={{
         background: dark ? '#101018' : '#fff',
         borderRadius: 24, maxWidth: 360, width: '100%', padding: '28px 24px',
         textAlign: 'center',
+        maxHeight: '90vh', overflowY: 'auto', WebkitOverflowScrolling: 'touch',
+        overscrollBehavior: 'contain',
       }}>
         {saving ? (
           /* Saving state */
