@@ -26,6 +26,7 @@
   gestiones externas. **Desde el 16-oct-2026 las pestañas Vehículos y Rifa
   están en BETA CONTROLADA** (PRÓXIMAMENTE salvo probadores del admin).
   PROPER integra contra producción desde el 16-sep (aún con socios de prueba).
+- **Dominio propio:** puntosplus.com.gt ADQUIRIDO (7-nov-2026); la migración es plan a futuro (ROADMAP D39).
 - **Producción:** https://puntosplus.vercel.app (sin guión —
   `puntos-plus.vercel.app` es un proyecto AJENO).
 - **Repo:** github.com/victorsut/puntos-plus, rama `main` → Vercel auto-deploy.
@@ -258,7 +259,7 @@ se ejecutan a mano en el SQL Editor de Supabase (regla de CLAUDE.md §9).
 - Login (usuario + contraseña; bcrypt server-side). Panel con ventas del día, rating en vivo (Realtime), estación de la última venta.
 - Registrar compra: escáner QR (`resolve_card`), galones reales, promociones aplicadas por el motor, push de calificación al socio.
 - Canjes: por código, confirmación al socio (Realtime), entrega atómica con comprobante e impresión térmica (`window.print`, `print_logs`). Rifa: venta de boletos.
-- Con PROPER activo el colaborador NO usa esta vista: el POS llama a la API y la estación viaja en cada factura.
+- Con PROPER activo el colaborador NO usa esta vista: el POS llama a la API y la estación viaja en cada factura. **D38 (7-nov-2026): la vista queda OMITIDA** — no se desarrolla ni se corrige; sigue desplegada solo como respaldo.
 
 - Tutorial interactivo (21-sep): 31 coach marks que recorren todas las pestañas (cada paso declara `screen`; los pasos sin elemento se saltan); aparece al crear la cuenta y al abrir sesión; reapertura desde Asistencia y ayuda (`components/tour/`, anclas `data-tour`). Validado por el dueño el 16-oct.
 
@@ -324,7 +325,10 @@ WiFi por estación viven ahí.
   resuelto 7-nov: se mantiene FUERA; (3) rollout de Vehículos y Rifa
   (interruptor "para todos"); (4) Sign in with Apple para la versión de App
   Store. Tarjeta física: proyecto a futuro que puede realizarse u omitirse
-  (7-nov).
+  (7-nov). Vista de operador OMITIDA: operación 100 % por PROPER (D38).
+- **Plan a futuro:** formalizar el dominio **puntosplus.com.gt** (D39:
+  Vercel + redirección, OAuth/Supabase Auth, manifest/assetlinks, base URL
+  de la API para PROPER con documento de novedades).
 - **GO-LIVE (≈4-8 hs):** encender degradación (`set_degradation_enabled`),
   encender `phone_verification` (requiere Twilio), desactivar la llave API
   "Pruebas" (Admin → API externa), limpiar operadores espejo (PROPER 351,
@@ -333,7 +337,7 @@ WiFi por estación viven ahí.
   verificación general con factura real.
 - **Deudas menores:** 6 socios con saldo ≠ libro mayor (legado de pruebas; el
   saldo manda); retirar `beta: true` de compatibilidad en `list_my_vehicles`;
-  `OpRaffle` vende boletos a socios fuera de la beta de Rifa; verificar E3i
+  verificar E3i
   con el primer socio que cierre un tramo; benchmark anónimo de rendimiento
   (a futuro); depurar reglas de permisos de Claude Code.
 - **Gestiones del dueño:** PROPER (volumen estimado, paso a producción real),

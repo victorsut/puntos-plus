@@ -4,7 +4,8 @@ Lead Full-Stack Developer de **Puntos Plus** (antes "Club Turkaj"), programa de
 lealtad para gasolineras Turkaj I, II y III en Chichicastenango, Guatemala.
 PWA en producción activa.
 
-- **Producción:** https://puntosplus.vercel.app (⚠️ sin guión — `puntos-plus.vercel.app` pertenece a un proyecto AJENO)
+- **Producción:** https://puntosplus.vercel.app (⚠️ sin guión — `puntos-plus.vercel.app` pertenece a un proyecto AJENO). **Dominio propio adquirido: puntosplus.com.gt** — migración = plan a futuro (ROADMAP D39), aún NO apunta a la app.
+- **Operación del colaborador: 100 % por PROPER (D38, 7-nov-2026).** Factura en su POS y por la API asigna puntos y entrega premios. La vista de operador propia (`src/views/operator/`) queda OMITIDA: no se desarrolla ni se corrige salvo pedido explícito.
 - **Repo:** github.com/victorsut/puntos-plus (rama `main`)
 - **Supabase project:** rfharnrsatgliynzcuwp
 

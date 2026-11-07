@@ -288,6 +288,14 @@ Esta sección documenta las decisiones tomadas durante las conversaciones de pla
 **Decisión:** los POS en producción (Sunmi P2) y los candidatos (PAX A920Pro) **no permiten instalar aplicaciones** (MDM del proveedor de terminales), lo que descarta SDKs nativos y apps puente. Por lo tanto: (a) **FA se re-scopea a "FA-lite"**: `window.print()` optimizado — plantilla térmica dedicada (CSS `@page` 58/80 mm), auto-disparo al confirmar el canje, botón de reimpresión y `print_logs` best-effort. (b) **La impresión definitiva se hará vía PROPER (F7a):** la respuesta del endpoint de consumo de canjes incluirá el payload del comprobante (modelo neutro de la PAL) para que PROPER lo imprima con su propio sistema — cero clics, sin hardware nuevo. (c) **Gestión paralela con el proveedor de las terminales** para whitelisting MDM: si prospera, la PAL gana un driver nativo sin refactor. (d) La alternativa de impresoras de red con cloud-printing (Star CloudPRNT / Epson SDP, ~US$150-250/estación) queda documentada como plan B sin inversión por ahora.
 **Motivo:** restricción MDM real verificada por el dueño con ambos dispositivos en mano + PROPER ya imprimirá en el flujo de facturación; se evita comprar hardware y desarrollar contra SDKs inaccesibles.
 
+### D38 — Operación 100 % por PROPER: la vista de operador queda OMITIDA (7-nov-2026)
+**Decisión:** todas las operaciones del colaborador se hacen desde la interfaz de PROPER, que se limita a FACTURAR y, a través de la API de Puntos Plus, ASIGNAR PUNTOS (`POST /v1/purchases`) y ENTREGAR PREMIOS por canje (`GET/POST /v1/redemptions`). La vista de operador propia (`src/views/operator/`: compras manuales, canjes, venta de boletos de rifa) queda OMITIDA por el momento: no se desarrolla ni se corrige, aunque sigue desplegada como respaldo.
+**Motivo:** el equipo técnico de PROPER está cerca de concluir ambas modalidades (acumulación y entrega); duplicar la operación en dos interfaces solo agrega mantenimiento. Consecuencias: las deudas de la vista de operador (p. ej. `OpRaffle` vendiendo boletos a socios fuera de la beta de Rifa) dejan de ser relevantes; la impresión del comprobante es de PROPER (D37); la calificación del colaborador sigue llegando por el push server-side de `api/v1/purchases`. Si PROPER no concluyera, la vista propia se reactiva tal cual está.
+
+### D39 — Dominio propio puntosplus.com.gt (7-nov-2026, plan a futuro)
+**Decisión:** el dueño adquirió el dominio **puntosplus.com.gt**; parte del plan de perfeccionamiento previo al lanzamiento es FORMALIZAR el dominio y servir la app desde él (hoy `puntosplus.vercel.app`). Se anota como PLAN A FUTURO, sin fecha.
+**Alcance previsto de la migración (aditiva, sin tocar lógica):** dominio en Vercel (+ redirección permanente desde `puntosplus.vercel.app`), URLs de redirección de Google OAuth y de Supabase Auth, `manifest.json`/`id`/`scope` y `assetlinks.json` del TWA (track TIENDAS), base URL de la API para PROPER (documento de novedades; la URL vieja sigue respondiendo), enlaces en push/correos/QR y en `CLAUDE.md`/`ESTADO-PROYECTO.md`. Las sesiones y suscripciones push NO se pierden si el dominio viejo redirige; se verifica en la PWA instalada.
+
 ### D36 — Caso ángel macario: cerrado sin ajuste (17-jul-2026)
 **Decisión:** los 71 puntos quedan tal cual (no se ajustan a 50 ni se crea entrada retroactiva). El caso se habló directamente con el cliente y se da por concluido. No se investiga retroactivamente a otros miembros.
 **Motivo:** el trigger strict de FB.9 ya garantiza que ninguna mutación futura pase sin auditoría; el valor de la corrección retroactiva no justifica su costo relacional/operativo. Cierra las decisiones FB.5/FB.6 → **FB queda CERRADA**.
@@ -377,7 +385,7 @@ Mover el `useState(checkingPhone)` al tope del componente con los otros useState
 | 12 | F8 | **Puntos Plus Business** (flotas): diseño técnico v0.4b en `docs/PUNTOS-PLUS-BUSINESS.md` (7 etapas B-E1…E7; 39 decisiones B1-B39) | 186-259 hs | Media | ⏸️ **DISEÑO ACORDADO, EN PAUSA** (4-sep; B19-B27 el 5-sep; **v0.4/v0.4b el 22-sep: reconciliación con la recalibración y la API v1.4** — misma fórmula `round(gal × ptsPerGal)`, premios de combustible con `cash_value`, API v1.5 aditiva, consumos de flota = canjes independientes de la facturación, puntos a la empresa AL FACTURAR, depósitos FIFO). Bloqueos del dueño: premios (B18/B25), niveles de empresa (B23), `ptsPerGal` inicial (puede ser provisional), onboarding. El 16-oct el dueño pidió el estado y quedó en responder si trae su plan completo o arranca B-E1 con valor provisional; nada construido |
 | 13 | F9 | Reportería enriquecida (opcional) | 40-55 hs | Opcional | 🟡 **PARCIAL** — el grupo Análisis del admin (13-ago: AnClientes/AnOperadores/AnPromos/AnIntegridad con RPCs `report_*`, integridad auditada; sin método de pago — solo Q total) cubre el grueso; el resto queda opcional |
 | — | **TIENDAS** | **Track operativo nuevo (v4.0):** publicación en Play Store (TWA/PWABuilder + `assetlinks.json`) y App Store (Sign in with Apple + push APNs, decisiones del dueño 14-ago) — checklist en `docs/TIENDAS.md` | 15-25 hs + gestiones | Alta | 🟡 **PREPARADO** (14-ago: manifest completo, privacidad/eliminación corregidas, iconos 192). BLOQUEADO por cuentas del dueño (Play Console + Apple Developer) + capturas 1080×1920 + cuenta demo |
-| — | **GO-LIVE** | **Checklist de lanzamiento:** ~~rollout de Vehículos~~ (✅ 4-sep), encender motor de degradación (`set_degradation_enabled` — el contador de todos arranca en cero), encender `phone_verification` (con Twilio), revocar la API key "Pruebas" de PROPER, limpiar los operadores espejo y socios de prueba de PROPER, abrir Vehículos y Rifa a todos (`features_beta.<sección>.public`, 16-oct), verificación general | 4-8 hs | Alta | 📋 Pendiente (los interruptores están apagados A PROPÓSITO hasta el lanzamiento oficial) |
+| — | **GO-LIVE** | **Checklist de lanzamiento:** ~~rollout de Vehículos~~ (✅ 4-sep), encender motor de degradación (`set_degradation_enabled` — el contador de todos arranca en cero), encender `phone_verification` (con Twilio), revocar la API key "Pruebas" de PROPER, limpiar los operadores espejo y socios de prueba de PROPER, abrir Vehículos y Rifa a todos (`features_beta.<sección>.public`, 16-oct), **formalizar el dominio puntosplus.com.gt (D39, plan a futuro)**, verificación general | 4-8 hs (+ dominio) | Alta | 📋 Pendiente (los interruptores están apagados A PROPÓSITO hasta el lanzamiento oficial) |
 | ∥ | **R1b** | **Track paralelo: rediseño visual iterativo por vistas** (Home → Promociones → Historiales → Menú → Canjes/Rifa) | 75-110 hs | Alta | 🔛 ACTIVO — **R1b.1 Home ✅ CERRADA** (17-jul, `4972e1d`→`dd50f30`, validada por el dueño: bento adaptable, cuadrados fijos Promos/Vehículo, degradados+iconos SVG, historiales con períodos derivados de datos + libro mayor de puntos, container transform con tinte de continuidad). **R1b.2 Promociones ✅ CERRADA** (18-jul, `dbe2ffd`→`6adb57c`, validada por el dueño) — cards verticales 3:4 en grid de 2 (vista PROMOCIONES con chips), 1:1 en el home (carrusel arrastrable, tap → vista); imagen 900×1200 como FONDO completo con textos encima (saltos de línea manuales, color por bloque via `text_colors` jsonb), preview admin a tamaño real; bucket promo-images solo-service-role + `/api/upload-promo-image`. **Actualización v4.0 (15-ago):** desde entonces el track cerró TODAS las vistas base del cliente — Menú (23-jul), modo claro/oscuro completo (24-jul), paleta por nivel + BLACK galaxia (23-jul→14-ago), Historiales con filtros por tipo + paginado (11-ago), Admin v2 con shell lateral y lienzo ancho (4→6-ago), divisiones <500 líneas de App/ClientHome/Settings/AdminDash (12→15-ago), code splitting por rol (cliente 354 kB, 14-ago) y **splash de entrada con monedas PP 3D** según referencia "idea intro" (15-ago). El track sigue ACTIVO para correcciones visuales puntuales según referencias |
 
 **Total restante estimado (v4.6):** ≈4-8 hs de desarrollo (solo go-live) + **F8 Puntos Plus Business (186-259 hs, diseño v0.4b acordado, en pausa: espera el plan del dueño o el arranque de B-E1 con `ptsPerGal` provisional)** + F9 opcional restante + gestiones externas del dueño (PROPER, Twilio, Play/Apple). F6 (72-93 hs estimadas) se ejecutó entre el 15-ago y el 3-sep y recibió la telemetría E3f-E3i entre el 21-sep y el 16-oct; el plan v3.0 de 550-750 hs queda ejecutado en ~95%.
@@ -1231,9 +1239,9 @@ Sin cambios respecto a v2.1. Ver versiones anteriores del documento para detalle
   - **PENDIENTE:** (1) benchmark anónimo de rendimiento entre socios (idea del
     dueño 2-sep, a futuro); (2) retirar el campo `beta: true` de
     compatibilidad en `list_my_vehicles` cuando ya no queden PWA con el
-    placeholder cacheado; (3) `OpRaffle` (vista del operador) sigue vendiendo
-    boletos a cualquier socio aunque la Rifa esté cerrada para él —
-    compuertar si la beta se alarga; (4) ~~Fernando Morales tiene 1 boleto de
+    placeholder cacheado; (3) ~~`OpRaffle` (vista del operador) sigue vendiendo
+    boletos a cualquier socio aunque la Rifa esté cerrada para él~~ — SIN
+    EFECTO desde el 7-nov: la vista de operador queda omitida (D38); (4) ~~Fernando Morales tiene 1 boleto de
     octubre y no está en la beta de Rifa~~ — RESUELTO 7-nov: el dueño decidió
     MANTENERLO FUERA de la beta de Rifa; (5) verificar E3i en campo con el
     primer socio que cierre un tramo.
@@ -1852,7 +1860,7 @@ quedó **RESUELTO** aparte (commit `5270f98`).
 
 | Item | Severidad | Cuándo |
 |---|---|---|
-| **`OpRaffle` vende boletos a cualquier socio aunque la Rifa esté en beta controlada para él** (16-oct; el servidor sí rechaza `buy_raffle_tickets` del propio socio, no la venta del operador) | Baja | Al abrir la Rifa a todos deja de importar; compuertar si la beta se alarga |
+| ~~**`OpRaffle` vende boletos a cualquier socio aunque la Rifa esté en beta controlada para él**~~ (16-oct) — sin efecto: la vista de operador queda OMITIDA, la operación es 100 % por PROPER (D38, 7-nov) | Baja (cerrado) | ✅ 7-nov-2026 |
 | **Tramos aproximados E3i sin verificación en campo** — ningún socio llega a 9 cargas con km (16-oct) | Baja | Con el primer socio que cierre un tramo |
 | ~~ROADMAP/ESTADO-PROYECTO sin los cierres del 22-sep al 16-oct (regla §0.3 incumplida)~~ — saldado el 7-nov (v4.6) | Baja (cerrado) | ✅ 7-nov-2026 |
 | **Incidente 3-sep (F6 E2b):** el backfill de `20260903b` reconcilió la tabla `vehicles` desde un `members.vehicles` desactualizado ANTES de espejar y borró 2 vehículos de la beta (Hero Eco Deluxe de Ezer M. con 3 compras re-ligadas; Hero Eco 100 de Fernando M.). Reparado en `20260903c`; color/km/aceite/próximo servicio de ambos NO recuperables (reingreso por el socio). LECCIÓN: en toda unificación, espejar primero y NUNCA borrar filas con datos propios desde una fuente legada | Alta (cerrado) | ✅ 3-sep-2026 |
@@ -2101,7 +2109,12 @@ Fernando Morales se MANTIENE FUERA de la beta de Rifa aunque tenga 1 boleto
 de octubre; (3) GO-LIVE sigue pendiente: se continúa perfeccionando la
 aplicación antes del lanzamiento oficial (interruptores apagados); (4) la
 tarjeta física queda como proyecto a FUTURO que puede realizarse u omitirse
-(F4/F7b siguen en pausa; nada que construir).
+(F4/F7b siguen en pausa; nada que construir); (5) **D38:** la vista de
+operador queda OMITIDA — toda la operación del colaborador es por PROPER
+(facturar, asignar puntos y entregar premios por la API), cuyo equipo técnico
+está cerca de concluir; (6) **D39:** dominio **puntosplus.com.gt** adquirido;
+formalizarlo es parte del plan de perfeccionamiento previo al lanzamiento
+(plan a futuro, sin fecha).
 
 **Estado al 7-nov (verificado en la base):** degradación, verificación de
 teléfono y precios automáticos de PROPER APAGADOS; llave API "Pruebas"
