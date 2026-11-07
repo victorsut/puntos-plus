@@ -24,6 +24,7 @@ import useMemberFeatures from '../hooks/useMemberFeatures';
 import useNotificationsInbox from '../hooks/useNotificationsInbox';
 import useSessionGuard from '../hooks/useSessionGuard';
 import useBusinessActions from '../hooks/useBusinessActions';
+import useSurveyFlow from '../hooks/useSurveyFlow';
 
 // Router de pantallas: TODOS los imports de vistas (incluidos los
 // React.lazy del code splitting por rol, 14-ago) viven allá.
@@ -252,6 +253,11 @@ export default function App() {
     setMe, setCusts, setActivityLog, setMySurveyCount,
     setRedeemedList, setRafData, setSpecialBonusModal, setAmt,
   });
+  // Encuesta de Satisfacción (UX-04/06, 7-nov): pendiente persistida,
+  // reclamo con reintentos y modal de resultado — en la RAÍZ para que
+  // resuelva en cualquier pestaña (antes solo en Inicio). Modales en AppModals.
+  const { surveyPending, setSurveyPending, surveyResult, setSurveyResult } =
+    useSurveyFlow({ me, doSurvey, setShowSurveys });
 
   // ===== HOOKS DE DATOS (división etapa 3, 12-ago-2026) =====
   // Staff: fichas completas, actividad global, participantes de rifa y
@@ -379,7 +385,7 @@ export default function App() {
     pendingRedeemConfirm, setPendingRedeemConfirm,
     purchaseConfirm, setPurchaseConfirm,
     redeemConfirm, setRedeemConfirm,
-    showSurveys, setShowSurveys,
+    showSurveys, setShowSurveys, surveyPending, setSurveyPending, surveyResult, setSurveyResult,
     sortDir, setSortDir, memSort, setMemSort,
     stationFilter, setStationFilter, stationMode, setStationMode, memberStations,
     rewardQrCloseSignal,

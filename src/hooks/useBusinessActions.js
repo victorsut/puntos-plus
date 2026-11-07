@@ -14,7 +14,7 @@ import { getMemberToken } from '../services/sessionTokens';
 import { localDate } from '../lib/dates';
 import { sendPushToMember } from '../lib/pushNotifications';
 import { firstName } from '../lib/text'; // regla 29-jul: al cliente solo el primer nombre del personal
-import { friendlyError } from '../lib/netError';
+import { friendlyError, isNetworkError } from '../lib/netError';
 
 export default function useBusinessActions({
   me, curMonth, fire, sbConnected, loggedOp,
@@ -363,12 +363,16 @@ export default function useBusinessActions({
     // Solo exige el cliente de Supabase — NO sbConnected (fin del boot
     // completo): el reclamo tras la recarga de la PWA debe poder correr
     // apenas la sesión del miembro esté lista (14-ago).
-    if (!sb) { fire('Sin conexión'); return { ok: false }; }
+    // UX-04: `network: true` = fallo de transporte → useSurveyFlow conserva
+    // la encuesta pendiente y la reintenta (sin toast: lo avisa su modal).
+    // Los errores de NEGOCIO (límite diario, sesión) sí van al toast.
+    if (!sb) return { ok: false, network: true };
 
     const { data, error } = await completeSurvey(me.id);
 
     if (error) {
-      fire('❌ ' + (error.message || 'Error al guardar encuesta'));
+      if (isNetworkError(error)) return { ok: false, network: true };
+      fire('❌ ' + friendlyError(error, 'Error al guardar encuesta'));
       return { ok: false };
     }
 

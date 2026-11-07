@@ -2,11 +2,13 @@
 // Modal post-compra en el dispositivo del cliente (Realtime INSERT de
 // purchases): paso 1 califica al operador con estrellas; paso 2 invita
 // a la Encuesta de Satisfacción de Shell de la estación de ESA compra.
-// La encuesta reutiliza el flujo del home (surveyPending + espera
-// SURVEY_WAIT viven en ClientHome; acá solo se lanza y se muestra el
-// estado de espera SIN contador visible — al volver de Shell, el
-// handler de visibilidad de ClientHome otorga los puntos o cancela,
-// y este modal se cierra solo).
+// La encuesta reutiliza el flujo global (surveyPending + espera
+// SURVEY_WAIT viven en useSurveyFlow, montado en App.jsx; este modal se
+// renderiza en AppModals — UX-06, 7-nov-2026: antes vivía en ClientHome
+// y la compra pasaba inadvertida si el socio estaba en otra pestaña);
+// acá solo se lanza y se muestra el estado de espera SIN contador
+// visible — al volver de Shell, el handler de visibilidad otorga los
+// puntos o cancela, y este modal se cierra solo.
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { sb } from '../lib/supabaseClient';
 import { bento, BRAND_ORANGE } from '../constants/styles';
@@ -118,10 +120,12 @@ export default function OpRatingModal({
     setSurveyPending({ openedAt: Date.now(), stationName: surveyTarget.name });
   };
 
-  // Al volver de Shell, el handler de visibilidad de ClientHome resuelve
-  // surveyPending (puntos o cancelación, con sus toasts) → cerrar acá.
+  // Al volver de Shell, useSurveyFlow resuelve surveyPending (puntos o
+  // cancelación, con su modal) → cerrar acá. UX-04: si el reclamo quedó
+  // `due` (sin red) también cerramos — el reintento es automático y el
+  // "Cancelar" de abajo no debe poder borrar ese crédito.
   useEffect(() => {
-    if (step === 'survey' && launchedRef.current && !surveyPending) close();
+    if (step === 'survey' && launchedRef.current && (!surveyPending || surveyPending.due)) close();
   }, [step, surveyPending, close]);
 
   const subTxt = dark ? 'rgba(255,255,255,.5)' : '#6E6E73';

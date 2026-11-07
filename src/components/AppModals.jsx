@@ -21,6 +21,9 @@ import RedeemConfirmSheet from './RedeemConfirmSheet';
 import PurchaseConfirmSheet from './PurchaseConfirmSheet';
 import ClientQrSheet from './ClientQrSheet';
 import ClientTourGate from './tour/ClientTourGate';
+import OpRatingModal from './OpRatingModal';
+import SurveyResultModal from './SurveyResultModal';
+import { homeColors } from '../constants/styles';
 
 export default function AppModals({
   ctx, toast,
@@ -38,7 +41,11 @@ export default function AppModals({
     redeemConfirm, setRedeemConfirm,
     purchaseConfirm, setPurchaseConfirm,
     showQR,
+    pendingOpRating, setPendingOpRating, sbConnected, mySurveyCount,
+    surveyPending, setSurveyPending, surveyResult, setSurveyResult,
   } = ctx;
+  // Paleta del cuadro Encuesta según el nivel (paso 2 del modal de calificación)
+  const hp = me ? homeColors(cTier.name) : null;
 
   // R1b.4 Rifa — modal de ganador: si el sorteo (draw_due_raffles) me
   // marcó ganador de una rifa que aún no he visto, felicitar UNA vez.
@@ -120,6 +127,39 @@ export default function AppModals({
           dark={dark}
           closing={qrClosing}
           onClose={closeQR}
+        />
+      )}
+
+      {/* ── Modal post-compra (Realtime): estrellas + invitación a la
+          encuesta Shell de la estación de la compra. UX-06 (7-nov): en la
+          RAÍZ — antes solo en ClientHome y la compra pasaba inadvertida si
+          el socio estaba en Canjes/Rifa/Vehículos/Menú. key = nueva compra
+          reinicia el paso interno del modal. ── */}
+      {pendingOpRating && isC && me && (
+        <OpRatingModal
+          key={pendingOpRating.purchaseId || 'compra'}
+          data={pendingOpRating}
+          onClose={() => setPendingOpRating(null)}
+          dark={dark}
+          memberId={me.id}
+          sbConnected={sbConnected}
+          fire={fire}
+          cfg={cfg}
+          mySurveyCount={mySurveyCount}
+          accent={hp.survey}
+          accentInk={hp.surveyInk || '#fff'}
+          surveyPending={surveyPending}
+          setSurveyPending={setSurveyPending}
+        />
+      )}
+
+      {/* ── Resultado de la encuesta — persistente hasta que el cliente lo
+          cierre (éxito · no completada · en espera por red · fallida) ── */}
+      {surveyResult && isC && me && (
+        <SurveyResultModal
+          result={surveyResult}
+          onClose={() => setSurveyResult(null)}
+          dark={dark}
         />
       )}
 

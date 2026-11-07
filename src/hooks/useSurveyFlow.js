@@ -1,6 +1,6 @@
 // src/hooks/useSurveyFlow.js
-// Flujo de la Encuesta de Satisfacción (extraído VERBATIM de ClientHome
-// en la división 14-ago): encuesta pendiente persistida en localStorage
+// Flujo de la Encuesta de Satisfacción (extraído de ClientHome en la
+// división 14-ago): encuesta pendiente persistida en localStorage
 // pp_survey_pending, reclamo de puntos y modal de resultado.
 //
 // La espera se asume completada tras SURVEY_WAIT segundos en la página
@@ -9,16 +9,28 @@
 // localStorage: en móvil el SO suele RECARGAR la PWA mientras el
 // cliente pasa el tiempo en Shell; sin persistencia el estado moría y
 // los puntos nunca se otorgaban.
+//
+// UX-06 (7-nov-2026): el hook vive en App.jsx (raíz) y los modales en
+// AppModals — antes vivían en ClientHome y solo resolvían en la pestaña
+// Inicio. UX-04: la pendiente se borra SOLO cuando el servidor acredita;
+// si el reclamo falla por RED queda marcada `due` y se reintenta sola
+// (foco / visibilidad / intervalo, con pausa RETRY_GAP, hasta
+// MAX_ATTEMPTS). Antes se borraba ANTES de llamar a la RPC y un fallo
+// al volver de Shell perdía los puntos con solo un toast de 3 s.
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { SURVEY_WAIT } from '../constants/config';
 
+const RETRY_GAP = 15000;  // ms mínimos entre reintentos automáticos
+const MAX_ATTEMPTS = 12;  // luego se rinde con modal "failed" (asistencia)
+
 export default function useSurveyFlow({ me, doSurvey, setShowSurveys }) {
+  // { openedAt, stationName, due?, attempts?, lastTry? }
   const [surveyPending, setSurveyPendingState] = useState(() => {
     try {
       const p = JSON.parse(localStorage.getItem('pp_survey_pending'));
       return (p && typeof p.openedAt === 'number') ? p : null;
     } catch { return null; }
-  }); // { openedAt, stationName }
+  });
   const setSurveyPending = useCallback((p) => {
     setSurveyPendingState(p);
     try {
@@ -29,16 +41,31 @@ export default function useSurveyFlow({ me, doSurvey, setShowSurveys }) {
 
   // Resultado de la encuesta — modal PERSISTENTE (14-ago): el toast se
   // perdía cuando la recarga de la PWA reclamaba los puntos durante el
-  // boot, y el cliente nunca veía confirmación (reporte del dueño).
+  // boot. Tipos: success · early · retry (UX-04) · failed (UX-04).
   const [surveyResult, setSurveyResult] = useState(null);
-  const claimSurvey = useCallback(async () => {
-    const res = await doSurvey();
-    if (res?.ok) setSurveyResult({
-      type: 'success', pts: res.pts, count: res.count,
-      limit: res.limit, bonus: res.bonusTicket,
-    });
-    // Error de RPC/conexión: doSurvey ya disparó su toast de error.
-  }, [doSurvey]);
+  const claimingRef = useRef(false);
+  const claimSurvey = useCallback(async (p) => {
+    if (claimingRef.current) return;
+    claimingRef.current = true;
+    try {
+      const res = await doSurvey();
+      if (res?.ok) {
+        setSurveyPending(null);
+        setSurveyResult({ type: 'success', pts: res.pts, count: res.count, limit: res.limit, bonus: res.bonusTicket });
+        return;
+      }
+      const attempts = (p?.attempts || 0) + 1;
+      if (res?.network && attempts < MAX_ATTEMPTS) {
+        // Sin red: conservar el crédito y reintentar; avisar UNA vez.
+        setSurveyPending({ ...p, due: true, attempts, lastTry: Date.now() });
+        if (attempts === 1) setSurveyResult({ type: 'retry' });
+      } else {
+        setSurveyPending(null);
+        if (res?.network) setSurveyResult({ type: 'failed' });
+        // Error de negocio (límite diario, sesión…): doSurvey ya mostró su toast.
+      }
+    } finally { claimingRef.current = false; }
+  }, [doSurvey, setSurveyPending]);
 
   // Resolución de la espera — NO depende de un único evento (14-ago):
   // en la app instalada (TWA) volver de la pestaña de Shell NO dispara
@@ -50,17 +77,23 @@ export default function useSurveyFlow({ me, doSurvey, setShowSurveys }) {
   //    despierta al volver): SOLO reclaman al cumplirse el tiempo —
   //    sin señal de visibilidad no se puede saber si volvió antes,
   //    así que la espera simplemente corre hasta otorgar los puntos.
+  // Con `due` (reclamo fallido por red) las tres vías REINTENTAN.
   useEffect(() => {
-    if (!surveyPending) return;
+    if (!surveyPending || !me?.id) return;
     let done = false;
     const resolve = (allowEarlyCancel) => {
       if (done) return;
+      if (surveyPending.due) {
+        if (Date.now() - (surveyPending.lastTry || 0) < RETRY_GAP) return;
+        done = true;
+        claimSurvey(surveyPending); // actualiza surveyPending → el efecto se rearma
+        return;
+      }
       const elapsed = Math.floor((Date.now() - surveyPending.openedAt) / 1000);
       if (elapsed >= SURVEY_WAIT) {
         done = true;
-        setSurveyPending(null);
         setShowSurveys(false);
-        claimSurvey();
+        claimSurvey(surveyPending);
       } else if (allowEarlyCancel) {
         done = true;
         setSurveyPending(null);
@@ -80,28 +113,25 @@ export default function useSurveyFlow({ me, doSurvey, setShowSurveys }) {
       document.removeEventListener('visibilitychange', onVis);
       window.removeEventListener('focus', onFocus);
     };
-  }, [surveyPending, claimSurvey, setShowSurveys, setSurveyPending]);
+  }, [surveyPending, me?.id, claimSurvey, setShowSurveys, setSurveyPending]);
 
   // Resolución al montar (con la sesión ya lista): si la PWA se recargó
   // mientras el cliente estaba en Shell, la encuesta RESTAURADA (la que
   // existía en el primer render — nunca una recién creada por un tap)
-  // SIEMPRE se resuelve: puntos si cumplió el tiempo, modal de "no
-  // completada" si volvió antes. Nunca queda una espera atascada en
-  // silencio (causa del reporte del 14-ago).
-  // No espera sbConnected (el fin del boot COMPLETO tardaba varios
-  // segundos): basta la sesión del miembro — el RPC no necesita el
-  // resto de los datos del boot.
+  // SIEMPRE se resuelve: puntos si cumplió el tiempo, reintento si quedó
+  // `due`, modal de "no completada" si volvió antes. Nunca queda una
+  // espera atascada en silencio (causa del reporte del 14-ago).
+  // No espera sbConnected: basta la sesión del miembro.
   const resumeSurveyRef = useRef(surveyPending);
   useEffect(() => {
     const p = resumeSurveyRef.current;
     if (!p || !me?.id || me.id.startsWith('temp-')) return;
     resumeSurveyRef.current = null; // una sola vez
     if (surveyPending !== p) return; // ya la resolvió el handler de visibilidad
-    const elapsed = Math.floor((Date.now() - p.openedAt) / 1000);
-    setSurveyPending(null);
     setShowSurveys(false);
-    if (elapsed >= SURVEY_WAIT) claimSurvey();
-    else setSurveyResult({ type: 'early' });
+    const elapsed = Math.floor((Date.now() - p.openedAt) / 1000);
+    if (p.due || elapsed >= SURVEY_WAIT) claimSurvey(p);
+    else { setSurveyPending(null); setSurveyResult({ type: 'early' }); }
   }, [surveyPending, me?.id, claimSurvey, setShowSurveys, setSurveyPending]);
 
   return { surveyPending, setSurveyPending, surveyResult, setSurveyResult };

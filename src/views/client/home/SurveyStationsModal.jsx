@@ -121,17 +121,23 @@ export default function SurveyStationsModal({
               color: dark ? '#FFD54F' : '#B58000',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             }}>
-              <Clock /> Completá la encuesta de {surveyPending.stationName}
+              <Clock /> {surveyPending.due
+                ? `Registrando tu encuesta de ${surveyPending.stationName}…`
+                : `Completá la encuesta de ${surveyPending.stationName}`}
             </div>
             <div style={{ fontSize: 11, fontWeight: 600, color: dark ? 'rgba(255,255,255,.5)' : '#6E6E73', marginTop: 4 }}>
-              Respondé todas las preguntas en la página de Shell · Tus puntos se asignan al terminar
+              {surveyPending.due
+                ? 'Sin conexión por ahora · Tus puntos se acreditan solos al volver la señal'
+                : 'Respondé todas las preguntas en la página de Shell · Tus puntos se asignan al terminar'}
             </div>
           </div>
         )}
 
         {/* Sin botón "Cerrar": la salida es la flecha del GrowModal.
-            Con encuesta pendiente queda "Cancelar" para abortarla. */}
-        {surveyPending && (
+            Con encuesta pendiente queda "Cancelar" para abortarla —
+            salvo con reclamo pendiente por red (UX-04): ese crédito no
+            se cancela, se reintenta solo. */}
+        {surveyPending && !surveyPending.due && (
           <button onClick={() => { setSurveyPending(null); close(); }} style={{
             width: '100%', marginTop: 8, padding: 14, borderRadius: 14,
             background: dark ? 'rgba(255,255,255,.08)' : '#F5F5F7',

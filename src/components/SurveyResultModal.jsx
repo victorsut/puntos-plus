@@ -4,6 +4,8 @@
 // la PWA se recarga al volver de Shell, los puntos se reclaman durante
 // el boot y un toast de 2s se perdía sin que el cliente lo viera.
 // result: { type: 'success', pts, count, limit, bonus } | { type: 'early' }
+//       | { type: 'retry' } (UX-04: reclamo sin red, se reintenta solo)
+//       | { type: 'failed' } (UX-04: se agotaron los reintentos)
 import { useState, useCallback } from 'react';
 import { bento, BRAND_ORANGE } from '../constants/styles';
 import { Check, Clock } from './ui/Icons';
@@ -20,6 +22,12 @@ export default function SurveyResultModal({ result, onClose, dark }) {
   }, [onClose]);
 
   const ok = result.type === 'success';
+  const TITLES = { early: 'Encuesta no completada', retry: 'Tu encuesta quedó en espera', failed: 'No pudimos registrar tu encuesta' };
+  const BODIES = {
+    early: 'Volviste antes de terminar la encuesta de Shell y no se registró. Respondé todas las preguntas hasta el final y tus puntos se asignarán al regresar a la app.',
+    retry: 'Se perdió la conexión al registrarla. Tus puntos no se pierden: la app lo reintentará sola en cuanto vuelva la señal, sin que hagas nada. No cerrés sesión.',
+    failed: 'No hubo conexión con el servidor tras varios intentos. Escribinos por Asistencia y ayuda para acreditarte los puntos de esta encuesta.',
+  };
   const subTxt = dark ? 'rgba(255,255,255,.5)' : '#6E6E73';
 
   return (
@@ -43,7 +51,7 @@ export default function SurveyResultModal({ result, onClose, dark }) {
         </div>
 
         <div style={{ fontSize: 18, fontWeight: 800, color: dark ? '#fff' : '#0D0D0D', marginBottom: 6 }}>
-          {ok ? '¡Encuesta registrada!' : 'Encuesta no completada'}
+          {ok ? '¡Encuesta registrada!' : TITLES[result.type] || TITLES.early}
         </div>
 
         {ok ? (
@@ -70,9 +78,7 @@ export default function SurveyResultModal({ result, onClose, dark }) {
           </>
         ) : (
           <div style={{ fontSize: 13, fontWeight: 600, color: subTxt, lineHeight: 1.55, marginBottom: 20 }}>
-            Volviste antes de terminar la encuesta de Shell y no se
-            registró. Respondé todas las preguntas hasta el final y tus
-            puntos se asignarán al regresar a la app.
+            {BODIES[result.type] || BODIES.early}
           </div>
         )}
 

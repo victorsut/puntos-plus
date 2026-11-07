@@ -3,8 +3,6 @@
 import { useState } from 'react';
 import { bento, homeColors, homeTileColors } from '../../constants/styles';
 import { CARD_PREFIX } from '../../constants/config';
-import OpRatingModal from '../../components/OpRatingModal';
-import SurveyResultModal from '../../components/SurveyResultModal';
 import LegalFooter from '../../components/ui/LegalFooter';
 import BentoTile from '../../components/ui/BentoTile';
 import TierCardBento from '../../components/ui/TierCardBento';
@@ -18,7 +16,6 @@ import HomeHeader from './home/HomeHeader';
 import PromoBentoTile from './home/PromoBentoTile';
 import VehicleBentoTile from './home/VehicleBentoTile';
 import useShortScreen from '../../hooks/useShortScreen';
-import useSurveyFlow from '../../hooks/useSurveyFlow';
 import NotificationsSheet from './NotificationsSheet';
 import SupportSheet from '../../components/ui/SupportSheet';
 import { WifiIcon, SurveyIcon, PinIcon, TicketStarIcon, BagIcon } from '../../components/ui/BentoIcons';
@@ -30,10 +27,10 @@ export default function ClientHome(ctx) {
   // logout, rafData, curMonth — este último solo alimentaba el derivado
   // currentMonthTickets, también muerto).
   const { me, cfg, cTier, activePromos, promoIdx, setPromoIdx,
-    mySurveyCount, doSurvey,
+    mySurveyCount,
     showWifi, setShowWifi, showMap, setShowMap, stations, showQR,
-    showSurveys, setShowSurveys, fire,
-    pendingOpRating, setPendingOpRating, sbConnected,
+    showSurveys, setShowSurveys, fire, sbConnected,
+    surveyPending, setSurveyPending, // flujo de la encuesta — vive en App.jsx (UX-04/06)
     activityLog, redeemedList,
     setCScr, setNavOrigin, dark, chosenDark, setVehicleFocus,
     myNotifs, markNotifsRead, clearNotifs, rewardQrCloseSignal,
@@ -52,11 +49,6 @@ export default function ClientHome(ctx) {
   const [showNotifs, setShowNotifs] = useState(null); // { origin } | null
   const unreadN = (myNotifs || []).filter(n => !n.read_at).length;
   const [supportOpen, setSupportOpen] = useState(false);
-
-  // Flujo de la Encuesta de Satisfacción (pendiente persistida +
-  // resolución en 3 vías + modal de resultado) — hooks/useSurveyFlow.
-  const { surveyPending, setSurveyPending, surveyResult, setSurveyResult } =
-    useSurveyFlow({ me, doSurvey, setShowSurveys });
 
   // Codigo de tarjeta con prefijo dinamico segun tier actual
   const tierPrefix = CARD_PREFIX[cTier.name] || 'CTOD';
@@ -264,37 +256,8 @@ export default function ClientHome(ctx) {
           surveyPending={surveyPending} setSurveyPending={setSurveyPending} />
       )}
 
-      {/* Modal post-compra (Realtime): estrellas + invitación a la
-          encuesta Shell de la estación de la compra. key = nueva compra
-          reinicia el paso interno del modal. */}
-      {pendingOpRating && (
-        <OpRatingModal
-          key={pendingOpRating.purchaseId || 'compra'}
-          data={pendingOpRating}
-          onClose={() => setPendingOpRating(null)}
-          dark={dark}
-          memberId={me.id}
-          sbConnected={sbConnected}
-          fire={fire}
-          cfg={cfg}
-          mySurveyCount={mySurveyCount}
-          accent={hp.survey}
-          accentInk={hp.surveyInk || '#fff'}
-          surveyPending={surveyPending}
-          setSurveyPending={setSurveyPending}
-        />
-      )}
-
-      {/* Resultado de la encuesta — persistente hasta que el cliente
-          lo cierre (sustituye al toast, que se perdía cuando la PWA
-          se recargaba al volver de Shell) */}
-      {surveyResult && (
-        <SurveyResultModal
-          result={surveyResult}
-          onClose={() => setSurveyResult(null)}
-          dark={dark}
-        />
-      )}
+      {/* Modal de calificación post-compra y resultado de la encuesta:
+          en AppModals (raíz) desde UX-06 — se ven desde cualquier pestaña. */}
 
       {/* Inbox de la campana: notificaciones del motor, se marcan
           leídas al abrir (el badge se apaga al instante). */}

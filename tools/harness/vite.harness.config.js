@@ -9,7 +9,7 @@ const mockVehicles = {
     if (!id.split('\\').join('/').endsWith('src/services/vehicleService.js')) return null;
     return code.replace(
       'export async function listMyVehicles()',
-      'export async function listMyVehicles() {\n  if (typeof window !== "undefined" && window.__PP_MOCK_VEHICLES) return { data: { ok: true, vehicles: window.__PP_MOCK_VEHICLES }, error: null };\n  return listMyVehicles_real();\n}\nasync function listMyVehicles_real()',
+      'export async function listMyVehicles() {\n  if (typeof window !== "undefined" && window.__PP_MOCK_VEHICLES) return { data: { ok: true, beta: true, vehicles: window.__PP_MOCK_VEHICLES }, error: null };\n  return listMyVehicles_real();\n}\nasync function listMyVehicles_real()',
     );
   },
 };
