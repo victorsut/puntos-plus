@@ -38,10 +38,6 @@ input[type='password']::-ms-clear { display: none; }
   width: 48px; height: 48px;
   animation: spin 1s linear infinite;
 }
-/* UX-10: antes de la intro (perla) el isotipo sigue girando pero sin el
-   texto "Cargando…" (regla del dueño 15-ago) */
-#loading.pre-intro { background: #EDE7E1; }
-#loading.pre-intro .label { display: none; }
 /* UX-11: esqueletos de catálogo/promos mientras llega el boot */
 @keyframes ppSkeleton { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
 .pp-skeleton { animation: ppSkeleton 1.3s ease-in-out infinite; }

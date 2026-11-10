@@ -490,8 +490,10 @@ export default function App() {
           Solo cliente y tap para saltarla. Regla del dueño: en el
           LOGIN se muestra en cada recarga; con sesión de miembro solo
           el arranque en frío (la recarga al volver de la encuesta
-          Shell NO la repite). loggedAtMount se decide al montar. ── */}
-      {isC && <SplashIntro loggedAtMount={!!savedMe?.id} />}
+          Shell NO la repite). 10-nov: la animación vive en index.html
+          (lo primero que se pinta, en bucle) y este controlador la
+          retira cuando terminó el arranque (sbLoading). ── */}
+      <SplashIntro enabled={isC} ready={!sbLoading} />
     </>
   );
 }

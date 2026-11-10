@@ -2073,6 +2073,18 @@ beta recordado en localStorage; cachés borradas al cerrar sesión. Detalle en
 **10-nov · Decisiones del dueño:** la beta de Emanuel Martinez NO se extiende
 (venció el 1-nov).
 
+**10-nov · Animación de entrada como PRIMERA pantalla (pedido del dueño):**
+la lluvia de monedas PP y el logotipo circular se movieron de
+\`SplashIntro.jsx\` (dentro del bundle de ~780 KB; mientras bajaba solo se
+veía un isotipo estático) a \`index.html\` como HTML + CSS puros: se pinta
+de inmediato y se repite EN BUCLE (monedas, destellos, anillo que se llena
+y vacía, brillo) mientras carga la app. \`SplashIntro.jsx\` quedó como
+controlador: la retira con fundido cuando termina el arranque (\`sbLoading\`)
+y ya pasó una pasada completa (2.4 s), con tap para saltar y tope de 9 s.
+Regla de cuándo aparece intacta (login en cada carga; con sesión, solo el
+arranque en frío). \`manifest.json\` \`background_color\` → perla \`#EDE7E1\`
+para que la pantalla del sistema empalme sin destello blanco.
+
 ### Versión 4.6 — 7 de noviembre de 2026
 
 Reconciliación documental del 22-sep al 16-oct-2026 (la regla §0.3 de
