@@ -5,7 +5,7 @@
 > RPCs, endpoints, variables de entorno, accesos, reglas de negocio vigentes).
 > Se reconcilia con la realidad del repo cuando cambia algo estructural.
 >
-> **El plan maestro (fases, decisiones D1–D40, track de seguridad SEC, deuda
+> **El plan maestro (fases, decisiones D1–D41, track de seguridad SEC, deuda
 > técnica y changelog) vive en [`ROADMAP.md`](./ROADMAP.md).** Las reglas
 > operativas para trabajar el código están en [`CLAUDE.md`](./CLAUDE.md).
 > La API pública para el POS de PROPER está documentada en

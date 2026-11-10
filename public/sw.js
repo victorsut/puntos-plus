@@ -93,10 +93,42 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Para la app principal (navegacion): Network First con fallback offline.
-  // UX-27 (7-nov-2026): con red lenta ("Lie-Fi") la red no responde ni
-  // falla — a los 4 s se sirve el shell cacheado en vez de esperar el
-  // timeout del navegador (la app luego carga sus datos por API).
+  // App principal (navegación a "/" o a rutas de la SPA sin extensión):
+  // COPIA GUARDADA AL INSTANTE + actualización en segundo plano (10-nov-2026,
+  // pedido del dueño). Antes era Network First con espera de hasta 4 s
+  // (UX-27): con señal floja la pantalla fija del sistema se alargaba
+  // hasta 4 s antes de que apareciera la animación de entrada de
+  // index.html. Ahora el shell sale de la caché en milisegundos y la red
+  // renueva la copia para la PRÓXIMA apertura. Si la copia quedara vieja
+  // tras un deploy (apunta a chunks que ya no existen), vite:preloadError
+  // en main.jsx recarga una vez — para entonces la copia ya se renovó — y
+  // el aviso de "nueva versión" del SW sigue funcionando igual.
+  // Otras páginas HTML (privacidad.html, eliminacion.html…) siguen por la
+  // rama de red primero de abajo.
+  const isShell = url.origin === self.location.origin
+    && (url.pathname === '/' || url.pathname === '/index.html' || !/\.[a-z0-9]+$/i.test(url.pathname));
+  if (event.request.mode === 'navigate' && isShell) {
+    const network = fetch(event.request).then(res => {
+      if (res && res.ok && res.type === 'basic') {
+        const clone = res.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put('/index.html', clone));
+      }
+      return res;
+    }).catch(() => null);
+    event.waitUntil(network); // la renovación termina aunque ya se respondió
+    event.respondWith(
+      caches.match('/index.html').then(cached => cached || caches.match('/')).then(cached => {
+        if (cached) return cached;
+        return network.then(res => res || fetch(event.request)); // primera visita: red
+      })
+    );
+    return;
+  }
+
+  // Resto de navegaciones (páginas HTML sueltas): Network First con
+  // fallback offline. UX-27 (7-nov-2026): con red lenta ("Lie-Fi") la red
+  // no responde ni falla — a los 4 s se sirve el shell cacheado en vez de
+  // esperar el timeout del navegador.
   if (event.request.mode === 'navigate') {
     const fromCache = () => caches.match('/index.html').then(cached => cached || caches.match('/'));
     const timeout = new Promise(resolve => setTimeout(() => resolve(null), 4000));

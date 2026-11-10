@@ -7,6 +7,8 @@
   <link rel="icon" type="image/png" href="/favicon.png" />
   <link rel="apple-touch-icon" href="/logo.png" />
   <link rel="manifest" href="/manifest.json" />
+  <!-- ícono de la app = centro de la animación de entrada: que llegue antes que nada -->
+  <link rel="preload" as="image" href="/logo.png" fetchpriority="high" />
   <meta name="theme-color" content="#FBBC04" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -20,7 +22,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
   <noscript><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
   <!-- ANIMACIÓN DE ENTRADA EN EL HTML (10-nov-2026, pedido del dueño): la
-       lluvia de monedas PP y el logotipo circular son LO PRIMERO que se ve
+       lluvia de monedas PP alrededor del ÍCONO de la app son LO PRIMERO que se ve
        al abrir la app y se repiten EN BUCLE mientras baja el bundle y los
        datos del arranque. Antes vivían en SplashIntro.jsx (dentro del
        bundle de ~780 KB) y mientras tanto solo se veía un isotipo estático.
@@ -75,11 +77,12 @@
       0%, 100% { transform: translateY(0) rotate(-2.5deg); }
       50% { transform: translateY(-5px) rotate(2.5deg); }
     }
-    /* anillo naranja EN BUCLE: se llena y se vacía hacia adelante */
+    /* contorno naranja EN BUCLE alrededor del ícono: se llena y se vacía
+       hacia adelante (pathLength=100) */
     @keyframes ppSplashRing {
-      0% { stroke-dashoffset: 351.9; }
+      0% { stroke-dashoffset: 100; }
       55% { stroke-dashoffset: 0; }
-      100% { stroke-dashoffset: -351.9; }
+      100% { stroke-dashoffset: -100; }
     }
     @keyframes ppSplashGlow { 0% { opacity: 0; transform: scale(.6); } 100% { opacity: 1; transform: scale(1); } }
     @keyframes ppSplashSheen {
@@ -112,15 +115,19 @@
     <div style="position:relative;display:flex;flex-direction:column;align-items:center">
       <!-- resplandor naranja tras la moneda héroe -->
       <div style="position:absolute;top:-30px;left:50%;width:240px;height:240px;margin-left:-120px;border-radius:50%;background:radial-gradient(circle,rgba(250,84,8,.20) 0%,rgba(250,84,8,0) 65%);animation:ppSplashGlow .8s .15s ease-out both"></div>
-      <!-- bloque héroe 128×128: anillo + moneda con volteo 3D -->
+      <!-- bloque héroe 128×128 (decisión del dueño 10-nov): el ÍCONO DE LA APP
+           (cuadrado naranja de bordes redondeados con PP, /logo.png) al centro,
+           con contorno de progreso y volteo 3D — el mismo ícono que el sistema
+           muestra al tocar el ícono, para que la apertura sea un solo movimiento -->
       <div style="position:relative;width:128px;height:128px;perspective:700px">
-        <svg width="128" height="128" viewBox="0 0 128 128" style="position:absolute;inset:0;transform:rotate(-90deg);animation:ppSplashRise .4s .3s ease-out both">
-          <circle cx="64" cy="64" r="56" fill="none" stroke="rgba(0,0,0,.08)" stroke-width="4"/>
-          <circle cx="64" cy="64" r="56" fill="none" stroke="#FA5408" stroke-width="4" stroke-linecap="round" stroke-dasharray="351.9" style="animation:ppSplashRing 2.4s .42s cubic-bezier(.3,.1,.3,1) infinite both"/>
+        <svg width="128" height="128" viewBox="0 0 128 128" style="position:absolute;inset:0;animation:ppSplashRise .4s .3s ease-out both">
+          <rect x="4" y="4" width="120" height="120" rx="34" fill="none" stroke="rgba(0,0,0,.08)" stroke-width="4"/>
+          <rect x="4" y="4" width="120" height="120" rx="34" fill="none" stroke="#FA5408" stroke-width="4" stroke-linecap="round" pathLength="100" stroke-dasharray="100" style="animation:ppSplashRing 2.4s .42s cubic-bezier(.3,.1,.3,1) infinite both"/>
         </svg>
         <div style="position:absolute;top:16px;left:16px;animation:ppSplashFlip .7s cubic-bezier(.2,.8,.3,1.1) both;transform-style:preserve-3d">
           <div style="animation:ppSplashFloat 2.6s .8s ease-in-out infinite">
-            <div id="pp-splash-hero" style="position:relative;width:96px;height:96px;border-radius:50%;overflow:hidden;box-shadow:0 10px 22px rgba(90,40,0,.30),0 0 26px 4px rgba(250,84,8,.35),0 0 60px 14px rgba(250,84,8,.14)">
+            <div style="position:relative;width:96px;height:96px;border-radius:22px;overflow:hidden;background:#FA5408;box-shadow:0 10px 22px rgba(90,40,0,.30),0 0 26px 4px rgba(250,84,8,.35),0 0 60px 14px rgba(250,84,8,.14)">
+              <img src="/logo.png" alt="" width="96" height="96" style="display:block;width:96px;height:96px" />
               <div style="position:absolute;top:-20px;left:0;width:46px;height:140px;z-index:1;background:linear-gradient(90deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.5) 50%,rgba(255,255,255,0) 100%);animation:ppSplashSheen 2.4s 1.55s ease-in-out infinite both"></div>
             </div>
           </div>
@@ -156,8 +163,8 @@
       window.__ppSplash = { start: Date.now(), skipped: false };
       splash.addEventListener('click', function () { window.__ppSplash.skipped = true; window.dispatchEvent(new Event('pp-splash-skip')); });
 
-      // Moneda PP 3D (misma que la versión React): canto, cara con
-      // degradado radial, aro biselado, brillo y el monograma con extrusión.
+      // Moneda PP 3D de la lluvia: canto, cara con degradado radial, aro
+      // biselado, brillo y el monograma con extrusión.
       function coin(size, id) {
         function P(x, y, fill, color) {
           var s = '';
@@ -177,7 +184,6 @@
           + '<ellipse cx="40" cy="22" rx="26" ry="10" fill="rgba(255,255,255,.4)" transform="rotate(-16 40 22)"/>'
           + P(40, 38, '#FFFFFF', 'rgba(60,25,0,.38)') + P(57, 55, '#0D0D0D', '#7A2A00') + '</svg>';
       }
-      document.getElementById('pp-splash-hero').insertAdjacentHTML('afterbegin', coin(96, 'h'));
 
       // Lluvia: caen de ARRIBA-IZQUIERDA, rebotan y salen por ABAJO-DERECHA,
       // cada una repitiéndose cada DUR ms (bucle continuo mientras carga).

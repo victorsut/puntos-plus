@@ -301,6 +301,11 @@ Esta sección documenta las decisiones tomadas durante las conversaciones de pla
 **Decisión:** la app habla de "tú" (Inicia, Toca, Puedes, Tienes…), nunca de "vos" (Iniciá, Tocá, Podés, Tenés…). Hasta el 7-nov convivían ambas: el tutorial y el Inicio tuteaban; login, registro, modales y vehículos voseaban (UX-35). Se corrigieron 73 textos con un inventario automático de imperativos voseantes; los mensajes del backend (RPCs) y de Twilio se van alineando al tocarlos.
 **Regla:** todo texto nuevo del cliente va en "tú". Los falsos positivos conocidos del inventario son topónimos (Sololá, Quiché…), "estás/estés" (igual en ambas voces) y futuros ("se asignará").
 
+### D41 — Apertura formal con animación de entrada para las tiendas (10-nov-2026)
+**Decisión:** al abrir la app (PWA hoy, Play Store y App Store mañana) lo primero que se ve es la animación de entrada: el **ícono de la app** (cuadrado naranja de bordes redondeados con PP) al centro con contorno de progreso y la lluvia de monedas PP alrededor, EN BUCLE mientras carga. La pantalla estática del sistema (Android / launch screen de iOS) se configura IDÉNTICA al primer cuadro (fondo perla `#EDE7E1` + el mismo ícono) para que la apertura se vea como un solo movimiento; en Android 12+ se desea el ícono animado del sistema (≤1 s). Para que se sienta app y no página web: HTML desde la copia guardada al instante (sin esperar la red) y sin jalar-para-recargar ni selección de texto al mantener presionado.
+**Recomendaciones a confirmar por el dueño:** Android como TWA (el WebView de Capacitor no tiene web push) y iOS con Capacitor empaquetado + push nativo. **Pendientes del dueño:** color de barras del sistema, nombre de paquete definitivo (`com.puntosplus.app` vs `com.turkaj.puntosplus`), cuentas de tienda y Sign in with Apple.
+**Registro detallado (T1-T8) y checklist:** `docs/TIENDAS.md` → "Apertura formal con la animación de entrada".
+
 ### D36 — Caso ángel macario: cerrado sin ajuste (17-jul-2026)
 **Decisión:** los 71 puntos quedan tal cual (no se ajustan a 50 ni se crea entrada retroactiva). El caso se habló directamente con el cliente y se da por concluido. No se investiga retroactivamente a otros miembros.
 **Motivo:** el trigger strict de FB.9 ya garantiza que ninguna mutación futura pase sin auditoría; el valor de la corrección retroactiva no justifica su costo relacional/operativo. Cierra las decisiones FB.5/FB.6 → **FB queda CERRADA**.
@@ -2084,6 +2089,18 @@ y ya pasó una pasada completa (2.4 s), con tap para saltar y tope de 9 s.
 Regla de cuándo aparece intacta (login en cada carga; con sesión, solo el
 arranque en frío). \`manifest.json\` \`background_color\` → perla \`#EDE7E1\`
 para que la pantalla del sistema empalme sin destello blanco.
+
+**10-nov · D41 apertura formal (pedido del dueño, de cara a las tiendas):**
+(1) el centro de la animación pasa a ser el ÍCONO de la app (cuadrado
+naranja redondeado con PP, \`/logo.png\` precargado) con contorno de progreso
+cuadrado-redondeado en bucle — el mismo ícono que Android pinta al tocar el
+ícono de la PWA, así que la apertura ya empalma hoy; (2) \`public/sw.js\`
+sirve el HTML de la app desde la copia guardada AL INSTANTE y la renueva en
+segundo plano (antes red primero con espera de hasta 4 s; las páginas HTML
+sueltas siguen red primero); (3) \`global.css\`: \`overscroll-behavior-y:
+none\` (sin jalar-para-recargar) y, en táctil, sin selección ni menú al
+mantener presionado (campos de texto y \`.pp-selectable\` sí). Decisiones de
+tiendas T1-T8 registradas en \`docs/TIENDAS.md\`.
 
 ### Versión 4.6 — 7 de noviembre de 2026
 
