@@ -24,6 +24,7 @@ import { MonthBars, TrendChart } from './VehicleCharts';
 import FuelLogForm from './FuelLogForm';
 import FuelHistoryRow from './FuelHistoryRow';
 import FuelEventRow from './FuelEventRow';
+import FuelInvite from './FuelInvite';
 import { fmtN, fmtDay, fmtMonth } from './fuelFmt';
 import { friendlyError } from '../../../lib/netError';
 
@@ -192,14 +193,22 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
   // medición exacta y ya existan cargas, se le explica cómo lograrla.
   const nudge = method !== 'full' && mine.length >= 2;
 
+  // 9-nov-2026 (pedido del dueño): SOLO se muestran los indicadores que ya
+  // tienen dato — nada de cuadros con "—". Van apareciendo a medida que el
+  // socio registra cargas y km; sin ninguna carga, una invitación.
   const insights = [
-    { k: 'kmgal', label: 'Rendimiento', value: kmgal ? `${fmtN(kmgal)} km/gal` : '—', note: kmNote, warn: trendPct != null && trendPct <= -10 },
-    { k: 'costo', label: 'Costo por km', value: costoKm ? `Q${fmtN(costoKm, 2)}` : '—', note: costoKm ? `A Q${fmtN(qGal, 2)} el galón${lastPriced ? ' (última carga)' : ''}` : 'Se calcula con tu rendimiento' },
-    { k: 'mes', label: 'Costo mensual', value: costoMes ? `~Q${fmtN(costoMes, 0)}` : '—', note: costoMes ? `A tu ritmo de ${fmtN(st.km_per_day, 0)} km/día` : 'Se calcula con tu rendimiento y tus km por día' },
-    { k: 'auto', label: 'Autonomía', value: autonomia ? `~${fmtN(autonomia, 0)} km` : '—', note: autonomia ? `Por tanque de ${fmtN(vehicle.tank_gal)} gal` : 'Agrega el tanque en Datos y ajustes' },
-    { k: 'galc', label: 'Por carga', value: galCarga ? `${fmtN(galCarga)} gal` : '—', note: galCarga ? `Q${fmtN(st.total_amount / st.fuel_count, 0)} en promedio` : 'Aún sin cargas' },
-    { k: 'frec', label: 'Frecuencia', value: frecuencia ? `Cada ${frecuencia} día${frecuencia === 1 ? '' : 's'}` : '—', note: frecuencia ? `${mine.length} cargas recientes` : 'Con 2+ cargas' },
-  ];
+    kmgal && { k: 'kmgal', label: 'Rendimiento', value: `${fmtN(kmgal)} km/gal`, note: kmNote, warn: trendPct != null && trendPct <= -10 },
+    costoKm && { k: 'costo', label: 'Costo por km', value: `Q${fmtN(costoKm, 2)}`, note: `A Q${fmtN(qGal, 2)} el galón${lastPriced ? ' (última carga)' : ''}` },
+    costoMes && { k: 'mes', label: 'Costo mensual', value: `~Q${fmtN(costoMes, 0)}`, note: `A tu ritmo de ${fmtN(st.km_per_day, 0)} km/día` },
+    autonomia && { k: 'auto', label: 'Autonomía', value: `~${fmtN(autonomia, 0)} km`, note: `Por tanque de ${fmtN(vehicle.tank_gal)} gal` },
+    galCarga && { k: 'galc', label: 'Por carga', value: `${fmtN(galCarga)} gal`, note: `Q${fmtN(st.total_amount / st.fuel_count, 0)} en promedio` },
+    frecuencia && { k: 'frec', label: 'Frecuencia', value: `Cada ${frecuencia} día${frecuencia === 1 ? '' : 's'}`, note: `${mine.length} cargas recientes` },
+  ].filter(Boolean);
+  // sin cargas del vehículo activo (ya bajado el historial) → invitación
+  const noData = Array.isArray(loads) && mine.length === 0;
+  // qué falta para ver el rendimiento (antes era la nota del cuadro con "—");
+  // con 2+ cargas lo cubre la sugerencia de llenar el tanque
+  const kmHint = !kmgal && mine.length > 0 && !nudge ? kmNote : null;
 
   // 3-sep (pedido del dueño): el historial muestra SOLO las cargas del
   // vehículo seleccionado; "Ver todas" abre el historial general (todos
@@ -311,16 +320,27 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
           </div>
         )}
 
-        {/* Indicadores del vehículo activo */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 8 }}>
-          {insights.map(t => (
-            <div key={t.k} style={{ background: cardBg, borderRadius: 17, padding: '12px 14px' }}>
-              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', color: sub }}>{t.label}</div>
-              <div style={{ fontSize: 15.5, fontWeight: 800, marginTop: 5, color: t.warn ? '#E65100' : ink }}>{t.value}</div>
-              <div style={{ fontSize: 11.5, color: t.warn ? '#E65100' : sub, fontWeight: 600, marginTop: 3 }}>{t.note}</div>
-            </div>
-          ))}
-        </div>
+        {/* Indicadores del vehículo activo — solo los que tienen dato;
+            si quedan impares, el último ocupa el ancho completo */}
+        {insights.length > 0 && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 8 }}>
+            {insights.map((t, i) => (
+              <div key={t.k} style={{ background: cardBg, borderRadius: 17, padding: '12px 14px', gridColumn: insights.length % 2 && i === insights.length - 1 ? '1 / -1' : undefined }}>
+                <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', color: sub }}>{t.label}</div>
+                <div style={{ fontSize: 15.5, fontWeight: 800, marginTop: 5, color: t.warn ? '#E65100' : ink }}>{t.value}</div>
+                <div style={{ fontSize: 11.5, color: t.warn ? '#E65100' : sub, fontWeight: 600, marginTop: 3 }}>{t.note}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Sin cargas del vehículo: invitación a empezar a registrar */}
+        {noData && <FuelInvite dark={dark} ink={ink} sub={sub} cardBg={cardBg} others={othersN > 0} />}
+
+        {/* Hay cargas pero aún no alcanzan para el rendimiento: qué falta */}
+        {kmHint && (
+          <div style={{ fontSize: 11.5, color: sub, fontWeight: 600, lineHeight: 1.5, marginTop: 8 }}>{kmHint}.</div>
+        )}
       </div>
 
       {/* Sugerencia para lograr la medición exacta */}
@@ -382,6 +402,8 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
       {/* Historial de cargas del miembro + editor de reasignación.
           E3d: CONTRAÍDO por defecto (pedido del dueño — la vista del
           vehículo se saturaba); el encabezado despliega/contrae */}
+      {/* sin cargas ni movimientos en ningún vehículo, el encabezado sobra */}
+      {(!Array.isArray(loads) || timeline.length > 0 || othersN > 0) && (
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '18px 0 8px' }}>
         <button data-tour="veh-history" onClick={() => setHistOpen(o => !o)} style={{
           border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
@@ -399,6 +421,7 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
           }}>{showAll ? 'Solo este vehículo' : `Ver todas (${loads.length})`}</button>
         )}
       </div>
+      )}
 
       {histOpen && Array.isArray(loads) && loads.length > 0 && !showAll && mine.length === 0 && (
         <div style={{ background: cardBg, borderRadius: 17, padding: '14px', fontSize: 12.5, color: sub, fontWeight: 600, lineHeight: 1.5 }}>
@@ -416,11 +439,6 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
             display: 'block', marginTop: 10, padding: '10px 16px', borderRadius: 12, border: 'none', cursor: 'pointer',
             background: BRAND_ORANGE, color: '#fff', fontFamily: "'DM Sans'", fontSize: 13, fontWeight: 800,
           }}>Reintentar</button>
-        </div>
-      )}
-      {Array.isArray(loads) && loads.length === 0 && (
-        <div style={{ background: cardBg, borderRadius: 17, padding: '14px', fontSize: 12.5, color: sub, fontWeight: 600, lineHeight: 1.5 }}>
-          Aquí verás cada carga de combustible con su rendimiento. Carga en Turkaj y califica tu compra para empezar.
         </div>
       )}
 

@@ -139,7 +139,7 @@ export default function VehiclesHome({ ctx, vehicles, setVehicles }) {
     if (!v) return null;
     const hasDate = !!v.next_service;
     const hasKm = v.next_service_km != null;
-    if (!hasDate && !hasKm) return { value: '—', note: 'Sin programar — agrégalo al editar', warn: false };
+    if (!hasDate && !hasKm) return null; // sin programar → el cuadro no se muestra
     const kmVal = hasKm ? `${v.next_service_km.toLocaleString('en-US')} km` : null;
     const kmNote = !hasKm ? null
       : kmLeft == null ? 'Meta de km (actualiza tus km recorridos)'
@@ -163,33 +163,41 @@ export default function VehiclesHome({ ctx, vehicles, setVehicles }) {
   const svcDue = !!v && ((serviceDays != null && serviceDays <= alertDays) || (kmLeft != null && kmLeft <= alertKm));
   const vName = v ? ([v.brand, v.model].filter(Boolean).join(' ') || 'tu vehículo') : '';
 
-  // Tiles de datos del vehículo activo
+  // Tiles de datos del vehículo activo — 9-nov-2026 (pedido del dueño):
+  // SOLO los que tienen dato (nada de "—"); van apareciendo a medida que
+  // el socio completa la ficha y carga combustible. Sin ninguno, una
+  // invitación a completar los datos.
   const tiles = v ? [
-    {
+    v.km != null && {
       k: 'km', label: 'Kilometraje',
-      value: fmtKm(v.km) || '—',
-      note: v.km == null ? 'Agrégalo al editar' : 'Última lectura',
+      value: fmtKm(v.km),
+      note: 'Última lectura',
     },
-    {
+    svc && {
       k: 'service', label: 'Próximo servicio',
       value: svc.value, warn: svc.warn,
       note: svc.note + (v.alerts_muted ? ' · sin recordatorios' : ''),
     },
-    {
+    v.oil_type && {
       k: 'oil', label: 'Aceite',
-      value: v.oil_type || '—',
-      note: v.oil_type ? 'Tipo que utiliza' : 'Agrégalo al editar',
+      value: v.oil_type,
+      note: 'Tipo que utiliza',
     },
-    {
+    st?.fuel_count > 0 && {
       k: 'fuel', label: 'Combustible',
-      value: st
-        ? `${st.fuel_count} carga${st.fuel_count === 1 ? '' : 's'} · ${(+st.total_gallons).toLocaleString('en-US')} gal`
-        : '—',
-      note: st
-        ? `Q${(+st.total_amount).toLocaleString('en-US')} en total${st.km_per_gal ? ` · ${st.km_per_gal} km/gal` : ''}`
-        : statsErr ? 'No se pudo actualizar · toca Reintentar' : 'Tus cargas se asignan al calificar la compra',
+      value: `${st.fuel_count} carga${st.fuel_count === 1 ? '' : 's'} · ${(+st.total_gallons).toLocaleString('en-US')} gal`,
+      note: `Q${(+st.total_amount).toLocaleString('en-US')} en total${st.km_per_gal ? ` · ${st.km_per_gal} km/gal` : ''}`,
     },
-  ] : [];
+  ].filter(Boolean) : [];
+  // Datos de la ficha que faltan (pista discreta bajo los cuadros)
+  const missing = v ? [
+    v.km == null && 'kilometraje',
+    !svc && 'próximo servicio',
+    !v.oil_type && 'aceite',
+    !(v.tank_gal > 0) && 'tamaño del tanque',
+  ].filter(Boolean) : [];
+  const listEs = (xs) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} y ${xs[xs.length - 1]}`);
+  const openData = () => setForm({ vehicle: v, mode: 'data' });
 
   return (
     <div style={{ minHeight: '100dvh', padding: '18px 18px 120px', boxSizing: 'border-box' }}>
@@ -329,10 +337,14 @@ export default function VehiclesHome({ ctx, vehicles, setVehicles }) {
             </div>
           )}
 
-          {/* ── Datos relevantes ── */}
-          <div ref={tilesRef} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
-            {tiles.map(tl => (
-              <div key={tl.k} data-tour={tl.k === 'service' ? 'veh-service' : undefined} style={{ background: cardBg, borderRadius: 17, padding: '13px 14px' }}>
+          {/* ── Datos relevantes (solo los que tienen dato; impar → el
+              último ocupa el ancho completo) ── */}
+          <div ref={tilesRef} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: tiles.length ? 12 : 0 }}>
+            {tiles.map((tl, i) => (
+              <div key={tl.k} data-tour={tl.k === 'service' ? 'veh-service' : undefined} style={{
+                background: cardBg, borderRadius: 17, padding: '13px 14px',
+                gridColumn: tiles.length % 2 && i === tiles.length - 1 ? '1 / -1' : undefined,
+              }}>
                 <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', color: sub }}>{tl.label}</div>
                 <div style={{
                   fontSize: tl.k === 'km' ? 19 : 15.5, fontWeight: 800, marginTop: 5,
@@ -343,6 +355,27 @@ export default function VehiclesHome({ ctx, vehicles, setVehicles }) {
               </div>
             ))}
           </div>
+
+          {/* Ficha vacía: invitación a completar los datos del vehículo */}
+          {tiles.length === 0 && (
+            <div style={{ background: cardBg, borderRadius: 17, padding: '16px 16px 15px', marginTop: 12 }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: ink }}>Completa los datos de {vName}</div>
+              <div style={{ fontSize: 12, color: sub, fontWeight: 600, lineHeight: 1.55, marginTop: 6 }}>
+                Agrega el kilometraje, el aceite que usa, el tamaño del tanque y tu próximo servicio.
+                Te recordamos el servicio a tiempo y, con tus cargas, calculamos su rendimiento y autonomía.
+              </div>
+            </div>
+          )}
+
+          {/* Ficha a medias: qué falta, discreto y tocable */}
+          {tiles.length > 0 && missing.length > 0 && (
+            <button onClick={openData} style={{
+              display: 'block', width: '100%', marginTop: 8, padding: '6px 2px', border: 'none', background: 'transparent',
+              cursor: 'pointer', textAlign: 'left', fontFamily: "'DM Sans'", fontSize: 11.5, fontWeight: 600, color: sub, lineHeight: 1.5,
+            }}>
+              Completa {listEs(missing)} en <span style={{ color: BRAND_ORANGE, fontWeight: 800 }}>Datos y ajustes ›</span>
+            </button>
+          )}
 
           {/* E4: ¿ya hiciste el servicio? — mismo destino que el push */}
           {svcDue && (
@@ -362,10 +395,10 @@ export default function VehiclesHome({ ctx, vehicles, setVehicles }) {
 
           {/* ── Acciones del vehículo activo ── */}
           <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
-            <button data-tour="veh-settings" onClick={() => setForm({ vehicle: v, mode: 'data' })} style={{
+            <button data-tour="veh-settings" onClick={openData} style={{
               flex: 1, padding: 14, borderRadius: 15, border: 'none', cursor: 'pointer',
               background: hp.vehicle, color: '#fff', fontFamily: "'DM Sans'", fontSize: 13.5, fontWeight: 800,
-            }}>Datos y ajustes</button>
+            }}>{tiles.length === 0 ? 'Completar datos y ajustes' : 'Datos y ajustes'}</button>
           </div>
 
           {/* E3a: rendimiento, consumo por mes e historial de cargas con
