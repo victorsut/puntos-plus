@@ -16,11 +16,11 @@ const mockVehicles = {
     // vehicles.jsx (9-nov): telemetría y movimientos sembrados sin sesión
     code = code.replace(
       'export async function listMyVehicleStats()',
-      'export async function listMyVehicleStats() {\n  if (typeof window !== "undefined" && window.__PP_MOCK_STATS) return { data: { ok: true, stats: window.__PP_MOCK_STATS }, error: null };\n  return listMyVehicleStats_real();\n}\nasync function listMyVehicleStats_real()',
+      'export async function listMyVehicleStats() {\n  if (typeof window !== "undefined" && window.__PP_MOCK_OFFLINE) return { data: null, error: { message: "Failed to fetch", network: true } };\n  if (typeof window !== "undefined" && window.__PP_MOCK_STATS) return { data: { ok: true, stats: window.__PP_MOCK_STATS }, error: null };\n  return listMyVehicleStats_real();\n}\nasync function listMyVehicleStats_real()',
     );
     code = code.replace(
       'export async function listMyVehicleEvents(',
-      'export async function listMyVehicleEvents(o) {\n  if (typeof window !== "undefined" && window.__PP_MOCK_STATS) return { data: { ok: true, events: window.__PP_MOCK_EVENTS || [] }, error: null };\n  return listMyVehicleEvents_real(o);\n}\nasync function listMyVehicleEvents_real(',
+      'export async function listMyVehicleEvents(o) {\n  if (typeof window !== "undefined" && window.__PP_MOCK_OFFLINE) return { data: null, error: { message: "Failed to fetch", network: true } };\n  if (typeof window !== "undefined" && window.__PP_MOCK_STATS) return { data: { ok: true, events: window.__PP_MOCK_EVENTS || [] }, error: null };\n  return listMyVehicleEvents_real(o);\n}\nasync function listMyVehicleEvents_real(',
     );
     code = code.replace(
       'return listMyFuelHistory_real(limit);',

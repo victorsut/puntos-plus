@@ -11,6 +11,8 @@ import { listMyVehicles } from '../../services/vehicleService';
 import LogoSpinner from '../../components/ui/LogoSpinner';
 import FeatureGate from '../../components/ui/FeatureGate';
 import VehiclesSoon from './VehiclesSoon';
+import useOnline from '../../hooks/useOnline';
+import { readVehicleSnapshot, writeVehicleSnapshot } from '../../lib/vehicleSnapshot';
 
 // LAZY (code splitting, 14-ago): la ventana —con el arte de los
 // vehículos y los formularios— baja solo al entrar a la pestaña.
@@ -26,6 +28,7 @@ function VehiclesReal(ctx) {
   const [vehicles, setVehicles] = useState(null); // null = cargando
   const [error, setError] = useState(false);
   const [tryK, setTryK] = useState(0);
+  const [offlineAt, setOfflineAt] = useState(null); // fecha de la foto si la ficha vino del celular
 
   useEffect(() => {
     let alive = true;
@@ -33,11 +36,25 @@ function VehiclesReal(ctx) {
     setError(false);
     listMyVehicles().then(({ data, error: err }) => {
       if (!alive) return;
-      if (err || !data?.ok) { setError(true); return; }
-      setVehicles(Array.isArray(data.vehicles) ? data.vehicles : []);
+      if (err || !data?.ok) {
+        // 10-nov (sin conexión): la última foto guardada en el celular,
+        // en solo lectura; sin foto, el aviso con Reintentar de siempre.
+        // Un rechazo de NEGOCIO (data.ok=false) no usa la foto.
+        const snap = err ? readVehicleSnapshot(me.id) : null;
+        if (snap?.vehicles) { setVehicles(snap.vehicles); setOfflineAt(snap.vehiclesAt || snap.at); return; }
+        setError(true); return;
+      }
+      const list = Array.isArray(data.vehicles) ? data.vehicles : [];
+      writeVehicleSnapshot(me.id, 'vehicles', list);
+      setOfflineAt(null);
+      setVehicles(list);
     });
     return () => { alive = false; };
   }, [me?.id, tryK]);
+
+  // al volver la red, se recarga sola la ficha (sale del modo sin conexión)
+  const online = useOnline();
+  useEffect(() => { if (online && offlineAt) setTryK(k => k + 1); }, [online]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const center = { minHeight: '70vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24, textAlign: 'center' };
 
@@ -60,7 +77,8 @@ function VehiclesReal(ctx) {
 
   return (
     <Suspense fallback={spinner}>
-      <VehiclesHome ctx={ctx} vehicles={vehicles} setVehicles={setVehicles} />
+      <VehiclesHome ctx={ctx} vehicles={vehicles} setVehicles={setVehicles}
+        vehiclesOfflineAt={offlineAt} onRetry={() => setTryK(k => k + 1)} />
     </Suspense>
   );
 }

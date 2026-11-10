@@ -14,9 +14,24 @@
 import { useEffect, useRef, useState } from 'react';
 import { getMyFeatures, LOCKED_FEATURES } from '../services/featureService';
 
+// 10-nov-2026 (Vehículos sin conexión): la última respuesta también vive
+// en localStorage para que la PWA abierta SIN red (sessionStorage vacío)
+// no bloquee la pestaña; solo decide qué se PINTA — el servidor sigue
+// validando cada escritura. Se borra al cerrar sesión (clearFeaturesCache).
 const cacheKey = (id) => `pp_features_${id}`;
-const readCache = (id) => { try { return JSON.parse(sessionStorage.getItem(cacheKey(id)) || 'null'); } catch { return null; } };
-const writeCache = (id, f) => { try { sessionStorage.setItem(cacheKey(id), JSON.stringify(f)); } catch { /* sin storage */ } };
+const readCache = (id) => {
+  try { return JSON.parse(sessionStorage.getItem(cacheKey(id)) || localStorage.getItem(cacheKey(id)) || 'null'); } catch { return null; }
+};
+const writeCache = (id, f) => {
+  try { sessionStorage.setItem(cacheKey(id), JSON.stringify(f)); localStorage.setItem(cacheKey(id), JSON.stringify(f)); } catch { /* sin storage */ }
+};
+export function clearFeaturesCache() {
+  try {
+    for (const st of [localStorage, sessionStorage]) {
+      for (let i = st.length - 1; i >= 0; i--) { const k = st.key(i); if (k && k.startsWith('pp_features_')) st.removeItem(k); }
+    }
+  } catch { /* noop */ }
+}
 
 export default function useMemberFeatures({ meId, loggedIn }) {
   const [features, setFeatures] = useState(null);

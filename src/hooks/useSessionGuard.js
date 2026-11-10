@@ -9,6 +9,8 @@ import { sb } from '../lib/supabaseClient';
 import { logoutMember, logoutOperator, logoutAdmin } from '../services';
 import { getOperatorToken, getAdminToken } from '../services/sessionTokens';
 import { setSessionExpiredHandler } from '../services/sessionExpiry';
+import { clearVehicleSnapshots } from '../lib/vehicleSnapshot';
+import { clearFeaturesCache } from './useMemberFeatures';
 
 export default function useSessionGuard({
   view, viewRef, fire, loggedOp, loggedAdmin,
@@ -48,6 +50,7 @@ export default function useSessionGuard({
     if (isC) {
       logoutMember(); // SEC.C.1: revoca member_sessions y limpia el token
       localStorage.removeItem('ct_me'); setAuthScreen('login'); setCScr('home');
+      clearVehicleSnapshots(); clearFeaturesCache(); // cachés sin conexión del socio
       setCompanyPicked(false); // el selector de empresa se pide de nuevo
       setLoginPhone(''); setLoginPass(''); setMe(null);
       setAuthError(''); fire('👋 Sesión cerrada');

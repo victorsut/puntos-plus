@@ -9,6 +9,8 @@ import { useEffect, useCallback, useRef } from 'react';
 import { sb } from '../lib/supabaseClient';
 import { getMyMember, fetchMyActivity, fetchMyRedemptions, fetchPurchasePromo } from '../services';
 import { clearMemberToken } from '../services/sessionTokens';
+import { clearVehicleSnapshots } from '../lib/vehicleSnapshot';
+import { clearFeaturesCache } from './useMemberFeatures';
 import { mapMember } from '../lib/mapMember';
 import { utcToLocal } from '../lib/dates';
 import { ratingSeen, markRatingSeen } from '../lib/ratingSeen';
@@ -98,6 +100,7 @@ export default function useMemberRealtime({
     console.warn('[SEC.C] Sesión de miembro vencida/inválida → login');
     clearMemberToken();
     try { localStorage.removeItem('ct_me'); } catch { /* noop */ }
+    clearVehicleSnapshots(); clearFeaturesCache();
     setMe(null); setAuthScreen('login');
     if (fire) fire('⏱️ Tu sesión expiró, inicia sesión de nuevo');
   }, [fire]);

@@ -19,6 +19,9 @@ import useSwipeTrack, { slideIn } from '../../../hooks/useSwipeTrack';
 import VehicleForm from './VehicleForm';
 import VehicleFuel from './VehicleFuel';
 import ServiceConfirmSheet from './ServiceConfirmSheet';
+import OfflineSnapshotBanner from './OfflineSnapshotBanner';
+import { readVehicleSnapshot, writeVehicleSnapshot } from '../../../lib/vehicleSnapshot';
+import useOnline from '../../../hooks/useOnline';
 
 // El visor 3D (three.js) baja SOLO al abrirlo — chunk propio
 const Vehicle3DSheet = lazy(() => import('../../../components/ui/vehicle3d/Vehicle3DSheet.jsx'));
@@ -45,8 +48,8 @@ const daysUntil = (d) => {
   return Math.round((target - today) / 86400000);
 };
 
-export default function VehiclesHome({ ctx, vehicles, setVehicles }) {
-  const { cTier, dark, fire, cfg, vehicleFocus, setVehicleFocus } = ctx;
+export default function VehiclesHome({ ctx, vehicles, setVehicles, vehiclesOfflineAt = null, onRetry }) {
+  const { cTier, dark, fire, cfg, vehicleFocus, setVehicleFocus, me } = ctx;
   // D24: mismos umbrales que el push (editables por el admin)
   const alertDays = cfg?.serviceAlerts?.days ?? 7;
   const alertKm = cfg?.serviceAlerts?.km ?? 500;
@@ -66,15 +69,36 @@ export default function VehiclesHome({ ctx, vehicles, setVehicles }) {
   // error se ignoraba y la tarjeta Combustible mentía ("—" y "Tus cargas
   // se asignan al calificar") aunque hubiera cargas.
   const [statsErr, setStatsErr] = useState(null);
+  // 10-nov (sin conexión, pedido del dueño): si la RPC no responde se usa
+  // la última foto guardada en el celular (lib/vehicleSnapshot) en SOLO
+  // LECTURA, con aviso y fecha; con conexión cada respuesta renueva la foto.
+  const [statsOfflineAt, setStatsOfflineAt] = useState(null);
+  const [loadsOfflineAt, setLoadsOfflineAt] = useState(null); // lo reporta VehicleFuel
+  const [syncK, setSyncK] = useState(0); // Reintentar / volvió la red → recarga todo
   useEffect(() => {
     let alive = true;
     listMyVehicleStats().then(({ data, error }) => {
       if (!alive) return;
-      if (data?.ok) { setStats(data.stats || {}); setStatsErr(null); }
-      else setStatsErr(friendlyError(error, 'No se pudo actualizar la telemetría de tus vehículos.'));
+      if (data?.ok) {
+        setStats(data.stats || {}); setStatsErr(null); setStatsOfflineAt(null);
+        writeVehicleSnapshot(me?.id, 'stats', data.stats || {});
+        return;
+      }
+      const snap = error ? readVehicleSnapshot(me?.id) : null;
+      if (snap?.stats) { setStats(snap.stats); setStatsErr(null); setStatsOfflineAt(snap.statsAt || snap.at); return; }
+      setStatsErr(friendlyError(error, 'No se pudo actualizar la telemetría de tus vehículos.'));
     });
     return () => { alive = false; };
-  }, [statsK]);
+  }, [statsK, syncK]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // la foto MÁS VIEJA en pantalla es la que se informa
+  const offlineAt = [vehiclesOfflineAt, statsOfflineAt, loadsOfflineAt].filter(Boolean).sort()[0] || null;
+  const offline = !!offlineAt;
+  const retryAll = () => { onRetry?.(); setSyncK(k => k + 1); };
+  const online = useOnline();
+  useEffect(() => { if (online && offline) setSyncK(k => k + 1); }, [online]); // la ficha la recarga VehiclesScreen // eslint-disable-line react-hooks/exhaustive-deps
+  // sin conexión nada se escribe: los botones que abren cambios avisan
+  const guard = (fn) => (...a) => (offline ? fire('Sin conexión: conéctate para hacer cambios', 'error') : fn(...a));
 
   // E4: llegada desde la notificación de servicio (push, deep-link o
   // inbox): ir a ESE vehículo y abrir la confirmación; se consume una
@@ -197,7 +221,7 @@ export default function VehiclesHome({ ctx, vehicles, setVehicles }) {
     !(v.tank_gal > 0) && 'tamaño del tanque',
   ].filter(Boolean) : [];
   const listEs = (xs) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} y ${xs[xs.length - 1]}`);
-  const openData = () => setForm({ vehicle: v, mode: 'data' });
+  const openData = guard(() => setForm({ vehicle: v, mode: 'data' }));
 
   return (
     <div style={{ minHeight: '100dvh', padding: '18px 18px 120px', boxSizing: 'border-box' }}>
@@ -209,7 +233,7 @@ export default function VehiclesHome({ ctx, vehicles, setVehicles }) {
             {vehicles.length === 0 ? 'Agrega el primero' : `${vehicles.length} registrado${vehicles.length === 1 ? '' : 's'}`}
           </div>
         </div>
-        <button data-tour="veh-add" onClick={() => setForm({ vehicle: null })} style={{
+        <button data-tour="veh-add" onClick={guard(() => setForm({ vehicle: null }))} style={{
           padding: '10px 16px', borderRadius: 13, border: 'none', cursor: 'pointer',
           background: dark ? '#fff' : '#0D0D0D', color: dark ? '#0D0D0D' : '#fff',
           fontFamily: "'DM Sans'", fontSize: 13, fontWeight: 800,
@@ -269,7 +293,7 @@ export default function VehiclesHome({ ctx, vehicles, setVehicles }) {
                               E3c.1: 26px + margen negativo — a 32px engordaba la fila
                               y el título del tipo bajaba respecto al borde de la
                               tarjeta (referencia POR CORREGIR del dueño) */}
-                          <button aria-label="Personalizar" onClick={() => setForm({ vehicle: veh, mode: 'look' })} style={{
+                          <button aria-label="Personalizar" onClick={guard(() => setForm({ vehicle: veh, mode: 'look' }))} style={{
                             width: 26, height: 26, borderRadius: 9, border: 'none', cursor: 'pointer',
                             margin: '-3px 0', background: dark ? 'rgba(255,255,255,.12)' : '#0D0D0D', color: '#fff',
                             display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, position: 'relative',
@@ -326,8 +350,11 @@ export default function VehiclesHome({ ctx, vehicles, setVehicles }) {
             </div>
           )}
 
+          {/* 10-nov: datos de la última foto del celular (sin conexión) */}
+          {offline && <OfflineSnapshotBanner at={offlineAt} dark={dark} onRetry={retryAll} />}
+
           {/* UX-24: telemetría sin respuesta del servidor */}
-          {statsErr && (
+          {statsErr && !offline && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12, padding: '10px 12px', borderRadius: 15, background: dark ? 'rgba(230,81,0,.14)' : '#FFF3E9', color: '#E65100' }}>
               <div style={{ flex: 1, fontSize: 12, fontWeight: 700, lineHeight: 1.4 }}>{statsErr}</div>
               <button onClick={() => setStatsK(k => k + 1)} style={{
@@ -379,7 +406,7 @@ export default function VehiclesHome({ ctx, vehicles, setVehicles }) {
 
           {/* E4: ¿ya hiciste el servicio? — mismo destino que el push */}
           {svcDue && (
-            <button onClick={() => setConfirm({ vehicle: v })} style={{
+            <button onClick={guard(() => setConfirm({ vehicle: v }))} style={{
               width: '100%', marginTop: 10, padding: '13px 14px', borderRadius: 15, cursor: 'pointer',
               border: '1.5px solid #E65100', background: dark ? 'rgba(230,81,0,.14)' : '#FFF3E9',
               color: '#E65100', fontFamily: "'DM Sans'", textAlign: 'left',
@@ -407,6 +434,7 @@ export default function VehiclesHome({ ctx, vehicles, setVehicles }) {
             <VehicleFuel
               dark={dark} fire={fire} vehicles={vehicles} vehicle={v}
               stats={stats} statsError={!!statsErr} onStatsDirty={() => setStatsK(k => k + 1)}
+              memberId={me?.id} offline={offline} syncKey={syncK} onLoadsOffline={setLoadsOfflineAt}
             />
           </div>
 

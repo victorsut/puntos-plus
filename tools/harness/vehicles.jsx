@@ -8,6 +8,8 @@
 //   ?gap=1     → con ?s=navi: la carga del 14-sep marcada "no registré" (corrección del 9-nov)
 //   ?pt=N      → toca el punto N de Rendimiento por llenado (panel fijo)
 //   ?tab=1|2   → abre la pestaña Galones / Km recorridos de Consumo por mes
+//   ?off=1     → SIN CONEXIÓN (10-nov): foto guardada en el celular del 9-nov y el servidor
+//                no responde → aviso + datos de la foto en solo lectura
 //   ?dark=1
 // Uso: npx vite --config tools/harness/vite.harness.config.js
 //      http://localhost:3100/tools/harness/vehicles.html?s=empty
@@ -61,7 +63,15 @@ window.__PP_MOCK_STATS = loads.length ? {
 window.__PP_MOCK_LOADS = loads;
 window.__PP_MOCK_EVENTS = [];
 
-const ctx = { cTier: { name: 'ORO' }, dark, fire: (m) => console.log('[toast]', m), cfg: {}, vehicleFocus: null, setVehicleFocus: () => {} };
+const ctx = { cTier: { name: 'ORO' }, dark, fire: (m) => console.log('[toast]', m), cfg: {}, vehicleFocus: null, setVehicleFocus: () => {}, me: { id: 'm1' } };
+const off = q.get('off') === '1';
+try { localStorage.removeItem('pp_veh_snap_m1'); } catch { /* noop */ }
+if (off) {
+  const at = '2026-11-09T20:32:00.000Z';
+  localStorage.setItem('pp_veh_snap_m1', JSON.stringify({ vehicles: [veh], vehiclesAt: at, stats: window.__PP_MOCK_STATS, statsAt: at,
+    loads: { rows: loads, editable_days: 30 }, loadsAt: at, at }));
+  window.__PP_MOCK_OFFLINE = true; window.__PP_MOCK_FUEL_FAIL = true;
+}
 
 const tab = +q.get('tab');
 const pt = q.get('pt');
@@ -71,6 +81,6 @@ setTimeout(() => { const el = document.querySelector('[role="tablist"]'); el?.sc
 
 createRoot(document.getElementById('root')).render(
   <div style={{ background: dark ? '#0D0D0F' : '#fff', maxWidth: 420, margin: '0 auto' }}>
-    <VehiclesHome ctx={ctx} vehicles={[veh]} setVehicles={() => {}} />
+    <VehiclesHome ctx={ctx} vehicles={[veh]} setVehicles={() => {}} vehiclesOfflineAt={off ? '2026-11-09T20:32:00.000Z' : null} />
   </div>,
 );

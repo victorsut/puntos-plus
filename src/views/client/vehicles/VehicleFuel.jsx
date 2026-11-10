@@ -28,6 +28,7 @@ import FuelEventRow from './FuelEventRow';
 import FuelInvite from './FuelInvite';
 import { fmtN, fmtDay } from './fuelFmt';
 import { friendlyError } from '../../../lib/netError';
+import { readVehicleSnapshot, writeVehicleSnapshot } from '../../../lib/vehicleSnapshot';
 
 // RPC inexistente (migración pendiente / arnés sin backend) → la sección
 // no aparece; cualquier OTRO fallo (red, timeout) se avisa con reintento (UX-08).
@@ -35,7 +36,11 @@ const rpcMissing = (error) => /PGRST202|42883|does not exist|Could not find the 
 
 // `preload` / `preloadEvents`: datos iniciales para el arnés de vista
 // previa (sin backend); en producción no se pasan y bajan por RPC.
-export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onStatsDirty, statsError = false, preload = null, preloadEvents = null }) {
+// 10-nov (sin conexión): `offline` = la vista pinta la foto del celular →
+// solo lectura; `syncKey` cambia con Reintentar / al volver la red;
+// `onLoadsOffline(fecha|null)` avisa al padre si las cargas vinieron de la foto.
+export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onStatsDirty, statsError = false, preload = null, preloadEvents = null,
+  memberId = null, offline = false, syncKey = 0, onLoadsOffline }) {
   const [loads, setLoads] = useState(preload);    // null=cargando · false=sin RPC · []=vacío
   const [loadErr, setLoadErr] = useState(null);   // UX-08: fallo de carga (texto) — se ofrece Reintentar
   // E3g: movimientos del vehículo (servicios, alta, edición, silencio)
@@ -60,6 +65,14 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
   const applyLoads = ({ data, error }) => {
     if (error || !data?.ok) {
       if (error && rpcMissing(error)) { setLoads(false); return; }
+      // 10-nov: sin red → las cargas de la última foto del celular
+      const snap = error ? readVehicleSnapshot(memberId) : null;
+      if (Array.isArray(snap?.loads?.rows)) {
+        setLoadErr(null); setLoads(snap.loads.rows);
+        if (snap.loads.editable_days) setEditableDays(snap.loads.editable_days);
+        onLoadsOffline?.(snap.loadsAt || snap.at);
+        return;
+      }
       // UX-08: antes cualquier error ocultaba TODA la sección en silencio
       setLoadErr(friendlyError(error, 'No se pudo cargar tu consumo.'));
       setLoads(ls => (Array.isArray(ls) ? ls : null));
@@ -68,6 +81,8 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
     setLoadErr(null);
     setLoads(Array.isArray(data.loads) ? data.loads : []);
     if (data.editable_days) setEditableDays(data.editable_days);
+    writeVehicleSnapshot(memberId, 'loads', { rows: Array.isArray(data.loads) ? data.loads : [], editable_days: data.editable_days || null });
+    onLoadsOffline?.(null);
   };
   const fetchLoads = () => { setLoadErr(null); return listMyFuelHistory().then(applyLoads); };
   useEffect(() => {
@@ -76,6 +91,12 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
     listMyFuelHistory().then(res => { if (alive) applyLoads(res); });
     return () => { alive = false; };
   }, [preload]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Reintentar / volvió la red: recargar cargas y movimientos
+  useEffect(() => {
+    if (preload || !syncKey) return;
+    fetchLoads(); if (!preloadEvents) fetchEvents();
+  }, [syncKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  const offMsg = () => fire('Sin conexión: conéctate para hacer cambios', 'error');
 
   const ink = dark ? '#fff' : '#0D0D0D';
   const sub = dark ? 'rgba(255,255,255,.5)' : '#9E9E9E';
@@ -358,7 +379,7 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
 
       {/* E3b: registrar consumo MANUAL (carga fuera de Turkaj) */}
       {!reg ? (
-        <button data-tour="veh-fuel-log" onClick={() => setReg(true)} style={{
+        <button data-tour="veh-fuel-log" onClick={() => (offline ? offMsg() : setReg(true))} style={{
           width: '100%', marginTop: 10, padding: 13, borderRadius: 15, cursor: 'pointer',
           border: `1.5px dashed ${dark ? 'rgba(255,255,255,.25)' : 'rgba(0,0,0,.18)'}`,
           background: 'transparent', color: ink,
@@ -430,17 +451,17 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
             vehicles={vehicles} vehName={vehName}
             win={winByEnd[l.id]} anchor={anchorIds.has(l.id)}
             isFull={!!l.vehicle_id && isFullLoad(l, tank)} inferred={!!l.vehicle_id && isInferredFull(l, tank)}
-            canReassign={l.source !== 'manual' && canEdit(l)}
-            canMarkFull={l.source === 'manual' || canEdit(l)}
+            canReassign={!offline && l.source !== 'manual' && canEdit(l)}
+            canMarkFull={!offline && (l.source === 'manual' || canEdit(l))}
             editOpen={editingId === l.id} onToggleEdit={() => { setEditingId(editingId === l.id ? null : l.id); setFullOpenId(null); }}
             onReassign={(vid) => reassign(l, vid)} busy={busyId === l.id}
-            delArmed={delLogArmed === l.id} onDel={() => delLog(l)} onDelCancel={() => setDelLogArmed(null)}
+            delArmed={delLogArmed === l.id} onDel={() => (offline ? offMsg() : delLog(l))} onDelCancel={() => setDelLogArmed(null)}
             fullOpen={fullOpenId === l.id} onToggleFullOpen={() => { setFullOpenId(fullOpenId === l.id ? null : l.id); setEditingId(null); }}
             onSetState={(v) => setState(l, v)} onSetGap={(v) => setGap(l, v)} />
         );
       })}
 
-      {histOpen && Array.isArray(loads) && loads.length > 0 && (
+      {histOpen && !offline && Array.isArray(loads) && loads.length > 0 && (
         <div style={{ fontSize: 11.5, color: sub, fontWeight: 600, lineHeight: 1.5, marginTop: 4 }}>
           ¿Una carga quedó en el vehículo equivocado o con el tanque mal marcado? Tócale el
           lápiz o la pastilla del tanque y corrígela (hasta {editableDays} días).
