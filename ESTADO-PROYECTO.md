@@ -1,5 +1,5 @@
 # Puntos Plus — Referencia Técnica del Proyecto
-## Última actualización: 7 de noviembre de 2026, noche (reconciliada contra el repo y la base de datos; incluye la revisión UX del socio A/B/C cerrada y validada ese día)
+## Última actualización: 10 de noviembre de 2026 (pulido de Vehículos del 9-nov y consulta sin conexión del 10-nov; base: reconciliación del 7-nov contra el repo y la base de datos)
 
 > **Este documento es solo REFERENCIA TÉCNICA** (stack, estructura, schema,
 > RPCs, endpoints, variables de entorno, accesos, reglas de negocio vigentes).
@@ -133,7 +133,8 @@ puntos-plus/
 │   │                             #   webauthnClient, tierSystem, cardCodes, receiptModel/
 │   │                             #   receiptPrinter (impresión térmica), inputMasks, dates,
 │   │                             #   geo, mapMember, motionOrigin, backStack, text,
-│   │                             #   fuelEconomy (respaldo del cálculo km/gal), tour
+│   │                             #   fuelEconomy (respaldo del cálculo km/gal), tour,
+│   │                             #   vehicleSnapshot (foto local de Vehículos sin conexión)
 │   ├── constants/                # config.js (DEFAULT_CONFIG, CARD_PREFIX…), styles.js,
 │   │                             #   vehicleCatalog.js (marcas/modelos + bodyFor), geoGt.js
 │   └── styles/global.css
@@ -252,7 +253,7 @@ se ejecutan a mano en el SQL Editor de Supabase (regla de CLAUDE.md §9).
 - Inicio en bento: tarjeta de nivel (progreso en galones), Promociones (carrusel), Vehículo (arte del principal), WiFi (PLATINO/BLACK), Encuesta de Satisfacción, Ubicación (mapa + Waze/Maps), Historial de canjes, Historial de compras; campana con inbox de notificaciones; canal de asistencia (WhatsApp).
 - QR dinámico con prefijo por tier; modal de calificación del operador por compra (Realtime) con selector de vehículo y odómetro; encuestas Shell (5/día, espera oculta de 75 s, resultado persistente).
 - Canjes con confirmación en dos pasos y comprobante QR; rifa mensual con carrusel de meses (arrastre) y compra de boletos (**en BETA CONTROLADA desde el 16-oct**: PRÓXIMAMENTE salvo probadores; `buy_raffle_tickets` rechaza a quien no la tiene); historial con una fila de períodos (Todo · años · Hoy · meses) y filtro de tipo en un icono de embudo. Historial, Canjes y Rifa son contenedores fijos al viewport: título y filtros quedan quietos y solo se desplazan las filas, los premios o los participantes.
-- Vehículos (F6; para todos del 4-sep al 16-oct, **desde entonces en BETA CONTROLADA**): carrusel de artes con arrastre (53 modelos), ficha (kilómetros recorridos, aceite, próximo servicio por fecha/km, tanque, combustible habitual), telemetría (km/gal DE LLENO A LLENO y de RESERVA A RESERVA — pregunta única "¿Cómo fue la carga?": Tanque lleno / Llegué en reserva / Carga parcial, en el modal de calificación y en el registro manual; inferencia de lleno ≥85 % del tanque; ventanas <10 km arrastran sus galones; carga sin registrar reinicia la medición; km monótonos con tope por dedazo; plausibilidad por tipo y mediana; tramos APROXIMADOS de 8+ cargas para quien nunca llena — E3h/E3i, 15/16-oct; el servidor `list_my_vehicle_stats` es la única fuente y `src/lib/fuelEconomy.js` el respaldo —, km/día, costo por km con el último precio pagado, gráficas), consumos manuales al momento, historial DEL VEHÍCULO (cargas + movimientos — `vehicle_events`) con reasignación y corrección del estado de la carga, confirmación de servicio desde el push, silencio de recordatorios por vehículo, zona de riesgo para eliminar.
+- Vehículos (F6; para todos del 4-sep al 16-oct, **desde entonces en BETA CONTROLADA**): carrusel de artes con arrastre (53 modelos), ficha (kilómetros recorridos, aceite, próximo servicio por fecha/km, tanque, combustible habitual), telemetría (km/gal DE LLENO A LLENO y de RESERVA A RESERVA — pregunta única "¿Cómo fue la carga?": Tanque lleno / Llegué en reserva / Carga parcial, en el modal de calificación y en el registro manual; inferencia de lleno ≥85 % del tanque; ventanas <10 km arrastran sus galones; carga sin registrar reinicia la medición; km monótonos con tope por dedazo; plausibilidad por tipo y mediana; tramos APROXIMADOS de 8+ cargas para quien nunca llena — E3h/E3i, 15/16-oct; el servidor `list_my_vehicle_stats` es la única fuente y `src/lib/fuelEconomy.js` el respaldo —, km/día, costo por km con el último precio pagado, gráficas), consumos manuales al momento, historial DEL VEHÍCULO (cargas + movimientos — `vehicle_events`) con reasignación y corrección del estado de la carga, confirmación de servicio desde el push, silencio de recordatorios por vehículo, zona de riesgo para eliminar. Desde el 9-nov solo se muestran los cuadros con dato (invitaciones y pista de datos faltantes), consumo por mes en carrusel (Gasto · Galones · Km recorridos) y rendimiento por llenado con hasta 10 puntos; desde el 10-nov se consulta SIN CONEXIÓN con la última foto guardada en el celular (`src/lib/vehicleSnapshot.js`), en solo lectura y con aviso de la fecha.
 - Menú: cuenta (avatar, teléfono con OTP, contraseña, eliminar cuenta), información, términos, modo claro/oscuro.
 
 ### Operador
@@ -306,7 +307,7 @@ WiFi por estación viven ahí.
   `history` (+`?qr=1&bar=1`), `catalog` (+`?tap=`), `redeem`, `d24`, `d4`,
   `fuel` (+`?approx=1|2|err=1|stale=1|how=1|hist=1&del=1`), `tour` (`?step=N`),
   `rating` (+`?star=N|back=1`), `soon` (+`?gate=1`), `survey`, `service`,
-  `tiercard` (+`?dark=1`)) que montan componentes del cliente con datos
+  `tiercard` (+`?dark=1`), `vehicles` (+`?s=empty|partial|full|navi&gap=1&pt=N&tab=N&off=1`)) que montan componentes del cliente con datos
   simulados. Servidor: `npx vite --config tools/harness/vite.harness.config.js`
   (puerto 3100). Captura: `node tools/harness/shot.cjs --out <dir> [--wait=ms]
   [--scroll=N] nombre=ruta?query` (Edge headless por CDP con viewport móvil
@@ -322,14 +323,14 @@ WiFi por estación viven ahí.
 
 ---
 
-## 12. Pendiente (fuente: ROADMAP v4.6, 7-nov-2026)
+## 12. Pendiente (fuente: ROADMAP v4.7, 10-nov-2026)
 
 - **Decisiones del dueño:** (1) Puntos Plus Business — traer el plan completo
   (se compara contra el doc v0.4b antes de construir) o arrancar B-E1 con
   `ptsPerGal` provisional — el 7-nov el dueño indicó que SIGUE en
   construcción, pendiente; (2) ~~Fernando Morales en la beta de Rifa~~ —
   resuelto 7-nov: se mantiene FUERA; (3) rollout de Vehículos y Rifa
-  (interruptor "para todos"); (4) Sign in with Apple para la versión de App
+  (interruptor "para todos"; la beta de Emanuel NO se extiende — 10-nov); (4) Sign in with Apple para la versión de App
   Store. Tarjeta física: proyecto a futuro que puede realizarse u omitirse
   (7-nov). Vista de operador OMITIDA: operación 100 % por PROPER (D38).
 - **Plan a futuro:** formalizar el dominio **puntosplus.com.gt** (D39:
@@ -338,9 +339,10 @@ WiFi por estación viven ahí.
 - ~~**Perfeccionamiento del socio (antes del GO-LIVE)**~~ ✅ **CERRADO
   7-nov-2026:** los 47 puntos de `docs/REVISION-UX-SOCIO.md` (A/B/C)
   implementados (`55a8302`…`ffa2bf1`) y validados por el dueño en celular;
-  decisión **D40 voz única "tú"**. Quedan anotados: ver las estadísticas de la
-  ÚLTIMA carga sin desplegar el historial (deseo del dueño, sin fecha) y
-  dividir `GoogleProfile.jsx` (507 líneas) al tocar esa pantalla.
+  decisión **D40 voz única "tú"**. El deseo de "estadísticas de la última
+  carga" se resolvió el 10-nov como consulta SIN CONEXIÓN de Vehículos
+  (`d1d079f`, falta validación del dueño en celular). Queda anotado: dividir
+  `GoogleProfile.jsx` (507 líneas) al tocar esa pantalla.
 - **GO-LIVE (≈4-8 hs):** encender degradación (`set_degradation_enabled`),
   encender `phone_verification` (requiere Twilio), desactivar la llave API
   "Pruebas" (Admin → API externa), limpiar operadores espejo (PROPER 351,

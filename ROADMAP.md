@@ -1,9 +1,10 @@
 # Puntos Plus — Roadmap de Producto
 
-> **Versión:** 4.6
+> **Versión:** 4.7
 > **Fecha de creación:** 17 de mayo de 2026
-> **Última actualización:** 7 de noviembre de 2026
+> **Última actualización:** 10 de noviembre de 2026
 > **Estado:** Vivo (este documento evoluciona con el proyecto)
+> **Alcance v4.7 (10-nov-2026):** **F6 Vehículos — pulido de la vista** (pedidos del dueño, sin migraciones): cuadros sin dato OCULTOS en lugar de guiones, con invitaciones y pista de datos faltantes (9-nov, `7585286`); consumo por mes en carrusel Gasto · Galones · Km recorridos y rendimiento por llenado con hasta 10 puntos y panel fijo (9-nov, `32970eb`); corrección de datos de la Navi de Ezer (`gap_before` en la carga del 14-sep → 137.1 km/gal); **consulta SIN CONEXIÓN** de Vehículos con la última foto guardada en el celular, en solo lectura y con aviso (10-nov, `d1d079f`). Validaciones del dueño: carrusel y gráfica OK, la pista "Completa … en Datos y ajustes" se queda, la beta de Emanuel NO se extiende. Restante de desarrollo: GO-LIVE + decisión del dueño sobre Business. Ver Changelog.
 > **Alcance v4.6 (7-nov-2026 — reconciliación del 22-sep al 16-oct):** **F6 TELEMETRÍA E3h/E3i** (km monótonos con tope por dedazo, cargas sin registrar, cadena de RESERVA, pregunta única "¿Cómo fue la carga?", servidor como única fuente de las ventanas — mig `20261015`; tramos APROXIMADOS para quien nunca llena ni llega a reserva — mig `20261016b`), **BETA CONTROLADA de secciones** (decisión del dueño 16-oct: Vehículos y Rifa vuelven a PRÓXIMAMENTE salvo probadores del admin — mig `20261016`, mecanismo genérico `feature_beta`; cierra además una sobrecarga insegura de `buy_raffle_tickets`), **precios de combustible desde PROPER** (extensión de D4, mig `20260923`, interruptor apagado), mantenimiento `20260922` (índices de FKs, teléfono duplicado, límite por IP), **Tanda 10 de artes** (Movesa Cruiser, Osborne Fantastic → 53 artes), **F8 Business v0.4/v0.4b** (B28-B39) y fixes (fechas del historial en la ficha del miembro, sheet de la rifa por portal). Restante de desarrollo: GO-LIVE + decisión del dueño sobre Business. Ver Changelog.
 > **Alcance v4.4 (22-sep-2026):** documentación — **F8 Puntos Plus Business v0.4**: reconciliación pedida por el dueño con la recalibración del 19-sep y la API v1.4 de PROPER (B28-B36): puntos de la empresa con la MISMA fórmula del programa (`round(gal × ptsPerGal)` propio, sin arrastre), premios de combustible con `rewards.cash_value`, red de seguridad que completa la compra existente y precede al rechazo `company_nit`, **API v1.5 aditiva** (campos de combustible en canjes, `operator.station` opcional, errores nuevos, `note: prepaid_voucher`) con documento de novedades, vocabulario "kilómetros recorridos", cargas de vale sin actividad de degradación, reportes segmentados por `source`, regla SEC.C.7 y acuerdo pendiente con PROPER sobre la forma de pago. Sigue EN PAUSA (premios B18, niveles B23). Estimación 186-259 hs. Mantenimiento del mismo día: migración `20260922` (índices de FKs, índice duplicado de teléfono, límite 10/h por IP a check_member_exists) EJECUTADA.
 > **Alcance v4.3 (5-sep-2026):** solo documentación de **F8 Puntos Plus Business v0.3**: nueve ajustes del dueño (B19-B27) — puntos de la empresa por GALONES con conversión propia editable en el admin, premios de combustible facturados a CF o al NIT de la empresa con control separado del dinero depositado, canjes con puntos que NO vencen, control de facturación (% facturado / por facturar), niveles de empresa pendientes, app normal solo para particulares, catálogo corporativo asignable con puntos→combustible, corte a la hora acordada y **cobro único al saldo al emitir el vale** (v0.2 duplicaba el cobro). Sigue EN PAUSA hasta definir premios y niveles; nada construido. Ver Changelog.
@@ -385,7 +386,7 @@ Mover el `useState(checkingPhone)` al tope del componente con los otros useState
 | 8 | F4 | Tarjeta física + extensiones operador | 50-70 hs | Media | ⏸️ **EN PAUSA** (decisión del dueño 11-ago: tarjeta SOLO DIGITAL; la física es deseo a futuro que podría descartarse). Esquema listo (`physical_cards` con seed inactivo reversible) — NO implementar sin pedido explícito |
 | 9 | F7b | Endpoints `/physical-members` (completa contrato PROPER) | 8-12 hs | Media | ⏸️ **EN PAUSA** (depende de F4) |
 | 10 | F5 | Features faltantes (WhatsApp+SMS, password, dirección) | 56-73 hs | Media | ✅ **CERRADA EN CÓDIGO** (8-ago, mig `20260808c`) — OTP al registrar implementado (Twilio Verify + `/api/verify-phone` + `phone_verifications`; interruptor `phone_verification` APAGADO hasta configurar `TWILIO_*` en Vercel); dirección estructurada ✓ (`AddressPicker` + `geoGt.js`); confirmación de compra de boletos ✓ (sheet en ClientRaffle). Recuperación de password RESUELTA por decisión del dueño (14-ago): vía chat de WhatsApp — NO SMS/correo. PENDIENTE OPERATIVO: credenciales Twilio + encender el interruptor |
-| 11 | F6 | Vehículos como entidad + alertas push | 72-93 hs | Media | ✅ **CERRADA EN CÓDIGO** (15-ago → 3-sep, v4.1; migs `20260815_f6e1/b`, `20260819_f6e2`, `20260902/b/c`, `20260903/b/c`) — entidad `vehicles` + BETA controlada, 50 artes por modelo (E1), combustible y telemetría (E2), análisis, consumos manuales, gráficas y push de servicio D24 (E3), confirmación de servicio desde la notificación (E4), unificación jsonb→tabla (E2b) y retiro de Mi cuenta → Vehículos. ✅ **ROLLOUT a todos los socios (4-sep, mig `20260904`):** beta retirada (tabla, config, RPCs y tarjeta de admin), placeholder PRÓXIMAMENTE eliminado — `VehiclesScreen` monta `VehiclesHome` directo. **E3f-E3i (21-sep → 16-oct, migs `20260921b/c/d`, `20261015`, `20261016b`):** rendimiento de lleno a lleno, historial del vehículo con movimientos, km monótonos, cargas sin registrar, cadena de reserva, tramos aproximados. ⚠️ **16-oct: la pestaña vuelve a BETA CONTROLADA** junto con Rifa (mig `20261016`, mecanismo genérico `feature_beta`; rollout = interruptor "para todos" en Admin → Configuración → Secciones en beta) |
+| 11 | F6 | Vehículos como entidad + alertas push | 72-93 hs | Media | ✅ **CERRADA EN CÓDIGO** (15-ago → 3-sep, v4.1; migs `20260815_f6e1/b`, `20260819_f6e2`, `20260902/b/c`, `20260903/b/c`) — entidad `vehicles` + BETA controlada, 50 artes por modelo (E1), combustible y telemetría (E2), análisis, consumos manuales, gráficas y push de servicio D24 (E3), confirmación de servicio desde la notificación (E4), unificación jsonb→tabla (E2b) y retiro de Mi cuenta → Vehículos. ✅ **ROLLOUT a todos los socios (4-sep, mig `20260904`):** beta retirada (tabla, config, RPCs y tarjeta de admin), placeholder PRÓXIMAMENTE eliminado — `VehiclesScreen` monta `VehiclesHome` directo. **E3f-E3i (21-sep → 16-oct, migs `20260921b/c/d`, `20261015`, `20261016b`):** rendimiento de lleno a lleno, historial del vehículo con movimientos, km monótonos, cargas sin registrar, cadena de reserva, tramos aproximados. ⚠️ **16-oct: la pestaña vuelve a BETA CONTROLADA** junto con Rifa (mig `20261016`, mecanismo genérico `feature_beta`; rollout = interruptor "para todos" en Admin → Configuración → Secciones en beta). **Pulido 9/10-nov (v4.7, sin migraciones):** cuadros sin dato ocultos, carrusel de consumo por mes, gráfica de 10 puntos con panel fijo y consulta SIN CONEXIÓN (foto local en solo lectura) |
 | 12 | F8 | **Puntos Plus Business** (flotas): diseño técnico v0.4b en `docs/PUNTOS-PLUS-BUSINESS.md` (7 etapas B-E1…E7; 39 decisiones B1-B39) | 186-259 hs | Media | ⏸️ **DISEÑO ACORDADO, EN PAUSA** (4-sep; B19-B27 el 5-sep; **v0.4/v0.4b el 22-sep: reconciliación con la recalibración y la API v1.4** — misma fórmula `round(gal × ptsPerGal)`, premios de combustible con `cash_value`, API v1.5 aditiva, consumos de flota = canjes independientes de la facturación, puntos a la empresa AL FACTURAR, depósitos FIFO). Bloqueos del dueño: premios (B18/B25), niveles de empresa (B23), `ptsPerGal` inicial (puede ser provisional), onboarding. El 16-oct el dueño pidió el estado y quedó en responder si trae su plan completo o arranca B-E1 con valor provisional; nada construido |
 | 13 | F9 | Reportería enriquecida (opcional) | 40-55 hs | Opcional | 🟡 **PARCIAL** — el grupo Análisis del admin (13-ago: AnClientes/AnOperadores/AnPromos/AnIntegridad con RPCs `report_*`, integridad auditada; sin método de pago — solo Q total) cubre el grueso; el resto queda opcional |
 | — | **TIENDAS** | **Track operativo nuevo (v4.0):** publicación en Play Store (TWA/PWABuilder + `assetlinks.json`) y App Store (Sign in with Apple + push APNs, decisiones del dueño 14-ago) — checklist en `docs/TIENDAS.md` | 15-25 hs + gestiones | Alta | 🟡 **PREPARADO** (14-ago: manifest completo, privacidad/eliminación corregidas, iconos 192). BLOQUEADO por cuentas del dueño (Play Console + Apple Developer) + capturas 1080×1920 + cuenta demo |
@@ -1239,7 +1240,37 @@ Sin cambios respecto a v2.1. Ver versiones anteriores del documento para detalle
     solo hasta el 1-nov). ROLLOUT = encender "para todos" (no borrar código).
     Hallazgo de seguridad cerrado en la misma migración: sobrecarga legada de
     `buy_raffle_tickets` ejecutable por anon sin token (DROP). Toda sección
-    nueva que deba nacer cerrada usa este mecanismo.
+    nueva que deba nacer cerrada usa este mecanismo. **10-nov:** la beta
+    de Emanuel venció y el dueño decidió NO extenderla.
+  - **Vista sin guiones (9-nov, `7585286`, pedido del dueño):** los cuadros
+    de la ficha (km, servicio, aceite, combustible) y los 6 indicadores de
+    rendimiento solo aparecen cuando tienen dato; impar → el último a ancho
+    completo; ficha vacía → "Completa los datos de X" + botón "Completar
+    datos y ajustes"; sin cargas → `FuelInvite` "Empieza a medir tu
+    consumo"; ficha a medias → pista tocable "Completa … en Datos y ajustes ›"
+    (validada: SE QUEDA); historial oculto si no hay nada. Arnés
+    `vehicles.html?s=empty|partial|full`.
+  - **Gráficas (9-nov, `32970eb`):** consumo por mes en carrusel
+    (`MonthCharts.jsx`: Gasto · Galones · Km recorridos; los km se reparten
+    por días entre lecturas consecutivas, sin mezclar unidades en un eje);
+    rendimiento por llenado con hasta 10 puntos, sin etiquetas sobre la línea
+    y panel fijo arriba con el punto tocado. Corrección de datos pedida por
+    el dueño: carga de la Navi del 14-sep con `gap_before=true` (faltó
+    registrar una carga; 193.9 km/gal no la apartaba la plausibilidad) →
+    promedio 148.2 → 137.1. Validado por el dueño el 10-nov.
+  - **Consulta SIN CONEXIÓN (10-nov, `d1d079f`, pedido del dueño):** cada
+    respuesta del servidor guarda una foto por socio en el celular
+    (`src/lib/vehicleSnapshot.js`, localStorage `pp_veh_snap_<id>`: ficha,
+    telemetría y cargas con fecha por parte). Ante un error de RED (no de
+    negocio) `VehiclesScreen`/`VehiclesHome`/`VehicleFuel` pintan la foto en
+    SOLO LECTURA con `OfflineSnapshotBanner` ("Sin conexión · datos del
+    último registro guardado en tu celular (fecha)" + Reintentar); los
+    botones de cambios avisan "conéctate para hacer cambios"; al volver la red
+    se recarga sola (`useOnline`). `useMemberFeatures` guarda también en
+    localStorage (si no, la PWA abierta sin red bloqueaba la pestaña beta;
+    solo decide qué se pinta). Ambas cachés se borran al cerrar sesión o al
+    vencer. Los movimientos del vehículo no se guardan offline. Arnés
+    `vehicles.html?off=1`.
   - **PENDIENTE:** (1) benchmark anónimo de rendimiento entre socios (idea del
     dueño 2-sep, a futuro); (2) retirar el campo `beta: true` de
     compatibilidad en `list_my_vehicles` cuando ya no queden PWA con el
@@ -2015,6 +2046,32 @@ Cambios mayores van en commits separados con mensaje `docs: actualizar ROADMAP �
 ---
 
 ## Changelog
+
+### Versión 4.7 — 10 de noviembre de 2026
+
+Pulido de la vista de Vehículos (pedidos del dueño; sin migraciones).
+
+**9-nov · Vista sin guiones (`7585286`):** los cuadros sin dato se ocultan y
+aparecen a medida que se llenan; invitaciones para ficha vacía y sin cargas;
+pista "Completa … en Datos y ajustes ›" para la ficha a medias (el dueño
+decidió el 10-nov que se queda).
+
+**9-nov · Gráficas (`32970eb`):** consumo por mes en carrusel Gasto ·
+Galones · Km recorridos y rendimiento por llenado con hasta 10 puntos y
+panel fijo del punto elegido. Corrección de datos de la Navi de Ezer
+(`gap_before` en la carga del 14-sep, ejecutada por el dueño): promedio
+137.1 km/gal. Validado por el dueño el 10-nov.
+
+**10-nov · Vehículos SIN CONEXIÓN (`d1d079f`):** el deseo anotado el 7-nov
+("estadísticas de la última carga") era consultar las últimas estadísticas
+sin internet. Foto local por socio que se renueva con cada respuesta del
+servidor; sin red se muestra en solo lectura con aviso y fecha del último
+registro, Reintentar y recarga automática al volver la red; acceso de la
+beta recordado en localStorage; cachés borradas al cerrar sesión. Detalle en
+§5 F6.
+
+**10-nov · Decisiones del dueño:** la beta de Emanuel Martinez NO se extiende
+(venció el 1-nov).
 
 ### Versión 4.6 — 7 de noviembre de 2026
 
