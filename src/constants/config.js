@@ -165,4 +165,4 @@ export { DEFAULT_CONFIG as CFG_INIT };
 
 // UX-43 (7-nov-2026): fecha única de "Última actualización" de los Términos
 // (TermsSheet y Menú → Términos la mostraban distinta).
-export const TERMS_UPDATED = 'Septiembre 2026';
+export const TERMS_UPDATED = 'Noviembre 2026';

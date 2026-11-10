@@ -1,0 +1,174 @@
+<title>Análisis legal Puntos Plus</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: una columna de lectura (~720px) con tablas desplazables; naranja de marca solo en encabezados y marcas de estado */
+:root {
+  --bg: #F6F2EE;
+  --surface: #FFFFFF;
+  --fg: #1B1714;
+  --sub: #6B615A;
+  --line: #E4DCD4;
+  --accent: #D9480A;
+  --hi-bg: #FDE3DA; --hi-fg: #A3270B;
+  --md-bg: #FCEFD2; --md-fg: #8A5A00;
+  --lo-bg: #FBF5D9; --lo-fg: #6E6200;
+  --ok-bg: #E2F1E5; --ok-fg: #24693A;
+  --f-display: 'Space Grotesk', 'Segoe UI', system-ui, sans-serif;
+  --f-body: 'Inter', 'Segoe UI', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #16120F; --surface: #211B17; --fg: #F1EAE3; --sub: #A99D93; --line: #3A312B; --accent: #FF7A3D;
+  --hi-bg: #4A1E12; --hi-fg: #FFB49C; --md-bg: #46330E; --md-fg: #F5CB75; --lo-bg: #3B3612; --lo-fg: #E6DA85;
+  --ok-bg: #173623; --ok-fg: #8FD6A4; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #16120F; --surface: #211B17; --fg: #F1EAE3; --sub: #A99D93; --line: #3A312B; --accent: #FF7A3D;
+  --hi-bg: #4A1E12; --hi-fg: #FFB49C; --md-bg: #46330E; --md-fg: #F5CB75; --lo-bg: #3B3612; --lo-fg: #E6DA85;
+  --ok-bg: #173623; --ok-fg: #8FD6A4; color-scheme: dark }
+
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.65; }
+.wrap { max-width: 760px; margin: 0 auto; padding-block: 40px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header { display: grid; gap: 10px; margin-bottom: 28px; }
+.eyebrow { font: 600 12px/1 var(--f-display); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+h1 { font: 700 clamp(28px, 6vw, 38px)/1.1 var(--f-display); margin: 0; text-wrap: balance; }
+h2 { font: 600 22px/1.25 var(--f-display); margin: 44px 0 12px; text-wrap: balance; }
+h3 { font: 600 16px/1.3 var(--f-display); margin: 22px 0 6px; }
+p { margin: 0 0 12px; max-width: 68ch; }
+.meta { color: var(--sub); font-size: 13px; }
+.notice { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; font-size: 14px; color: var(--sub); }
+ul, ol { padding-left: 20px; margin: 0 0 12px; display: grid; gap: 6px; }
+li { max-width: 68ch; }
+strong { font-weight: 600; }
+.keys { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); margin-top: 8px; }
+.key { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 6px; align-content: start; }
+.key p { margin: 0; font-size: 14px; }
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); margin: 10px 0 14px; }
+table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 14px; }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+th { font: 600 12px/1.3 var(--f-display); letter-spacing: .06em; text-transform: uppercase; color: var(--sub); }
+tr:last-child td { border-bottom: 0; }
+td:first-child { font-weight: 600; min-width: 150px; }
+.chip { display: inline-block; white-space: nowrap; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; }
+.hi { background: var(--hi-bg); color: var(--hi-fg); }
+.md { background: var(--md-bg); color: var(--md-fg); }
+.lo { background: var(--lo-bg); color: var(--lo-fg); }
+.ok { background: var(--ok-bg); color: var(--ok-fg); }
+.sources li { font-size: 13px; color: var(--sub); }
+a { color: var(--accent); }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+footer { margin-top: 48px; font-size: 13px; color: var(--sub); border-top: 1px solid var(--line); padding-top: 16px; }
+</style>
+
+<div class="wrap">
+<header>
+  <span class="eyebrow">Puntos Plus · Gasolineras Turkaj</span>
+  <h1>Análisis legal de la app y opciones para quemar puntos</h1>
+  <span class="meta">10 de noviembre de 2026 · Revisión de las funciones en producción y en beta</span>
+  <div class="notice">Esto no es asesoría legal. Las normas se consultaron en fuentes públicas; todo lo marcado "por confirmar" debe validarlo un abogado guatemalteco antes de decidir.</div>
+</header>
+
+<h2>Lo más importante</h2>
+<div class="keys">
+  <div class="key"><span class="chip hi">Rifa</span><p>En Guatemala las rifas las autoriza la <strong>Gobernación Departamental</strong>, aunque los boletos sean gratis. Mantenerla en beta hasta resolverlo.</p></div>
+  <div class="key"><span class="chip md">Datos personales</span><p>No hay ley general todavía (hay una iniciativa en el Congreso). La política de privacidad ya quedó completa para estar listos.</p></div>
+  <div class="key"><span class="chip ok">Quemar puntos</span><p>Sí se puede sin trámites: quitando el <strong>azar</strong> o dando cosas <strong>sin valor en dinero</strong>.</p></div>
+</div>
+
+<h2>Riesgo por función</h2>
+<div class="tbl"><table>
+  <thead><tr><th>Función</th><th>Riesgo</th><th>Qué revisar o hacer</th></tr></thead>
+  <tbody>
+  <tr><td>Rifa mensual</td><td><span class="chip hi">Alto</span></td><td>Autorización de la Gobernación Departamental, ISR sobre el premio, bases públicas y acta del sorteo. Apple exige bases dentro de la app y aclarar que no patrocina.</td></tr>
+  <tr><td>Minijuegos tipo casino (planificado)</td><td><span class="chip hi">Alto con premios de valor</span></td><td>Con premios en puntos o productos puede considerarse juego de azar. Solo con premios sin valor (ver opciones abajo).</td></tr>
+  <tr><td>Puntos por encuestas de Shell</td><td><span class="chip md">Medio · contractual</span></td><td>No es ilegal, pero premiar la encuesta de Shell puede ir contra las reglas de Shell o del contrato de franquicia. Revisar el contrato.</td></tr>
+  <tr><td>Cambios al programa</td><td><span class="chip ok">Corregido</span></td><td>Decía "en cualquier momento"; ahora se avisa con 15 días si se reducen beneficios. Preguntar si el reglamento debe registrarse ante DIACO como contrato de adhesión.</td></tr>
+  <tr><td>Degradación y pérdida de puntos</td><td><span class="chip md">Medio al encenderla</span></td><td>Hoy apagada. Los Términos ya prometen 15 días de aviso antes de activarla; cumplirlo con un anuncio en la app.</td></tr>
+  <tr><td>Registro (DPI, teléfono, nacimiento, NIT)</td><td><span class="chip ok">Corregido</span></td><td>Se agregó la mayoría de edad (18+) en Términos y Privacidad. Pendiente opcional: que el registro valide la edad con la fecha de nacimiento.</td></tr>
+  <tr><td>Política de privacidad</td><td><span class="chip ok">Corregido</span></td><td>Ahora declara a PROPER, los datos de vehículos, las calificaciones, la huella, la copia en el celular y el borrado inmediato. Debe coincidir con la ficha de datos de Play Store.</td></tr>
+  <tr><td>Calificación de operadores</td><td><span class="chip lo">Bajo</span></td><td>Si se usan para decisiones laborales, informarlo por escrito a los colaboradores.</td></tr>
+  <tr><td>Catálogo con tiendas asociadas</td><td><span class="chip lo">Bajo</span></td><td>Acuerdo escrito con cada tienda sobre quién responde por el premio.</td></tr>
+  <tr><td>Precios de combustible</td><td><span class="chip lo">Bajo</span></td><td>Que coincidan con el precio en bomba (publicidad engañosa, Ley de Protección al Consumidor).</td></tr>
+  <tr><td>Ubicación, push, borrar cuenta, Google, artes de vehículos</td><td><span class="chip ok">Sin pendientes</span></td><td>Ya están declarados o resueltos.</td></tr>
+  </tbody>
+</table></div>
+
+<h2>La rifa en detalle</h2>
+<h3>Cómo funciona hoy</h3>
+<ul>
+  <li>Los boletos se compran con puntos (5 por defecto o lo que fije el admin); el punto vale Q0.10.</li>
+  <li>La 5.ª encuesta del día da un boleto gratis.</li>
+  <li>El sorteo es automático al terminar el mes, con azar estándar de la base de datos, sin acta ni testigos.</li>
+  <li>El premio se entrega como canje con código TK. Está en beta para pocos probadores.</li>
+</ul>
+<h3>Por qué necesita permiso</h3>
+<p>Pagar algo de valor, que decida el azar y que haya un premio es lo que define una rifa. El Reglamento de Lotería, Rifas y Juegos Similares (reformado en 2015) pide autorización de la Gobernación Departamental. En promociones grandes, un delegado de Gobernación asiste al sorteo. Además, los premios de rifas y sorteos están gravados con ISR (Decreto 10-2012; tasa por confirmar).</p>
+<h3>Caminos posibles</h3>
+<ol>
+  <li><strong>Tramitar la autorización</strong> (gratis, presencial, unos 5 días hábiles según una guía; cada Gobernación puede pedir más) y agregar acta del sorteo y azar criptográfico.</li>
+  <li><strong>Cambiarla por una subasta de puntos</strong>: sin azar no es rifa. Ver opción 4 abajo.</li>
+  <li><strong>Dejarla en beta</strong> mientras se decide. Es lo que está hoy.</li>
+</ol>
+
+<h2>Opciones para quemar puntos sin costo ni trámites</h2>
+<p>La regla: lo que necesita permiso es <strong>pagar + azar + premio con valor</strong>. Basta con quitar una de las tres.</p>
+<div class="tbl"><table>
+  <thead><tr><th>Opción</th><th>Costo</th><th>Cómo funciona</th></tr></thead>
+  <tbody>
+  <tr><td>1. Protección de nivel</td><td><span class="chip ok">Cero</span></td><td>Pagar puntos para pausar el contador de inactividad (ej. 300 pts = 7 días) o asegurar el nivel un mes. Ideal cuando se encienda la degradación. Recomendada.</td></tr>
+  <tr><td>2. Personalización</td><td><span class="chip ok">Cero</span></td><td>Colores y fondos premium de la tarjeta, artes y colores especiales del vehículo, marcos, insignias, álbum coleccionable. Recomendada.</td></tr>
+  <tr><td>3. Minijuegos de feria</td><td><span class="chip ok">Cero</span></td><td>Ruleta, raspadito o tragamonedas con puntos, pero que solo dan insignias, cosméticos o lugar en un ranking. Nunca puntos ni productos.</td></tr>
+  <tr><td>4. Subasta mensual</td><td><span class="chip ok">Cero</span></td><td>Gana quien ofrece más puntos. El premio lo pone una tienda asociada a cambio de anunciarse. A quien no gana se le devuelven los puntos.</td></tr>
+  <tr><td>5. Prioridad</td><td><span class="chip ok">Cero</span></td><td>Acceso anticipado a promociones, apartar premios con pocas unidades, atención preferente en eventos.</td></tr>
+  <tr><td>6. Puntos + quetzales</td><td><span class="chip lo">Bajo</span></td><td>Pagar parte con puntos en artículos con buen margen (aceites, accesorios). Lo que se cede sale del margen.</td></tr>
+  <tr><td>7. Premios de aliados</td><td><span class="chip lo">Bajo</span></td><td>Canjes en tiendas asociadas que ellas financian a cambio de clientes.</td></tr>
+  </tbody>
+</table></div>
+<p>Para todas: precio en puntos claro antes de confirmar, aviso de que los puntos no se devuelven y las reglas dentro de los Términos. En iOS, confirmar que Apple acepte desbloquear cosméticos con puntos de lealtad.</p>
+
+<h2>Textos corregidos el 10-nov</h2>
+<h3>Términos y Condiciones (en la app)</h3>
+<ul>
+  <li><strong>Registro:</strong> el programa es para mayores de 18 años; se pueden suspender cuentas de menores.</li>
+  <li><strong>Independencia de marca:</strong> Google y Apple no patrocinan el programa ni sus rifas.</li>
+  <li><strong>Rifa:</strong> bases mínimas (premio, valor, costo y fecha publicados antes; boletos con puntos o gratis; ganador al azar tras el cierre; entrega en estación; no canjeable por dinero; sujeto a impuestos de ley).</li>
+  <li><strong>Encuestas y calificaciones:</strong> sección nueva, voluntarias y con el límite diario indicado en la app.</li>
+  <li><strong>Inactividad:</strong> aviso antes de bajar de nivel o perder puntos; activación y cambios con 15 días de anticipación.</li>
+  <li><strong>Privacidad:</strong> menciona a PROPER y remite a la Política de Privacidad.</li>
+  <li><strong>Modificaciones:</strong> 15 días de aviso si se reducen beneficios; promociones y existencias pueden cambiar sin ese plazo; quien no esté de acuerdo puede eliminar su cuenta.</li>
+</ul>
+<h3>Política de Privacidad (privacidad.html)</h3>
+<ul>
+  <li>Datos de compras detallados, vehículos, calificaciones, foto de perfil, huella o rostro (solo llave pública) y copia local en el celular.</li>
+  <li>Con quién se comparte: Gasolineras Turkaj, PROPER, Supabase, Vercel, Google y autoridades.</li>
+  <li>Borrado inmediato desde la app (máximo 30 días por correo); compras y canjes quedan sin datos personales por obligaciones fiscales.</li>
+  <li>Secciones nuevas: menores de edad y cambios a la política. Redacción en "tú".</li>
+</ul>
+<p class="meta">El plazo de 15 días es una propuesta razonable; se puede cambiar si el abogado o el dueño prefieren otro.</p>
+
+<h2>Preguntas para el abogado</h2>
+<ol>
+  <li>¿La rifa mensual con boletos comprados con puntos necesita autorización de la Gobernación? ¿Y si los boletos fueran solo gratis?</li>
+  <li>¿Una subasta de puntos con premio donado por una tienda aliada queda fuera del reglamento de rifas?</li>
+  <li>¿Cómo debe hacerse un sorteo válido: notario, delegado de Gobernación, acta?</li>
+  <li>¿Qué tasa de ISR aplica al premio, quién la retiene y qué constancia guardar?</li>
+  <li>¿El reglamento del programa debe registrarse ante DIACO como contrato de adhesión?</li>
+  <li>¿Minijuegos con premios sin valor en dinero (insignias, cosméticos) quedan fuera de juegos de azar?</li>
+  <li>¿Dar puntos por la encuesta de Shell choca con el contrato de franquicia?</li>
+</ol>
+
+<h2>Fuentes consultadas</h2>
+<ul class="sources">
+  <li><a href="https://livinginguatemala.com/es/tramites/gobern-autorizacion-rifas-sorteos/">Autorización de rifas y sorteos (Living in Guatemala)</a></li>
+  <li><a href="https://mingob.gob.gt/wp-content/uploads/2023/06/FP-PE-CRT-SA-DISAF-SIGENOVE1.pdf">Ministerio de Gobernación: base normativa del reglamento</a></li>
+  <li><a href="https://www.banrural.com.gt/hubfs/CONDICIONES%20PROMOCI%C3%93N%20MUNDIAL%20DEL%20MILLON%202026.pdf">Ejemplo de bases con delegado de Gobernación (Banrural)</a></li>
+  <li><a href="https://www.prensalibre.com/?p=13752980">ISR sobre premios de rifas y sorteos (Prensa Libre)</a></li>
+  <li><a href="https://emisorasunidas.com/nacional/2026/07/16/comision-de-asuntos-de-seguridad-analiza-iniciativa-de-ley-de-proteccion-de-datos-personales/">Iniciativa de ley de datos personales (Emisoras Unidas)</a></li>
+  <li><a href="https://consortiumlegal.com/en/2026/09/23/data-protection-habeas-data-guatemala/">Habeas data en Guatemala (Consortium Legal)</a></li>
+  <li><a href="https://www.wipo.int/wipolex/es/text/235834">Ley de Protección al Consumidor y Usuario, Decreto 006-2003 (WIPO Lex)</a></li>
+  <li><a href="https://lahora.gt/opinion/wpcomvip/2019/05/27/obligacion-de-registro-de-contratos-de-adhesion-ante-la-diaco/">Registro de contratos de adhesión ante DIACO (La Hora)</a></li>
+</ul>
+
+<footer>Puntos Plus · Copia en el repositorio: docs/ANALISIS-LEGAL.html</footer>
+</div>

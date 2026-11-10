@@ -5,6 +5,9 @@
 // dueño, recalibración C8): acumulación POR GALÓN, sin descuento de
 // canje por nivel y premios disponibles desde un nivel. Las tasas NO se
 // escriben acá (son editables en el admin): el texto remite a la app.
+// 10-nov-2026 (pedido del dueño, revisión legal docs/ANALISIS-LEGAL.html):
+// mayoría de edad, rifa con bases, aviso previo de 15 días, PROPER como
+// encargado, Google/Apple no patrocinan, encuestas y calificaciones.
 import { BRAND_ORANGE } from '../../../constants/styles';
 import { SectionHeader } from './menuUi';
 
@@ -22,11 +25,11 @@ export const TERMS_SECS = [
   },
   {
     title: 'INDEPENDENCIA DE MARCA',
-    body: 'Puntos Plus es una aplicación y plataforma ajena a Shell Guatemala. El Programa no es operado, patrocinado ni avalado por Shell Guatemala ni por sus franquiciantes, y aplica únicamente en las gasolineras Turkaj de Chichicastenango. Las marcas de terceros visibles en las estaciones pertenecen a sus respectivos titulares.',
+    body: 'Puntos Plus es una aplicación y plataforma ajena a Shell Guatemala. El Programa no es operado, patrocinado ni avalado por Shell Guatemala ni por sus franquiciantes, y aplica únicamente en las gasolineras Turkaj de Chichicastenango. Google y Apple tampoco patrocinan ni participan en el Programa, sus promociones o sus rifas. Las marcas de terceros visibles en las estaciones pertenecen a sus respectivos titulares.',
   },
   {
     title: 'REGISTRO Y MEMBRESÍA',
-    body: 'Para participar en el Programa, el usuario debe registrarse proporcionando su nombre completo, Documento Personal de Identificación (DPI), número de teléfono y fecha de nacimiento. El usuario garantiza que la información proporcionada es verídica y exacta. Cada persona física puede tener una única cuenta activa. El Programa se reserva el derecho de suspender cuentas con información incorrecta o duplicadas.',
+    body: 'El Programa está dirigido a personas mayores de 18 años. Para participar, el usuario debe registrarse proporcionando su nombre completo, Documento Personal de Identificación (DPI), número de teléfono y fecha de nacimiento. El usuario garantiza que la información proporcionada es verídica y exacta. Cada persona física puede tener una única cuenta activa. El Programa se reserva el derecho de suspender cuentas con información incorrecta, duplicadas o de menores de edad.',
   },
   {
     title: 'ACUMULACIÓN DE PUNTOS',
@@ -42,19 +45,23 @@ export const TERMS_SECS = [
   },
   {
     title: 'RIFA MENSUAL',
-    body: 'Cada mes el Programa realiza una rifa entre los miembros participantes. Los boletos de rifa tienen un costo en puntos definido por el Programa, visible en la sección Rifa de la aplicación. La participación en la rifa es voluntaria. El ganador se determina de forma aleatoria entre los boletos adquiridos para ese mes. Los puntos utilizados en la compra de boletos no son reembolsables en ningún caso.',
+    body: 'Cuando esté disponible, el Programa realiza una rifa mensual entre los miembros participantes. El premio, su valor, el costo de cada boleto en puntos y la fecha del sorteo se publican en la sección Rifa de la aplicación antes de que inicie la venta de boletos. Los boletos se obtienen con puntos o de forma gratuita en los casos que el Programa indique en la aplicación (por ejemplo, al completar las encuestas del día). La participación es voluntaria y cada boleto da una oportunidad de ganar. El ganador se elige al azar entre todos los boletos del mes, después de su cierre, y se le notifica en la aplicación. El premio se entrega en una de las estaciones afiliadas, presentando el código de canje, dentro del plazo indicado en la aplicación; no es canjeable por dinero ni transferible, y su entrega queda sujeta a los impuestos y requisitos que establezca la ley guatemalteca. Los puntos utilizados en la compra de boletos no son reembolsables.',
+  },
+  {
+    title: 'ENCUESTAS Y CALIFICACIONES',
+    body: 'El Programa puede invitar al miembro a calificar la atención recibida en cada compra y a completar encuestas de satisfacción, con los beneficios que se indiquen en la aplicación. Las calificaciones y encuestas son voluntarias y se usan para mejorar el servicio de las estaciones afiliadas. El límite diario de encuestas con beneficio se indica en la aplicación.',
   },
   {
     title: 'INACTIVIDAD Y DEGRADACIÓN',
-    body: 'El Programa monitorea la actividad de los miembros. La inactividad prolongada puede resultar en la degradación del nivel del miembro o la pérdida de puntos acumulados, según las reglas de inactividad vigentes disponibles en la sección correspondiente de la aplicación. Las reglas de inactividad pueden modificarse con previo aviso al miembro a través de la aplicación.',
+    body: 'El Programa monitorea la actividad de los miembros. La inactividad prolongada puede resultar en la degradación del nivel del miembro o la pérdida de puntos acumulados, según las reglas de inactividad vigentes disponibles en la sección correspondiente de la aplicación. La aplicación avisa al miembro antes de que su nivel baje o de que pierda puntos por inactividad. La activación de estas reglas y cualquier cambio en ellas se anunciarán en la aplicación con al menos 15 días de anticipación.',
   },
   {
     title: 'PRIVACIDAD Y PROTECCIÓN DE DATOS',
-    body: 'Puntos Plus recopila y procesa los datos personales del usuario con el único fin de operar el Programa de fidelización. Los datos no serán vendidos, cedidos ni compartidos con terceros sin consentimiento del usuario, salvo obligación legal. El usuario puede solicitar la eliminación de su cuenta y datos en cualquier momento a través de los canales de contacto del Programa.',
+    body: 'Puntos Plus recopila y procesa los datos personales del usuario con el único fin de operar el Programa de fidelización. Los datos no serán vendidos. Solo se comparten con las estaciones afiliadas y con los proveedores necesarios para operar el Programa (como el sistema de facturación PROPER de las estaciones y los servicios de alojamiento y base de datos), o cuando lo exija la ley. El detalle de los datos que se recopilan y de su uso está en la Política de Privacidad publicada en puntosplus.vercel.app/privacidad.html. El usuario puede corregir sus datos y eliminar su cuenta en cualquier momento desde la aplicación (Menú → Mi Cuenta) o a través de los canales de contacto del Programa.',
   },
   {
     title: 'MODIFICACIONES AL PROGRAMA',
-    body: 'El Programa se reserva el derecho de modificar, suspender o cancelar sus beneficios, reglas o catálogo de premios en cualquier momento. Los cambios serán notificados a través de la aplicación. El uso continuado del Programa después de la notificación de cambios implica la aceptación de los mismos por parte del usuario.',
+    body: 'El Programa puede modificar, suspender o cancelar sus beneficios, reglas o catálogo de premios. Los cambios que reduzcan los beneficios del miembro, o la suspensión o cancelación del Programa, se anunciarán en la aplicación con al menos 15 días de anticipación. Las promociones temporales y la disponibilidad de premios pueden cambiar sin ese plazo. Los canjes ya realizados no se ven afectados. El uso continuado del Programa después de que un cambio entre en vigor implica su aceptación; si el miembro no está de acuerdo, puede dejar de usar el Programa y eliminar su cuenta.',
   },
   {
     title: 'PROPIEDAD INTELECTUAL',
@@ -90,7 +97,7 @@ export default function MenuTerms({ TH, onBack }) {
       ))}
       <div style={{ marginTop: 24, padding: '14px 16px', borderRadius: 16, background: TH.surface }}>
         <div style={{ fontSize: 11, color: TH.sub, textAlign: 'center', lineHeight: 1.6 }}>
-          Al utilizar Puntos Plus aceptás estos términos y condiciones.<br />
+          Al utilizar Puntos Plus aceptas estos términos y condiciones.<br />
           Última actualización: {TERMS_UPDATED}
         </div>
       </div>
