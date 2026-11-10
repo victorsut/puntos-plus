@@ -86,6 +86,79 @@
      (el escáner es del operador).
 6. **Borrado de cuenta en-app:** ✅ ya cumplido.
 
+## 🎬 Apertura formal con la animación de entrada (10-nov-2026, pedido del dueño)
+
+Meta: que al tocar el ícono se vea como una app habitual (sin barra de
+navegador, sin destellos) y que la animación de las monedas PP aparezca de
+inmediato. Desde el 10-nov la animación vive en `index.html` (HTML + CSS
+puros, en bucle mientras carga) — ya es lo primero que dibuja la app.
+
+**Lo que NINGUNA app puede evitar:** al tocar el ícono, el sistema pinta
+una pantalla propia ESTÁTICA (Android 12+: ícono al centro sobre un color;
+iOS: la *launch screen*, que Apple exige estática). La técnica de las apps
+formales es que esa pantalla sea IDÉNTICA al primer cuadro de la animación,
+para que el ojo vea un solo movimiento:
+
+```
+toque → pantalla del sistema (perla #EDE7E1 + moneda PP al centro, fija)
+      → la moneda empieza a moverse: lluvia, anillo, PUNTOS PLUS (index.html)
+      → la app aparece con fundido cuando terminó de cargar
+```
+
+### Android (Play Store)
+1. **Envoltorio: TWA** (Bubblewrap/PWABuilder, como arriba). ⚠️ El
+   proyecto Capacitor del repo (`android/`, APK de prueba) carga la web en
+   un **WebView, que NO soporta web push** — publicado así, los socios se
+   quedarían sin notificaciones salvo que se agregue push nativo (FCM). El
+   TWA corre sobre Chrome: push, cámara y sesión de Google funcionan igual
+   que hoy. Recomendación: TWA para la tienda; el APK Capacitor queda solo
+   para pruebas.
+2. **Pantalla del sistema = primer cuadro:** fondo perla `#EDE7E1` y como
+   ícono la **moneda PP** (no el logotipo cuadrado), del mismo tamaño y
+   posición que la moneda héroe. En el proyecto Android generado:
+   `windowSplashScreenBackground` + `windowSplashScreenAnimatedIcon`.
+3. **Opcional (Android 12+):** ícono ANIMADO del sistema (AnimatedVector
+   Drawable, máx. ~1 s): la moneda entra con el volteo y el anillo empieza
+   a llenarse, y la página continúa exactamente desde ahí. Es el único
+   punto donde el sistema permite animación.
+4. **Splash del TWA** (imagen + color + fundido, configurable en Bubblewrap):
+   la misma moneda sobre perla, con fundido corto (~300 ms).
+5. **Barras del sistema:** color de la barra de estado y de navegación
+   definidos en el paquete (hoy `theme_color` es amarillo `#FBBC04`;
+   decidir con el dueño: perla durante la apertura o el color de la marca).
+6. **assetlinks.json** (punto 2 de Google Play arriba): sin él aparece la
+   barra del navegador y se pierde todo lo "formal".
+
+### iOS (App Store)
+- La *launch screen* (storyboard) es obligatoriamente estática: perla +
+  moneda PP centrada en la posición de la moneda héroe; luego arranca la
+  animación de `index.html`. Apple pide justamente que la launch screen se
+  parezca a la primera pantalla.
+- Envoltorio sugerido: **Capacitor iOS** (ya está en el repo) con los
+  archivos de la app EMPAQUETADOS (no solo la URL remota) — abre sin red,
+  baja el riesgo de rechazo 4.2 "sitio envuelto" — + push nativo (APNs) +
+  decisión de Sign in with Apple. Requiere Mac y cuenta Apple Developer.
+
+### Antes de publicar (código, se puede hacer ya y beneficia a la PWA)
+- **Abrir sin esperar la red:** hoy el service worker pide `index.html` a
+  la red y solo usa la copia guardada si no responde en 4 s — con señal
+  floja la pantalla del sistema se alarga hasta 4 s. Cambiar a "copia
+  guardada al instante + actualización en segundo plano" para el HTML
+  (cuidando que la copia vieja no apunte a archivos de un deploy anterior:
+  ya existe la recarga automática ante chunks faltantes y el aviso de
+  actualización).
+- **Gestos de navegador fuera:** `overscroll-behavior: none` (hoy jalar
+  hacia abajo RECARGA la app en Chrome/TWA, delata que es una web),
+  sin selección de texto ni menú de mantener presionado en botones y
+  tarjetas (`user-select`/`-webkit-touch-callout`), conservando la
+  selección en campos de texto.
+- **Botón atrás** de Android cerrando hojas y modales antes de salir (ya
+  existe `useBackLayer`; verificar en el TWA) y enlaces externos (Waze,
+  WhatsApp, encuesta Shell) abriendo su app o el navegador, nunca dentro
+  de la app (`lib/openExternal.js`).
+- **Ícono adaptable:** revisar que el `maskable` no recorte la moneda en
+  launchers redondos/squircle.
+
 ## Opcionales que suman
 
 - **Screenshots en el manifest** (`screenshots`): mejoran el diálogo de
