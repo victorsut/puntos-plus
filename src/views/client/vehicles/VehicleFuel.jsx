@@ -20,12 +20,13 @@ import { BRAND_ORANGE, bento } from '../../../constants/styles';
 import { VEHICLE_TYPES } from '../../../components/ui/VehicleIcons';
 import { assignPurchaseVehicle, deleteMyFuelLog, listMyFuelHistory, listMyVehicleEvents, setMyFuelLoadState, setMyFuelLoadGap } from '../../../services/vehicleService';
 import { fuelSummary, serverSummary, isFullLoad, isInferredFull, tankStateParams, APPROX_LOADS } from '../../../lib/fuelEconomy';
-import { MonthBars, TrendChart } from './VehicleCharts';
+import { TrendChart } from './VehicleCharts';
+import MonthCharts from './MonthCharts';
 import FuelLogForm from './FuelLogForm';
 import FuelHistoryRow from './FuelHistoryRow';
 import FuelEventRow from './FuelEventRow';
 import FuelInvite from './FuelInvite';
-import { fmtN, fmtDay, fmtMonth } from './fuelFmt';
+import { fmtN, fmtDay } from './fuelFmt';
 import { friendlyError } from '../../../lib/netError';
 
 // RPC inexistente (migración pendiente / arnés sin backend) → la sección
@@ -117,24 +118,9 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
     () => (Array.isArray(loads) ? loads.filter(l => l.vehicle_id === vehicle?.id) : []),
     [loads, vehicle?.id]);
   const summary = useMemo(() => summaryOf(vehicle?.id, mine), [mine, vehicle?.id, stats]); // eslint-disable-line react-hooks/exhaustive-deps
-  const months = useMemo(() => {
-    const acc = new Map();
-    for (const l of mine) {
-      const d = new Date(l.created_at);
-      const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      const e = acc.get(k) || {
-        label: fmtMonth(l.created_at),
-        short: new Date(l.created_at).toLocaleDateString('es-GT', { month: 'short' }).replace('.', ''),
-        n: 0, gal: 0, amt: 0,
-      };
-      e.n++; e.gal += +l.gallons || 0; e.amt += +l.amount || 0;
-      acc.set(k, e);
-    }
-    return [...acc.entries()].sort((a, b) => b[0].localeCompare(a[0])).slice(0, 6).map(x => x[1]);
-  }, [mine]);
   // E3e: puntos de la gráfica — una por ventana de lleno a lleno
   const trendPoints = useMemo(
-    () => summary.windows.map(w => ({ label: fmtDay(w.to), v: w.kmgal })),
+    () => summary.windows.map(w => ({ label: fmtDay(w.to), from: w.from ? fmtDay(w.from) : null, v: w.kmgal, km: w.km, gal: w.gal, kind: w.kind })),
     [summary]);
 
   // Titular: el del servidor (summary viene de stats cuando la RPC trae
@@ -366,23 +352,9 @@ export default function VehicleFuel({ dark, fire, vehicles, vehicle, stats, onSt
         </div>
       )}
 
-      {/* Consumo por mes (vehículo activo) — barras con ≥2 meses
-          (tap en una barra = cargas y galones); con 1 mes, fila simple */}
-      {months.length > 0 && (
-        <div style={{ background: cardBg, borderRadius: 17, padding: '12px 14px 8px', marginTop: 10 }}>
-          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', color: sub, marginBottom: 8 }}>Consumo por mes</div>
-          {months.length >= 2 ? (
-            <MonthBars months={[...months].reverse()} dark={dark} ink={ink} sub={sub} />
-          ) : months.map(m => (
-            <div key={m.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '5px 0' }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: ink }}>{m.label}</span>
-              <span style={{ fontSize: 12, color: sub, fontWeight: 600 }}>
-                {m.n} carga{m.n === 1 ? '' : 's'} · {fmtN(m.gal)} gal · <span style={{ color: ink, fontWeight: 800 }}>Q{fmtN(m.amt, 0)}</span>
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* Consumo por mes (vehículo activo) — 9-nov: carrusel Gasto ·
+          Galones · Km recorridos (MonthCharts); con 1 mes, fila simple */}
+      <MonthCharts loads={mine} dark={dark} ink={ink} sub={sub} cardBg={cardBg} />
 
       {/* E3b: registrar consumo MANUAL (carga fuera de Turkaj) */}
       {!reg ? (
